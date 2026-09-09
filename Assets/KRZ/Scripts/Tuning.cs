@@ -101,6 +101,11 @@ public class Tuning : ScriptableObject
              "opens as the kaiju grows, so the arena visibly unlocks over a run.")]
     public float buildingHpLarge = 450f;
 
+    [Tooltip("Bonus damage against large buildings only, indexed by size. This is what " +
+             "makes being giant feel giant against towers, without inflating the baseline " +
+             "curve against everything else. Small buildings keep their friction.")]
+    public float[] largeBuildingDamageBySize = { 1f, 2f, 3f, 4f, 5f };
+
     [Tooltip("Progress bar over buildings you have damaged. Intact ones show nothing.")]
     public bool showBuildingHealthBars = true;
     public int foodDropsSmall = 9;
@@ -115,17 +120,16 @@ public class Tuning : ScriptableObject
              "Grows with size in Stage 3.")]
     public float foodInfluenceRadius = 6.5f;
 
-    [Tooltip("How sharply the pull falls off toward the edge. 1 is linear; higher makes " +
-             "distant food barely twitch while close food is yanked in. 2.5 is a strong curve.")]
-    [Range(1f, 5f)] public float foodPullFalloff = 2.5f;
+    [Tooltip("How sharply the pull falls off toward the edge. 1 is linear; higher keeps the " +
+             "outer field nearly dead while ramping hard close to the body.")]
+    [Range(1f, 6f)] public float foodPullFalloff = 4f;
 
-    [Tooltip("Speed at the moment food reaches you — the top of the curve. " +
-             "This is the overall strength of the pull.")]
-    public float foodMagnetMaxSpeed = 8f;
+    [Tooltip("Speed at the moment food reaches you — the top of the curve.")]
+    public float foodMagnetMaxSpeed = 20f;
 
     [Tooltip("How quickly a piece takes up the speed the field is asking for. " +
-             "Lower feels heavier and laggier.")]
-    public float foodMagnetAccel = 13.3f;
+             "Only bites near the body, where the field asks for a lot at once.")]
+    public float foodMagnetAccel = 30f;
 
     [Tooltip("How far food is thrown by a small building, in world units.")]
     public float foodScatter = 3.4f;

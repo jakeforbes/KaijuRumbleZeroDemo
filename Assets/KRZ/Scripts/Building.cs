@@ -11,6 +11,9 @@ public class Building : Damageable
 
     public override bool IsAlive => hp > 0f;
 
+    /// <summary>Two-tile footprints are the towers the size bonus applies to.</summary>
+    public bool IsLarge => tiles >= 2;
+
     int tiles;
     int fullHeightPx;
     Color baseColour;
@@ -42,6 +45,17 @@ public class Building : Damageable
     public override void TakeDamage(float amount, Vector2 from)
     {
         if (!IsAlive) return;
+
+        // Large buildings take a size-scaled bonus. Applied here rather than in the
+        // attack so the baseline damage curve stays honest against everything else.
+        if (IsLarge)
+        {
+            var progress = PlayerProgress.Instance;
+            int tier = progress != null ? progress.Tier : 0;
+            var table = tuning.largeBuildingDamageBySize;
+            if (table != null && table.Length > 0)
+                amount *= table[Mathf.Clamp(tier, 0, table.Length - 1)];
+        }
 
         hp -= amount;
         AudioEvents.Play(Sfx.BuildingHit, transform.position);
