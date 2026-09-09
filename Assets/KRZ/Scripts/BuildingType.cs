@@ -30,6 +30,11 @@ public class BuildingType
     public int foodDrops = 6;
     public float foodScatter = 2.5f;
 
+    [Tooltip("Power-ups left behind when destroyed. Laboratories only — it is what " +
+             "makes them worth crossing the map for rather than smashing whatever " +
+             "happens to be nearest.")]
+    public int upgradeDrops;
+
     [Tooltip("Relative chance of being picked when the city is generated.")]
     public float weight = 30f;
 

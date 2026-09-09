@@ -418,14 +418,15 @@
             <tr><td class="name">Block &mdash; small</td><td class="num">256 &times; 384</td><td class="num">1 &times; 1</td><td class="num">3</td><td class="dim">Filler. Smash for food.</td><td><span class="pri p0">P0</span></td></tr>
             <tr><td class="name">Block &mdash; wide</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Filler. Smash for food.</td><td><span class="pri p0">P0</span></td></tr>
             <tr><td class="name">Tower</td><td class="num">512 &times; 768</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Tall enough to hide a size-2 kaiju. Sells the depth effect.</td><td><span class="pri p1">P1</span></td></tr>
-            <tr><td class="name">Barracks</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Spawns grunts until smashed.</td><td><span class="pri p1">P1</span></td></tr>
-            <tr><td class="name">Laboratory</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Drops a power-up when destroyed.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Lab &mdash; small</td><td class="num">384 &times; 320</td><td class="num">1 &times; 2</td><td class="num">3</td><td class="dim">Drops one power-up when destroyed.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Lab &mdash; large</td><td class="num">512 &times; 400</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Drops two power-ups when destroyed.</td><td><span class="pri p1">P1</span></td></tr>
             <tr><td class="name">Ground tiles &times;3</td><td class="num">256 &times; 128</td><td class="num">1 &times; 1</td><td class="num">1</td><td class="dim">Asphalt, road with markings, pavement edge. Must tile seamlessly in all four directions.</td><td><span class="pri p0">P0</span></td></tr>
           </tbody>
         </table>
       </div>
 
-      <p><strong>Barracks and Laboratory are gameplay, not scenery.</strong> A player scanning a dense street needs to spot them in under a second, from silhouette alone, at any zoom. Give each a distinct roof shape or signature feature that no filler block shares. If they read as ordinary buildings, players never learn the mechanic.</p>
+      <p><strong>Laboratories are gameplay, not scenery.</strong> They are the only buildings that pay out power-ups, so a player scanning a dense street needs to spot one in under a second, from silhouette alone, at any zoom. Give them a distinct roof shape or signature emitter that no filler block shares, and make the two sizes read as the same family. If they look like ordinary buildings, players never learn the mechanic.</p>
+      <p><strong>Barracks are cut.</strong> The design originally had them spawning grunt streams; enemy waves are driven by the spawner instead, so no Barracks art is needed.</p>
       <p><strong>Rubble state must read as walkable.</strong> Once destroyed, the player and enemies move straight over it &mdash; it should look like ground, not like a low obstacle.</p>
     </section>
 
