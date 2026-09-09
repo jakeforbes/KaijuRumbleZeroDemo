@@ -12,7 +12,9 @@ public static class TuningAssetBootstrap
     const string Dir = "Assets/KRZ/Resources";
     const string Path = Dir + "/Tuning.asset";
 
-    static TuningAssetBootstrap() => EditorApplication.delayCall += Ensure;
+    // Wrapped in a lambda because delayCall takes a void-returning callback
+    // and Ensure hands back the asset.
+    static TuningAssetBootstrap() => EditorApplication.delayCall += () => Ensure();
 
     [MenuItem("KRZ/Select Tuning Asset")]
     static void Select() => Selection.activeObject = Ensure();

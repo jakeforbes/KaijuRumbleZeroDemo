@@ -43,10 +43,29 @@ public class Tuning : ScriptableObject
     public float blockSpacingY = 3.5f;
     public int randomSeed = 1337;
 
+    [Header("Footprints")]
+    [Tooltip("Building collision diamond as a fraction of its drawn base. " +
+             "1.0 matches the art exactly. Below 1.0 lets the player creep onto the base.")]
+    [Range(0.5f, 1.2f)] public float buildingFootprint = 1f;
+
+    [Tooltip("Player collision ellipse in world units, at size 1. Tile is 2 x 1.")]
+    public Vector2 playerFootprint = new Vector2(1.1f, 0.55f);
+
+    [Header("Occluder fade")]
+    [Tooltip("Fade buildings that are drawn in front of the player and covering them.")]
+    public bool occluderFadeEnabled = true;
+
+    [Tooltip("How transparent a covering building becomes. Lower is more see-through.")]
+    [Range(0.1f, 1f)] public float occluderAlpha = 0.40f;
+
+    [Tooltip("Seconds to fade in and out. Too fast reintroduces the pop, too slow smears.")]
+    [Range(0.02f, 0.6f)] public float occluderFadeTime = 0.12f;
+
     [Header("Player size (previewed here, driven by growth in Stage 3)")]
     [Range(1f, 4f)] public float previewScale = 1f;
 
     [Header("Debug")]
     public bool showDebugHud = true;
     public bool enableCheatKeys = true;
+    public bool showColliders = false;
 }

@@ -18,6 +18,43 @@ public class DebugHud : MonoBehaviour
     {
         fps = Mathf.Lerp(fps, 1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f), 0.1f);
         if (tuning.enableCheatKeys) ReadCheats();
+        if (tuning.showColliders) DrawColliders();
+    }
+
+    /// <summary>
+    /// Outlines every 2D footprint so collision can be compared against the art.
+    /// Uses Debug.DrawLine, so it shows in the Scene view and in the Game view
+    /// with the Gizmos toggle switched on.
+    /// </summary>
+    static void DrawColliders()
+    {
+        var green = new Color(0.3f, 1f, 0.4f);
+        var cyan = new Color(0.3f, 0.9f, 1f);
+
+        foreach (var col in FindObjectsByType<Collider2D>(FindObjectsSortMode.None))
+        {
+            Vector3 origin = col.transform.position;
+
+            if (col is PolygonCollider2D poly)
+            {
+                var p = poly.points;
+                for (int i = 0; i < p.Length; i++)
+                    Debug.DrawLine(origin + (Vector3)p[i],
+                                   origin + (Vector3)p[(i + 1) % p.Length], green);
+            }
+            else if (col is CapsuleCollider2D cap)
+            {
+                Vector2 half = cap.size * 0.5f;
+                Vector3 prev = default;
+                for (int i = 0; i <= 24; i++)
+                {
+                    float a = i / 24f * Mathf.PI * 2f;
+                    var pt = origin + new Vector3(Mathf.Cos(a) * half.x, Mathf.Sin(a) * half.y, 0f);
+                    if (i > 0) Debug.DrawLine(prev, pt, cyan);
+                    prev = pt;
+                }
+            }
+        }
     }
 
     void ReadCheats()
@@ -26,6 +63,7 @@ public class DebugHud : MonoBehaviour
         if (kb == null) return;
 
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
+        if (kb.f4Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
         if (kb.f10Key.wasPressedThisFrame) GameBootstrap.Restart();
 
         // Stage 3 hands F2/F3 to the growth system; until then they preview sizes.
@@ -58,7 +96,7 @@ public class DebugHud : MonoBehaviour
             $"pos  {player.transform.position.x:0.0}, {player.transform.position.y:0.0}\n" +
             $"speed  {player.Velocity.magnitude:0.00}   facing  {player.FacingName}\n" +
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
-            $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F10</b> restart   <b>[ ]</b> timescale   <b>\\</b> reset";
+            $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> colliders   <b>F10</b> restart   <b>[ ]</b> timescale   <b>\\</b> reset";
 
         var size = style.CalcSize(new GUIContent(text));
         var rect = new Rect(12, 12, size.x + 16, size.y + 10);

@@ -13,6 +13,7 @@ public class GameBootstrap : MonoBehaviour
 
     Tuning tuning;
     PlayerController player;
+    OccluderFade fade;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
@@ -22,7 +23,23 @@ public class GameBootstrap : MonoBehaviour
         Instance = go.AddComponent<GameBootstrap>();
     }
 
-    public static void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    /// <summary>
+    /// Reloads the scene and rebuilds. Launch() only fires once per play session,
+    /// so the rebuild has to be re-triggered explicitly after the scene comes back.
+    /// </summary>
+    public static void Restart()
+    {
+        Time.timeScale = 1f;
+        Instance = null;
+        SceneManager.sceneLoaded += OnReloaded;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    static void OnReloaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnReloaded;
+        Launch();
+    }
 
     void Awake()
     {
@@ -37,6 +54,11 @@ public class GameBootstrap : MonoBehaviour
 
         ClearScene();
         var cam = BuildCamera();
+
+        // Created before the city so buildings can register as they are made.
+        fade = gameObject.AddComponent<OccluderFade>();
+        fade.tuning = tuning;
+
         BuildGround();
         BuildCity();
         player = BuildPlayer();
@@ -140,13 +162,24 @@ public class GameBootstrap : MonoBehaviour
 
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = GreyboxArt.IsoBox(tiles, heightPx, colour, ppu);
+                fade.Register(sr);
 
                 // Footprint only — never the sprite bounds, so the player can
                 // overlap a tower's upper floors without colliding with them.
-                var col = go.AddComponent<CapsuleCollider2D>();
-                col.direction = CapsuleDirection2D.Horizontal;
-                float w = GreyboxArt.TileW * tiles / ppu * 0.86f;
-                col.size = new Vector2(w, w * 0.5f);
+                // It is the drawn base diamond exactly, not a capsule approximating
+                // it: a capsule disagrees with the diamond most at the left and
+                // right vertices, which is precisely where the player creeps in.
+                float hw = GreyboxArt.TileW * tiles / ppu * 0.5f * tuning.buildingFootprint;
+                float hh = GreyboxArt.TileH * tiles / ppu * 0.5f * tuning.buildingFootprint;
+
+                var col = go.AddComponent<PolygonCollider2D>();
+                col.points = new[]
+                {
+                    new Vector2(0f, -hh),
+                    new Vector2(hw, 0f),
+                    new Vector2(0f, hh),
+                    new Vector2(-hw, 0f),
+                };
             }
     }
 
@@ -161,7 +194,7 @@ public class GameBootstrap : MonoBehaviour
         // caches the footprint, so it has to exist by then.
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
-        col.size = new Vector2(1.1f, 0.55f);
+        col.size = tuning.playerFootprint;
 
         var pc = go.AddComponent<PlayerController>();
         pc.tuning = tuning;
@@ -181,6 +214,7 @@ public class GameBootstrap : MonoBehaviour
         var bsr = bodyGo.AddComponent<SpriteRenderer>();
         bsr.sprite = GreyboxArt.Capsule(96, 128, new Color(0.55f, 0.85f, 0.45f), ppu);
 
+        fade.playerArt = bsr;
         pc.BindArt(art);
         return pc;
     }
