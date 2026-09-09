@@ -54,6 +54,8 @@ public class GameBootstrap : MonoBehaviour
 
         Food.Reset();
         Enemy.Reset();
+        HitFx.Reset();
+        Popups.Clear();
         ClearScene();
         var cam = BuildCamera();
 
@@ -67,6 +69,8 @@ public class GameBootstrap : MonoBehaviour
 
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
+
+        gameObject.AddComponent<Popups>();
 
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;

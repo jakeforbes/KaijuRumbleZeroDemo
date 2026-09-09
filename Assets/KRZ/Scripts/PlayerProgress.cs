@@ -96,6 +96,8 @@ public class PlayerProgress : MonoBehaviour
         invulnerableUntil = Time.time + tuning.hitInvulnerability;
         AudioEvents.Play(Sfx.PlayerHit, transform.position);
         Shake(tuning.hitShake);
+        Popups.Add(transform.position + Vector3.up * currentScale,
+                   $"<b>-{amount:0}</b>", new Color(1f, 0.35f, 0.3f));
 
         if (Hp <= 0f) Die();
     }

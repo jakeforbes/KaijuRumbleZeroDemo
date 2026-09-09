@@ -110,6 +110,9 @@ public class Tuning : ScriptableObject
 
     public float hitShake = 0.18f;
 
+    [Tooltip("Floating damage numbers. The only way to tune damage by eye.")]
+    public bool showDamageNumbers = true;
+
     [Header("Footprints")]
     [Tooltip("Building collision diamond as a fraction of its drawn base. " +
              "1.0 matches the art exactly. Below 1.0 lets the player creep onto the base.")]

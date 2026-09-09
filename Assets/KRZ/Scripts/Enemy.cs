@@ -19,6 +19,8 @@ public class Enemy : Damageable
     float hp;
     float nextAttackAt;
     float flashUntil;
+    float windEndsAt;
+    bool winding;
 
     Rigidbody2D body;
     SpriteRenderer sr;
@@ -89,21 +91,56 @@ public class Enemy : Damageable
 
         if (flat > type.attackRange)
         {
+            winding = false;
             Vector2 dir = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized;
             body.linearVelocity = new Vector2(dir.x, dir.y * tuning.isoSquash) * type.moveSpeed;
         }
         else
         {
             body.linearVelocity = Vector2.zero;
-            if (Time.time >= nextAttackAt)
+
+            if (!winding && Time.time >= nextAttackAt)
             {
+                winding = true;
+                windEndsAt = Time.time + type.attackWindup;
+            }
+
+            if (winding && Time.time >= windEndsAt)
+            {
+                winding = false;
                 nextAttackAt = Time.time + type.attackCooldown;
-                progress.TakeDamage(type.contactDamage);
+                Strike(progress);
             }
         }
 
-        if (Time.time < flashUntil) sr.color = Color.white;
-        else sr.color = baseColour;
+        Recolour();
+    }
+
+    void Recolour()
+    {
+        if (Time.time < flashUntil) { sr.color = Color.white; return; }
+
+        if (winding)
+        {
+            // Pulses harder as the strike approaches, so the timing is readable.
+            float t = 1f - Mathf.Clamp01((windEndsAt - Time.time) / Mathf.Max(0.01f, type.attackWindup));
+            sr.color = Color.Lerp(baseColour, new Color(1f, 0.95f, 0.85f), t * t);
+            return;
+        }
+
+        sr.color = baseColour;
+    }
+
+    void Strike(PlayerProgress progress)
+    {
+        Vector3 target = progress.transform.position;
+        bool ranged = type.attackRange > 2f;
+
+        if (ranged) HitFx.Line(transform.position, target, new Color(1f, 0.7f, 0.35f), tuning.pixelsPerUnit);
+        else body.linearVelocity = ((Vector2)(target - transform.position)).normalized * 6f;
+
+        HitFx.Burst(target, new Color(1f, 0.45f, 0.35f), 0.9f * progress.Scale, tuning.pixelsPerUnit);
+        progress.TakeDamage(type.contactDamage);
     }
 
     public override void TakeDamage(float amount, Vector2 from)
@@ -112,10 +149,18 @@ public class Enemy : Damageable
 
         // Armour is flat subtraction, so chip damage genuinely bounces off heavies.
         float dealt = Mathf.Max(0f, amount - type.armour);
-        if (dealt <= 0f) { flashUntil = Time.time + 0.06f; return; }
+
+        if (dealt <= 0f)
+        {
+            // Says "your weapon is wrong" rather than looking like a missed hit.
+            flashUntil = Time.time + 0.06f;
+            Popups.Add(transform.position, "<b>BLOCKED</b>", new Color(0.65f, 0.7f, 0.8f));
+            return;
+        }
 
         hp -= dealt;
         flashUntil = Time.time + 0.08f;
+        Popups.Add(transform.position, $"{dealt:0}", Color.white);
 
         if (hp <= 0f) Die(Sfx.EnemyDeath);
     }

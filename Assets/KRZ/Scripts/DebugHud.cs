@@ -18,6 +18,7 @@ public class DebugHud : MonoBehaviour
     void Update()
     {
         fps = Mathf.Lerp(fps, 1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f), 0.1f);
+        Popups.show = tuning.showDamageNumbers;
         if (tuning.enableCheatKeys) ReadCheats();
         if (tuning.showColliders) DrawColliders();
     }

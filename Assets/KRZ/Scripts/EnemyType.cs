@@ -26,6 +26,10 @@ public class EnemyType
     public float attackRange = 0.9f;
     public float attackCooldown = 1.1f;
 
+    [Tooltip("Telegraph before the hit lands. Damage arriving with no warning reads as " +
+             "unfair and cannot be tuned, because you never see what hit you.")]
+    public float attackWindup = 0.35f;
+
     public int foodDrops = 2;
     public float foodScatter = 1.2f;
 
