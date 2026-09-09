@@ -33,7 +33,8 @@ public class PlayerProgress : MonoBehaviour
 
     public float DamageMultiplier => Mathf.Pow(tuning.damagePerTier, Tier);
     public float SpeedMultiplier => Mathf.Pow(tuning.speedPerTier, Tier);
-    public float InfluenceRadius => tuning.foodInfluenceRadius * currentScale;
+    public float InfluenceRadius =>
+        tuning.foodInfluenceRadius * Mathf.Pow(currentScale, tuning.foodRadiusExponent);
 
     /// <summary>Set when the kaiju dies at size 1. The run is over until F10.</summary>
     public bool IsDead { get; private set; }

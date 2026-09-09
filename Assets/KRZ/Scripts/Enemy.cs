@@ -82,8 +82,10 @@ public class Enemy : Damageable
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
 
         // Outgrown enemies die underfoot. No input, no damage taken — this is the
-        // whole reward for having grown.
-        if (progress.Tier > type.sizeClass && flat <= tuning.squishRange * progress.Scale)
+        // whole reward for having grown. Thresholds are spaced so each class stays
+        // a real threat for several sizes rather than going trivial immediately.
+        int squishAt = tuning.squishFirstTier + type.sizeClass * tuning.squishTiersPerClass;
+        if (progress.Tier >= squishAt && flat <= tuning.squishRange * progress.Scale)
         {
             Squish();
             return;

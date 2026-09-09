@@ -47,8 +47,10 @@ public class Tuning : ScriptableObject
 
     [Header("Growth")]
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
-             "Totals 600 across the run, the same as the four-size version did.")]
-    public float[] foodPerTier = { 75f, 125f, 175f, 225f };
+             "Roughly geometric rather than arithmetic: income accelerates hard as you " +
+             "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
+             "so a flat +50 per gate meant later tiers arrived faster than earlier ones.")]
+    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length.")]
@@ -79,7 +81,7 @@ public class Tuning : ScriptableObject
     public EnemyType[] enemyTypes =
     {
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
-                        contactDamage = 6f,  moveSpeed = 3.4f, attackRange = 0.9f,
+                        contactDamage = 6f,  moveSpeed = 2.55f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
@@ -107,6 +109,13 @@ public class Tuning : ScriptableObject
 
     [Tooltip("How close an outgrown enemy has to be to die underfoot, scaled by size.")]
     public float squishRange = 0.85f;
+
+    [Tooltip("Smallest size that can squish anything, as a tier index. 2 means size 3.")]
+    [Range(0, 4)] public int squishFirstTier = 2;
+
+    [Tooltip("Extra sizes needed per enemy class. 2 means every other size unlocks the " +
+             "next class up: smalls at size 3, mediums at size 5, larges never.")]
+    [Range(1, 4)] public int squishTiersPerClass = 2;
 
     public float hitShake = 0.18f;
 
@@ -178,9 +187,13 @@ public class Tuning : ScriptableObject
     public float foodValueMedium = 5f;
     public float foodValueLarge = 20f;
 
-    [Tooltip("Outer edge of the pull field. Food further out is untouched. " +
-             "Grows with size in Stage 3.")]
+    [Tooltip("Outer edge of the pull field at size 1. Food further out is untouched.")]
     public float foodInfluenceRadius = 6.5f;
+
+    [Tooltip("How the pull radius grows with size: radius x (scale ^ this). 1.0 is linear " +
+             "and quadruples the radius by size 5 — sixteen times the collection area, " +
+             "which is most of why the level curve ran away. 0.5 doubles it instead.")]
+    [Range(0f, 1f)] public float foodRadiusExponent = 0.5f;
 
     [Tooltip("How sharply the pull falls off toward the edge. 1 is linear; higher keeps the " +
              "outer field nearly dead while ramping hard close to the body.")]
