@@ -98,7 +98,7 @@ public class Tuning : ScriptableObject
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
-                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f, volley = true,
                         bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
@@ -144,6 +144,9 @@ public class Tuning : ScriptableObject
     [Tooltip("Extra sizes needed per enemy class. 2 means every other size unlocks the " +
              "next class up: smalls at size 3, mediums at size 5, larges never.")]
     [Range(1, 4)] public int squishTiersPerClass = 2;
+
+    [Tooltip("How close a missile must get to the kaiju to hit, scaled by size.")]
+    public float missileHitRadius = 0.9f;
 
     public float hitShake = 0.18f;
 
@@ -249,8 +252,9 @@ public class Tuning : ScriptableObject
                           weight = 0.9f, colour = new Color(0.75f, 0.6f, 1f) },
     };
 
-    [Tooltip("Chance a destroyed building leaves an upgrade. Labs in Stage 6 replace this.")]
-    [Range(0f, 1f)] public float upgradeDropChance = 0.12f;
+    [Tooltip("Fallback chance for any non-Lab building to drop an upgrade. 0 now that " +
+             "Labs exist — raise it to make the whole city pay out while testing.")]
+    [Range(0f, 1f)] public float upgradeDropChance = 0f;
 
     [Tooltip("How close you must walk to collect one. Upgrades are not vacuumed.")]
     public float upgradePickupRange = 1.2f;
@@ -284,6 +288,19 @@ public class Tuning : ScriptableObject
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
                            foodDrops = 34, foodScatter = 7f,  weight = 10f,
                            colour = new Color(0.25f, 0.26f, 0.42f) },
+
+        // Laboratories are the only buildings that pay out power-ups, so they have to
+        // read as prizes across a crowded street. Deliberately squat and a hue no
+        // filler block uses — silhouette and colour are all greybox has to work with.
+        new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
+                           minHeightPx = 200, maxHeightPx = 250, hp = 38f,
+                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 7f,
+                           colour = new Color(0.20f, 0.62f, 0.60f) },
+
+        new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 260, maxHeightPx = 330, hp = 59f,
+                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 5f,
+                           colour = new Color(0.24f, 0.72f, 0.68f) },
     };
 
     [Tooltip("Damage multiplier by (your size - the building's class), from -4 to +4. " +

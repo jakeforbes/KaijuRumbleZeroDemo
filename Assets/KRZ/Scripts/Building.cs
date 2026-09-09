@@ -102,6 +102,29 @@ public class Building : Damageable
         bar.Set(hp / maxHp);
     }
 
+    /// <summary>
+    /// Labs pay out a fixed number of power-ups. Everything else falls back to the
+    /// chance on the Tuning asset, which is 0 now that Labs exist — it stays as a
+    /// knob for making the whole city drop upgrades while testing.
+    /// </summary>
+    void DropUpgrades()
+    {
+        if (PlayerUpgrades.Instance == null) return;
+
+        int drops = type.upgradeDrops;
+        if (drops == 0 && Random.value < tuning.upgradeDropChance) drops = 1;
+
+        for (int i = 0; i < drops; i++)
+        {
+            // Spread multiples so two prizes never land on the same pixel.
+            var offset = drops > 1
+                ? new Vector3(Random.Range(-1.2f, 1.2f), Random.Range(-0.6f, 0.6f), 0f)
+                : Vector3.zero;
+            UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
+                                transform.position + offset, ppu);
+        }
+    }
+
     void Collapse()
     {
         hp = 0f;
@@ -123,10 +146,6 @@ public class Building : Damageable
         if (footprint != null) footprint.enabled = false;
 
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, ppu);
-
-        // Stage 6 moves this onto Laboratories; for now any building can pay out so
-        // the upgrade system is testable without the wave director.
-        if (Random.value < tuning.upgradeDropChance && PlayerUpgrades.Instance != null)
-            UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(), transform.position, ppu);
+        DropUpgrades();
     }
 }

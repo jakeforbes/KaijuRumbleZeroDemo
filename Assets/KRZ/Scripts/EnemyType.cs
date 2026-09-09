@@ -44,6 +44,29 @@ public class EnemyType
              "rather than walk away from it.")]
     public bool dropsUpgrade;
 
+    [Header("Missile volley")]
+    [Tooltip("Periodically stops, telegraphs, then fires a cluster of homing missiles.")]
+    public bool volley;
+
+    public float volleyCooldown = 5f;
+
+    [Tooltip("How long it stands still before firing. This is the tell — long enough " +
+             "to see it coming and break line of sight or close the distance.")]
+    public float volleyWindup = 1f;
+
+    [Tooltip("Will not fire from further than this, so off-screen enemies stay quiet.")]
+    public float volleyRange = 18f;
+
+    public int volleyCount = 8;
+    public float missileDamage = 12f;
+    public float missileSpeed = 14f;
+
+    [Tooltip("How hard a missile can change direction. Low turns wide and is dodgeable; " +
+             "high tracks you around corners.")]
+    public float missileTurn = 40f;
+
+    public float missileLife = 4f;
+
     [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
     public int bodyPx = 64;
 

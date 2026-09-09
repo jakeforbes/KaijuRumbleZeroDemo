@@ -22,6 +22,9 @@ public class Enemy : Damageable
     float flashUntil;
     float windEndsAt;
     bool winding;
+    float nextVolleyAt;
+    float volleyEndsAt;
+    bool volleyWinding;
 
     Rigidbody2D body;
     SpriteRenderer sr;
@@ -67,6 +70,8 @@ public class Enemy : Damageable
         e.sr = bsr;
         e.baseColour = type.colour;
 
+        e.nextVolleyAt = Time.time + type.volleyCooldown;
+
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
         return e;
@@ -92,6 +97,11 @@ public class Enemy : Damageable
             Squish();
             return;
         }
+
+        // The volley takes priority over everything: it plants the Mech, telegraphs,
+        // then fires. Handled before movement so the stop is absolute rather than a
+        // Mech that keeps walking while it winds up.
+        if (type.volley && HandleVolley(progress, flat)) return;
 
         if (flat > type.attackRange)
         {
@@ -121,9 +131,46 @@ public class Enemy : Damageable
         Recolour();
     }
 
+    /// <summary>Returns true while the volley owns this frame.</summary>
+    bool HandleVolley(PlayerProgress progress, float flat)
+    {
+        if (volleyWinding)
+        {
+            body.linearVelocity = Vector2.zero;
+            if (Time.time >= volleyEndsAt)
+            {
+                volleyWinding = false;
+                nextVolleyAt = Time.time + type.volleyCooldown;
+                Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
+            }
+            Recolour();
+            return true;
+        }
+
+        if (Time.time >= nextVolleyAt && flat <= type.volleyRange)
+        {
+            volleyWinding = true;
+            volleyEndsAt = Time.time + type.volleyWindup;
+            body.linearVelocity = Vector2.zero;
+            Recolour();
+            return true;
+        }
+
+        return false;
+    }
+
     void Recolour()
     {
         if (Time.time < flashUntil) { sr.color = Color.white; return; }
+
+        if (volleyWinding)
+        {
+            // A faster, hotter pulse than the melee tell, so the two read differently.
+            float t = 1f - Mathf.Clamp01((volleyEndsAt - Time.time) / Mathf.Max(0.01f, type.volleyWindup));
+            sr.color = Color.Lerp(baseColour, new Color(1f, 0.45f, 0.2f),
+                                  Mathf.PingPong(t * 6f, 1f) * 0.5f + t * 0.5f);
+            return;
+        }
 
         if (winding)
         {
