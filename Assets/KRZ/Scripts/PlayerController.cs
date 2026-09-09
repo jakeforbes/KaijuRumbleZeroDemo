@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     /// <summary>Size multiplier. Growth takes this over in Stage 3.</summary>
     public float Scale { get; private set; } = 1f;
 
+    /// <summary>Last direction moved, on the squashed ground plane. Attacks aim along it.</summary>
+    public Vector2 AimDir { get; private set; } = Vector2.down;
+
     public Vector2 Velocity => body.linearVelocity;
 
     static readonly string[] FacingNames = { "s", "se", "e", "ne", "n", "nw", "w", "sw" };
@@ -49,7 +52,11 @@ public class PlayerController : MonoBehaviour
         desired = new Vector2(raw.x, raw.y * tuning.isoSquash);
         if (desired.sqrMagnitude > 1f) desired.Normalize();
 
-        if (raw.sqrMagnitude > 0.04f) Facing = FacingFromInput(raw);
+        if (raw.sqrMagnitude > 0.04f)
+        {
+            Facing = FacingFromInput(raw);
+            AimDir = desired.normalized;
+        }
 
         // Stage 3 replaces this with the growth system; for now it previews sizes.
         if (!Mathf.Approximately(Scale, tuning.previewScale)) SetScale(tuning.previewScale);

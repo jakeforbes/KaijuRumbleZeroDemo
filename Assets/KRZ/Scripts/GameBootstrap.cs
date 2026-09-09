@@ -52,6 +52,7 @@ public class GameBootstrap : MonoBehaviour
             tuning = ScriptableObject.CreateInstance<Tuning>();
         }
 
+        Food.Reset();
         ClearScene();
         var cam = BuildCamera();
 
@@ -164,6 +165,8 @@ public class GameBootstrap : MonoBehaviour
                 sr.sprite = GreyboxArt.IsoBox(tiles, heightPx, colour, ppu);
                 fade.Register(sr);
 
+                var building = go.AddComponent<Building>();
+
                 // Footprint only — never the sprite bounds, so the player can
                 // overlap a tower's upper floors without colliding with them.
                 // It is the drawn base diamond exactly, not a capsule approximating
@@ -180,6 +183,9 @@ public class GameBootstrap : MonoBehaviour
                     new Vector2(0f, hh),
                     new Vector2(-hw, 0f),
                 };
+
+                // Init last: it caches the collider and sprite renderer.
+                building.Init(tuning, tiles, heightPx, colour, ppu);
             }
     }
 
@@ -198,6 +204,12 @@ public class GameBootstrap : MonoBehaviour
 
         var pc = go.AddComponent<PlayerController>();
         pc.tuning = tuning;
+
+        var progress = go.AddComponent<PlayerProgress>();
+        progress.tuning = tuning;
+
+        var attack = go.AddComponent<PlayerAttack>();
+        attack.tuning = tuning;
 
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;

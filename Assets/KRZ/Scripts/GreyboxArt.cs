@@ -125,6 +125,70 @@ public static class GreyboxArt
         return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), ppu);
     }
 
+    /// <summary>Small diamond pickup. Pivot at the ground so it sorts with everything else.</summary>
+    public static Sprite Pickup(int size, Color fill, float ppu)
+    {
+        int texW = size, texH = Mathf.Max(4, size / 2);
+        var px = new Color[texW * texH];
+        float cx = texW * 0.5f, cy = texH * 0.5f;
+
+        for (int x = 0; x < texW; x++)
+        {
+            float nx = Mathf.Abs(x + 0.5f - cx) / (texW * 0.5f);
+            if (nx > 1f) continue;
+            float dy = (texH * 0.5f) * (1f - nx);
+            for (int y = 0; y < texH; y++)
+            {
+                float fy = y + 0.5f;
+                if (fy >= cy - dy && fy <= cy + dy) px[y * texW + x] = fill;
+            }
+        }
+
+        Outline(px, texW, texH, 0.4f);
+        var tex = MakeTexture(px, texW, texH);
+        return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), ppu);
+    }
+
+    /// <summary>
+    /// Filled wedge pointing along +X, pivot at its apex. Used to show the swipe arc
+    /// while tuning range and width. Squash it vertically to lay it on the ground.
+    /// </summary>
+    public static Sprite Wedge(int radiusPx, float arcDegrees, Color fill, float ppu)
+    {
+        int size = radiusPx * 2;
+        var px = new Color[size * size];
+        float c = size * 0.5f;
+        float half = arcDegrees * 0.5f * Mathf.Deg2Rad;
+
+        for (int x = 0; x < size; x++)
+            for (int y = 0; y < size; y++)
+            {
+                float dx = x + 0.5f - c, dy = y + 0.5f - c;
+                float d = Mathf.Sqrt(dx * dx + dy * dy);
+                if (d > radiusPx || d < radiusPx * 0.18f) continue;
+                if (Mathf.Abs(Mathf.Atan2(dy, dx)) > half) continue;
+
+                var col = fill;
+                col.a = fill.a * (1f - d / radiusPx) * 1.6f;   // brightest near the kaiju
+                px[y * size + x] = col;
+            }
+
+        var tex = MakeTexture(px, size, size);
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), ppu);
+    }
+
+    /// <summary>
+    /// Flat rectangle. pivotX 0 anchors it to its left edge, so scaling X makes a
+    /// meter fill from the left instead of from the middle.
+    /// </summary>
+    public static Sprite Solid(int w, int h, Color fill, float ppu, float pivotX = 0.5f)
+    {
+        var px = new Color[w * h];
+        for (int i = 0; i < px.Length; i++) px[i] = fill;
+        var tex = MakeTexture(px, w, h);
+        return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(pivotX, 0.5f), ppu);
+    }
+
     /// <summary>Soft elliptical contact shadow, drawn by the engine rather than baked into art.</summary>
     public static Sprite Shadow(int w, float ppu)
     {

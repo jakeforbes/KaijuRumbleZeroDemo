@@ -12,6 +12,7 @@ public class DebugHud : MonoBehaviour
     public PlayerController player;
 
     GUIStyle style;
+    GUIStyle meterStyle;
     float fps;
 
     void Update()
@@ -81,6 +82,7 @@ public class DebugHud : MonoBehaviour
 
     void OnGUI()
     {
+        DrawFoodMeter();
         if (!tuning.showDebugHud) return;
 
         style ??= new GUIStyle(GUI.skin.label)
@@ -95,6 +97,7 @@ public class DebugHud : MonoBehaviour
             $"<b>KRZ — Stage 1</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
             $"pos  {player.transform.position.x:0.0}, {player.transform.position.y:0.0}\n" +
             $"speed  {player.Velocity.magnitude:0.00}   facing  {player.FacingName}\n" +
+            $"food  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.FoodTotal : 0f):0} total\n" +
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> colliders   <b>F10</b> restart   <b>[ ]</b> timescale   <b>\\</b> reset";
 
@@ -105,5 +108,37 @@ public class DebugHud : MonoBehaviour
         GUI.DrawTexture(rect, Texture2D.whiteTexture);
         GUI.color = Color.white;
         GUI.Label(rect, text, style);
+    }
+
+    /// <summary>
+    /// Real HUD, not debug output: growth needs visible progress between bites or
+    /// most of a run reads as nothing happening. Stays on when the debug HUD is off.
+    /// </summary>
+    void DrawFoodMeter()
+    {
+        var progress = PlayerProgress.Instance;
+        if (progress == null) return;
+
+        meterStyle ??= new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 13,
+            alignment = TextAnchor.MiddleCenter,
+            richText = true
+        };
+
+        const float w = 420f, h = 20f;
+        float x = (Screen.width - w) * 0.5f;
+        float y = Screen.height - h - 28f;
+        var bar = new Rect(x, y, w, h);
+
+        GUI.color = new Color(0f, 0f, 0f, 0.60f);
+        GUI.DrawTexture(bar, Texture2D.whiteTexture);
+
+        GUI.color = new Color(1f, 0.66f, 0.24f, 0.92f);
+        GUI.DrawTexture(new Rect(x + 2f, y + 2f, (w - 4f) * progress.TierProgress, h - 4f),
+                        Texture2D.whiteTexture);
+
+        GUI.color = Color.white;
+        GUI.Label(bar, $"<b>FOOD</b>   {progress.FoodThisTier:0} / {progress.FoodForNextTier:0}", meterStyle);
     }
 }
