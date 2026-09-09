@@ -32,6 +32,9 @@ public class UpgradeType
              "X...X...X into XX...XX...XX rather than making X bigger.")]
     public int extraHitsPerStack;
 
+    [Tooltip("Degrees added to the swipe cone per stack, capped by swipeArcMax.")]
+    public float arcPerStack;
+
     public int maxStacks = 5;
 
     [Tooltip("Relative chance of being the one that drops.")]

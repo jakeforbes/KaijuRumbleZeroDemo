@@ -32,13 +32,23 @@ public class PlayerUpgrades : MonoBehaviour
     public float SwipeCooldownMul => Mul(UpgradeId.Brawler);
     public float SwipeRangeMul => Mul(UpgradeId.Claws);
 
-    /// <summary>Extra swipes per activation. One Claws makes each attack a double tap.</summary>
+    /// <summary>Extra swipes per activation. One Brawler makes each attack a double tap.</summary>
     public int SwipeExtraHits
     {
         get
         {
+            var type = Find(UpgradeId.Brawler);
+            return type == null ? 0 : Count(UpgradeId.Brawler) * type.extraHitsPerStack;
+        }
+    }
+
+    /// <summary>Degrees Claws adds to the swipe cone. Capped by the caller.</summary>
+    public float SwipeArcBonus
+    {
+        get
+        {
             var type = Find(UpgradeId.Claws);
-            return type == null ? 0 : Count(UpgradeId.Claws) * type.extraHitsPerStack;
+            return type == null ? 0f : Count(UpgradeId.Claws) * type.arcPerStack;
         }
     }
     public float MoveSpeedMul => Mul(UpgradeId.Fleet);

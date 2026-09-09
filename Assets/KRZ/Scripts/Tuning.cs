@@ -155,6 +155,10 @@ public class Tuning : ScriptableObject
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
 
+    [Tooltip("Ceiling on the cone once Claws has widened it. 180 is a half circle — " +
+             "everything in front of the kaiju.")]
+    [Range(30f, 360f)] public float swipeArcMax = 180f;
+
     [Tooltip("Gap between the hits of a multi-hit swipe. Short enough to read as one " +
              "flurry, long enough that each hit is visible.")]
     public float swipeBurstInterval = 0.13f;
@@ -199,13 +203,18 @@ public class Tuning : ScriptableObject
     [Header("Upgrades")]
     public UpgradeType[] upgrades =
     {
+        // Brawler changes the rhythm: one extra strike per activation, per stack.
+        // perStack stays 1.0 so it does not also shorten the cooldown — stacking a
+        // rate cut with extra hits multiplies DPS far faster than either alone.
         new UpgradeType { id = UpgradeId.Brawler, displayName = "Brawler",
-                          effect = "Swipe fires 15% faster", perStack = 0.85f, maxStacks = 5,
+                          effect = "One extra strike per attack",
+                          perStack = 1f, extraHitsPerStack = 1, maxStacks = 4,
                           weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
 
+        // Claws changes the shape: longer and wider, up to a 180 degree half circle.
         new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
-                          effect = "One extra swipe per attack, slightly longer reach",
-                          perStack = 1.12f, extraHitsPerStack = 1, maxStacks = 4,
+                          effect = "Swipe reaches 25% further and 12 degrees wider",
+                          perStack = 1.25f, arcPerStack = 12.5f, maxStacks = 4,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
         new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",

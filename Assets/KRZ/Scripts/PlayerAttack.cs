@@ -63,8 +63,12 @@ public class PlayerAttack : MonoBehaviour
         Vector2 origin = transform.position;
         Vector2 aim = player.AimDir;
 
-        SwipeFx.Show(tuning, transform.position, aim, range, tuning.pixelsPerUnit);
-        float cosHalfArc = Mathf.Cos(tuning.swipeArc * 0.5f * Mathf.Deg2Rad);
+        // Claws widens the cone as well as lengthening it, up to the cap.
+        float arc = Mathf.Min(tuning.swipeArcMax,
+                              tuning.swipeArc + (upgrades != null ? upgrades.SwipeArcBonus : 0f));
+
+        SwipeFx.Show(tuning, transform.position, aim, range, arc, tuning.pixelsPerUnit);
+        float cosHalfArc = Mathf.Cos(arc * 0.5f * Mathf.Deg2Rad);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
         bool connected = false;
