@@ -6,6 +6,7 @@ using UnityEngine;
 /// a couple of seconds, one above is a real fight, two above is a wall you come back
 /// to. Three visual states — pristine, damaged, rubble — with rubble walkable.
 /// </summary>
+[SoundActions(Sfx.BuildingHit, Sfx.BuildingDestroyed)]
 public class Building : Damageable
 {
     /// <summary>Above the ground tiles at -100, below everything that sorts by Y at 0.</summary>
@@ -31,6 +32,7 @@ public class Building : Damageable
     public void Init(Tuning t, BuildingType buildingType, int tx, int ty, int heightPx, float pixelsPerUnit)
     {
         tuning = t;
+        SoundPlayer.Attach(gameObject, t.buildingSounds);
         type = buildingType;
         tilesX = tx;
         tilesY = ty;
@@ -65,7 +67,7 @@ public class Building : Damageable
         if (!IsAlive) return;
 
         hp -= amount * DeltaMultiplier();
-        AudioEvents.Play(Sfx.BuildingHit, transform.position);
+        AudioEvents.Play(Sfx.BuildingHit, transform.position, owner: gameObject);
 
         if (hp <= 0f) { Collapse(); return; }
 
@@ -103,7 +105,7 @@ public class Building : Damageable
     void Collapse()
     {
         hp = 0f;
-        AudioEvents.Play(Sfx.BuildingDestroyed, transform.position);
+        AudioEvents.Play(Sfx.BuildingDestroyed, transform.position, owner: gameObject);
 
         if (bar != null) Destroy(bar.gameObject);
 

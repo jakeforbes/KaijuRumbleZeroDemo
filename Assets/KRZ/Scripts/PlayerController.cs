@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 /// traces the ellipse a 2:1 isometric projection expects, instead of reading flat.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
+[SoundActions(Sfx.Footstep)]
 public class PlayerController : MonoBehaviour
 {
     public Tuning tuning;

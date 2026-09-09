@@ -26,7 +26,14 @@ public enum Sfx
     EnemyDeath,
     BossArrive,
     Win,
-    Lose
+    Lose,
+    EnemyAttack,
+    EnemyHit,
+    EnemyBlocked,
+    EnemyPushed,
+    SwipeHitEnemy,
+    SwipeHitBuilding,
+    Collect
 }
 
 public static class AudioEvents
@@ -34,24 +41,19 @@ public static class AudioEvents
     public static bool logEvents = false;
 
     static readonly System.Collections.Generic.Dictionary<Sfx, AudioClip> clips = new();
-    static AudioSource source;
 
     public static void Register(Sfx id, AudioClip clip) => clips[id] = clip;
 
-    public static void Play(Sfx id, Vector3 at = default, float volume = 1f)
+    /// <returns>True when configured, including intentional mute/cooldown; false when unassigned.</returns>
+    public static bool Play(Sfx id, Vector3 at = default, float volume = 1f, GameObject owner = null)
     {
         if (logEvents) Debug.Log($"[sfx] {id}");
 
-        if (!clips.TryGetValue(id, out var clip) || clip == null) return;
+        if (owner != null && owner.TryGetComponent<SoundPlayer>(out var player) && player.TryPlay(id, volume)) return true;
 
-        if (source == null)
-        {
-            var go = new GameObject("~AudioEvents");
-            Object.DontDestroyOnLoad(go);
-            source = go.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-        }
+        if (!clips.TryGetValue(id, out var clip) || clip == null) return false;
 
-        source.PlayOneShot(clip, volume);
+        RuntimeSoundPlayer.Ensure().Play(null, new SoundPlayer.PlaybackSettings(), clip, at, volume, id);
+        return true;
     }
 }

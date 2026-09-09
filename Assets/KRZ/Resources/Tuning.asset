@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e596a4b7e6372b44897630d6deec6d5, type: 3}
   m_Name: Tuning
   m_EditorClassIdentifier: Assembly-CSharp::Tuning
+  playerSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4201, type: 3}
+  enemySounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4202, type: 3}
+  buildingSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4203, type: 3}
+  foodSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4204, type: 3}
   moveSpeed: 7
   acceleration: 70
   deceleration: 90

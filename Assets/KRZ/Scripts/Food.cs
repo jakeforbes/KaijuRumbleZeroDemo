@@ -5,6 +5,7 @@ using UnityEngine;
 /// bobs, then flies to the player once they are inside the pickup radius.
 /// No prefabs — everything is built in code so nothing needs wiring.
 /// </summary>
+[SoundActions(Sfx.FoodPickup)]
 public class Food : MonoBehaviour
 {
     static Sprite spriteSmall, spriteMedium, spriteLarge;
@@ -57,6 +58,7 @@ public class Food : MonoBehaviour
 
         var f = go.AddComponent<Food>();
         f.tuning = tuning;
+        SoundPlayer.Attach(go, tuning.foodSounds);
         f.value = tier == 2 ? tuning.foodValueLarge
                 : tier == 1 ? tuning.foodValueMedium
                             : tuning.foodValueSmall;
@@ -117,7 +119,10 @@ public class Food : MonoBehaviour
         if (toPlayer.sqrMagnitude < 0.09f)
         {
             progress.AddFood(value);
-            AudioEvents.Play(Sfx.FoodPickup, transform.position, 0.5f);
+            // Player-owned settings follow the collector's size, including at max tier.
+            // Keep older pickup setups working until a Collect sound is assigned.
+            if (!AudioEvents.Play(Sfx.Collect, progress.transform.position, owner: progress.gameObject))
+                AudioEvents.Play(Sfx.FoodPickup, transform.position, 0.5f, owner: gameObject);
             Destroy(gameObject);
         }
     }

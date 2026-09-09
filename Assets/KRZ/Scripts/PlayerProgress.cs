@@ -8,6 +8,7 @@ using UnityEngine;
 /// nothing happening; a curve with punctuation reads as constant progress. The
 /// tier-up still lands as a moment: a jump in size, a full heal, a shake.
 /// </summary>
+[SoundActions(Sfx.PlayerHit, Sfx.GrowTier, Sfx.Shrink, Sfx.Lose, Sfx.Collect)]
 public class PlayerProgress : MonoBehaviour
 {
     public static PlayerProgress Instance { get; private set; }
@@ -94,7 +95,7 @@ public class PlayerProgress : MonoBehaviour
         Hp -= amount;
         flashUntil = Time.time + 0.1f;
         invulnerableUntil = Time.time + tuning.hitInvulnerability;
-        AudioEvents.Play(Sfx.PlayerHit, transform.position);
+        AudioEvents.Play(Sfx.PlayerHit, transform.position, owner: gameObject);
         Shake(tuning.hitShake);
 
         if (Hp <= 0f) Die();
@@ -106,7 +107,7 @@ public class PlayerProgress : MonoBehaviour
         {
             IsDead = true;
             Hp = 0f;
-            AudioEvents.Play(Sfx.Lose, transform.position);
+            AudioEvents.Play(Sfx.Lose, transform.position, owner: gameObject);
             Shake(tuning.tierUpShake * 1.5f);
             return;
         }
@@ -164,7 +165,7 @@ public class PlayerProgress : MonoBehaviour
 
         Tier++;
         Hp = MaxHp;                     // reaching a size heals you into it
-        AudioEvents.Play(Sfx.GrowTier, transform.position);
+        AudioEvents.Play(Sfx.GrowTier, transform.position, owner: gameObject);
         Shake(tuning.tierUpShake);
     }
 
@@ -176,7 +177,7 @@ public class PlayerProgress : MonoBehaviour
         Tier--;
         FoodThisTier = 0f;
         Hp = MaxHp;
-        AudioEvents.Play(Sfx.Shrink, transform.position);
+        AudioEvents.Play(Sfx.Shrink, transform.position, owner: gameObject);
         Shake(tuning.tierUpShake);
     }
 

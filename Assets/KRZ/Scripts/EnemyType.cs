@@ -8,6 +8,8 @@ using UnityEngine;
 [System.Serializable]
 public class EnemyType
 {
+    public SoundPlayer sounds;
+
     public string name = "Grunt";
 
     [Tooltip("Squishable once the kaiju's size is above this. 0 is size 1.")]

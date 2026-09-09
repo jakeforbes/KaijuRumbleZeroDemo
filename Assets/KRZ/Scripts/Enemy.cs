@@ -5,6 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -64,7 +65,8 @@ public class Enemy : Damageable
         e.sr = bsr;
         e.baseColour = type.colour;
 
-        AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f);
+        SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
+        AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
         return e;
     }
 
@@ -98,6 +100,7 @@ public class Enemy : Damageable
             if (Time.time >= nextAttackAt)
             {
                 nextAttackAt = Time.time + type.attackCooldown;
+                AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
                 progress.TakeDamage(type.contactDamage);
             }
         }
@@ -112,9 +115,10 @@ public class Enemy : Damageable
 
         // Armour is flat subtraction, so chip damage genuinely bounces off heavies.
         float dealt = Mathf.Max(0f, amount - type.armour);
-        if (dealt <= 0f) { flashUntil = Time.time + 0.06f; return; }
+        if (dealt <= 0f) { flashUntil = Time.time + 0.06f; AudioEvents.Play(Sfx.EnemyBlocked, transform.position, owner: gameObject); return; }
 
         hp -= dealt;
+        AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
 
         if (hp <= 0f) Die(Sfx.EnemyDeath);
@@ -122,14 +126,14 @@ public class Enemy : Damageable
 
     void Squish()
     {
-        AudioEvents.Play(Sfx.Squish, transform.position, 0.7f);
+        AudioEvents.Play(Sfx.Squish, transform.position, 0.7f, owner: gameObject);
         Die(Sfx.Squish);
     }
 
     void Die(Sfx sound)
     {
         hp = 0f;
-        if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f);
+        if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f, owner: gameObject);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);
         Destroy(gameObject);
     }
@@ -140,6 +144,7 @@ public class Enemy : Damageable
         Vector2 away = (Vector2)transform.position - fromPoint;
         if (away.sqrMagnitude < 0.001f) away = Random.insideUnitCircle;
         body.linearVelocity = away.normalized * force;
+        AudioEvents.Play(Sfx.EnemyPushed, transform.position, owner: gameObject);
     }
 
     public static void KillAll()

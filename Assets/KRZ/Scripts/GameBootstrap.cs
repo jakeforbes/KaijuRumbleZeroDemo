@@ -56,6 +56,7 @@ public class GameBootstrap : MonoBehaviour
         Enemy.Reset();
         ClearScene();
         var cam = BuildCamera();
+        RuntimeSoundPlayer.Ensure();
 
         // Created before the city so buildings can register as they are made.
         fade = gameObject.AddComponent<OccluderFade>();
@@ -85,6 +86,7 @@ public class GameBootstrap : MonoBehaviour
     {
         var go = new GameObject("Camera");
         var cam = go.AddComponent<Camera>();
+        go.AddComponent<AudioListener>();
         cam.orthographic = true;
         cam.orthographicSize = tuning.baseOrthoSize;
         cam.clearFlags = CameraClearFlags.SolidColor;
@@ -218,6 +220,7 @@ public class GameBootstrap : MonoBehaviour
 
         var attack = go.AddComponent<PlayerAttack>();
         attack.tuning = tuning;
+        SoundPlayer.Attach(go, tuning.playerSounds);
 
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;

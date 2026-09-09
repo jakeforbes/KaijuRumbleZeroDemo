@@ -5,6 +5,7 @@ using UnityEngine;
 /// Swipe — the auto attack. Fires on a cooldown with no input, Vampire Survivors
 /// style, hitting everything in an arc in front of the kaiju.
 /// </summary>
+[SoundActions(Sfx.Swipe, Sfx.SwipeHitEnemy, Sfx.SwipeHitBuilding)]
 public class PlayerAttack : MonoBehaviour
 {
     public Tuning tuning;
@@ -39,7 +40,7 @@ public class PlayerAttack : MonoBehaviour
     void Swipe()
     {
         LastSwipeAt = Time.time;
-        AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f);
+        AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f, owner: gameObject);
 
         float range = tuning.swipeRange * player.Scale;
         Vector2 origin = transform.position;
@@ -49,7 +50,9 @@ public class PlayerAttack : MonoBehaviour
         float cosHalfArc = Mathf.Cos(tuning.swipeArc * 0.5f * Mathf.Deg2Rad);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
-        bool connected = false;
+        bool hitEnemy = false;
+        bool hitBuilding = false;
+        bool hitOther = false;
 
         for (int i = 0; i < count; i++)
         {
@@ -67,9 +70,15 @@ public class PlayerAttack : MonoBehaviour
 
             float mul = PlayerProgress.Instance != null ? PlayerProgress.Instance.DamageMultiplier : 1f;
             target.TakeDamage(tuning.swipeDamage * mul, origin);
-            connected = true;
+            if (target is Enemy) hitEnemy = true;
+            else if (target is Building) hitBuilding = true;
+            else hitOther = true;
         }
 
-        if (connected) AudioEvents.Play(Sfx.SwipeHit, transform.position, 0.6f);
+        // Once per target kind per swipe, even when several targets are hit.
+        // A mixed swipe plays both impact sounds, using the player's size settings.
+        if (hitEnemy) AudioEvents.Play(Sfx.SwipeHitEnemy, transform.position, 0.6f, owner: gameObject);
+        if (hitBuilding) AudioEvents.Play(Sfx.SwipeHitBuilding, transform.position, 0.6f, owner: gameObject);
+        if (hitOther) AudioEvents.Play(Sfx.SwipeHit, transform.position, 0.6f, owner: gameObject);
     }
 }

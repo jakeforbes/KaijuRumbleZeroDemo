@@ -8,6 +8,12 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "KRZ/Tuning", fileName = "Tuning")]
 public class Tuning : ScriptableObject
 {
+    [Header("Sound templates (Sound Player prefabs)")]
+    public SoundPlayer playerSounds;
+    public SoundPlayer enemySounds;
+    public SoundPlayer buildingSounds;
+    public SoundPlayer foodSounds;
+
     [Header("Movement")]
     public float moveSpeed = 7f;
     public float acceleration = 70f;
