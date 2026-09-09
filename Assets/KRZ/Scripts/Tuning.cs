@@ -92,7 +92,7 @@ public class Tuning : ScriptableObject
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
-                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f, volley = true,
                         bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
@@ -138,6 +138,9 @@ public class Tuning : ScriptableObject
     [Tooltip("Extra sizes needed per enemy class. 2 means every other size unlocks the " +
              "next class up: smalls at size 3, mediums at size 5, larges never.")]
     [Range(1, 4)] public int squishTiersPerClass = 2;
+
+    [Tooltip("How close a missile must get to the kaiju to hit, scaled by size.")]
+    public float missileHitRadius = 0.9f;
 
     public float hitShake = 0.18f;
 

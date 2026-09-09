@@ -55,6 +55,7 @@ public class GameBootstrap : MonoBehaviour
         Food.Reset();
         Enemy.Reset();
         HitFx.Reset();
+        Missile.Reset();
         UpgradePickup.Reset();
         Popups.Clear();
         ClearScene();
