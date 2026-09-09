@@ -285,6 +285,13 @@ public class GameBootstrap : MonoBehaviour
         var bsr = bodyGo.AddComponent<SpriteRenderer>();
         bsr.sprite = GreyboxArt.Capsule(96, 128, new Color(0.55f, 0.85f, 0.45f), ppu);
 
+        // Real art takes over if the package is present; greybox stays otherwise, so
+        // the build never depends on the art having been delivered.
+        var uries = go.AddComponent<UriesArt>();
+        uries.target = bsr;
+        uries.player = pc;
+        if (UriesArt.Available) bodyGo.transform.localScale = Vector3.one * UriesArt.CanvasScale;
+
         fade.playerArt = bsr;
         progress.bodyArt = bsr;
         pc.BindArt(art);

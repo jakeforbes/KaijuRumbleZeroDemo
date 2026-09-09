@@ -74,6 +74,7 @@ public class PlayerSpecial : MonoBehaviour
         Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
 
         AudioEvents.Play(Sfx.Blast, origin);
+        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Blast);
         // Fired from roughly mouth height. The offset is visual only: hit detection
         // stays on the ground plane, because that is where every footprint lives and
         // a raised hit band would damage things the beam is not drawn over.

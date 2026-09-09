@@ -56,6 +56,7 @@ public class PlayerAttack : MonoBehaviour
     {
         LastSwipeAt = Time.time;
         AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f);
+        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
 
         var upgrades = PlayerUpgrades.Instance;
         float range = tuning.swipeRange * player.Scale *
