@@ -14,48 +14,97 @@ public static class GreyboxArt
     public const float FootPadding = 0.12f;
 
     /// <summary>
-    /// An isometric box: diamond top face plus two shaded side faces.
-    /// Pivot sits at the centre of the base diamond, so it sorts and collides correctly.
+    /// The four ground corners of a w x h tile footprint, in pixels, relative to the
+    /// footprint's centre. Both the sprite and the collider are built from this, so
+    /// they cannot drift apart — art and collision disagreeing is what let the player
+    /// walk onto building bases the first time round.
+    /// Order is south, east, north, west; index 1 is always the lowest on screen.
     /// </summary>
-    public static Sprite IsoBox(int tiles, int heightPx, Color top, float ppu)
+    public static Vector2[] FootprintCornersPx(int tilesX, int tilesY)
     {
-        int dW = TileW * tiles;
-        int dH = TileH * tiles;
-        int texW = dW;
-        int texH = dH + heightPx;
+        // The two ground axes as they appear on screen in a 2:1 projection.
+        var a = new Vector2(TileW * 0.5f, -TileH * 0.5f);
+        var b = new Vector2(TileW * 0.5f, TileH * 0.5f);
+        Vector2 half = (a * tilesX + b * tilesY) * 0.5f;
+
+        return new[] { -half, a * tilesX - half, half, b * tilesY - half };
+    }
+
+    /// <summary>
+    /// An isometric box on a w x h tile footprint: the ground face raised by heightPx,
+    /// plus the two side faces facing the camera. Pivot sits at the footprint centre.
+    /// </summary>
+    public static Sprite IsoBox(int tilesX, int tilesY, int heightPx, Color top, float ppu)
+    {
+        var corners = FootprintCornersPx(tilesX, tilesY);
+
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minY = float.MaxValue, maxY = float.MinValue;
+        foreach (var c in corners)
+        {
+            minX = Mathf.Min(minX, c.x); maxX = Mathf.Max(maxX, c.x);
+            minY = Mathf.Min(minY, c.y); maxY = Mathf.Max(maxY, c.y);
+        }
+
+        int texW = Mathf.CeilToInt(maxX - minX);
+        int texH = Mathf.CeilToInt(maxY - minY) + heightPx;
+        float offX = -minX, offY = -minY;
 
         Color left = top * 0.62f;
         Color right = top * 0.42f;
         left.a = right.a = 1f;
 
-        var px = new Color[texW * texH];
-        float cx = dW * 0.5f;
-        float cyBase = dH * 0.5f;
-        float cyTop = cyBase + heightPx;
+        var lo = new float[texW];
+        var hi = new float[texW];
+        ColumnSpans(corners, texW, offX, offY, lo, hi);
 
+        // Everything left of the nearest corner is the left face, everything right of
+        // it the right face — that corner is where the two visible walls meet.
+        float splitX = corners[1].x + offX;
+
+        var px = new Color[texW * texH];
         for (int x = 0; x < texW; x++)
         {
-            float nx = Mathf.Abs(x + 0.5f - cx) / (dW * 0.5f);
-            if (nx > 1f) continue;
-
-            float dy = (dH * 0.5f) * (1f - nx);
-            float topLo = cyTop - dy;
-            float topHi = cyTop + dy;
-            float sideLo = cyBase - dy;
-            bool isLeft = x + 0.5f < cx;
+            if (hi[x] < lo[x]) continue;
+            float topLo = lo[x] + heightPx;
+            float topHi = hi[x] + heightPx;
+            bool isLeft = x + 0.5f < splitX;
 
             for (int y = 0; y < texH; y++)
             {
                 float fy = y + 0.5f;
                 if (fy >= topLo && fy <= topHi) px[y * texW + x] = top;
-                else if (fy >= sideLo && fy < topLo) px[y * texW + x] = isLeft ? left : right;
+                else if (fy >= lo[x] && fy < topLo) px[y * texW + x] = isLeft ? left : right;
             }
         }
 
         Outline(px, texW, texH, 0.45f);
         var tex = MakeTexture(px, texW, texH);
         return Sprite.Create(tex, new Rect(0, 0, texW, texH),
-                             new Vector2(0.5f, cyBase / texH), ppu);
+                             new Vector2(offX / texW, offY / texH), ppu);
+    }
+
+    /// <summary>Per-column vertical extent of a convex polygon, used to fill the ground face.</summary>
+    static void ColumnSpans(Vector2[] poly, int texW, float offX, float offY, float[] lo, float[] hi)
+    {
+        for (int x = 0; x < texW; x++) { lo[x] = float.MaxValue; hi[x] = float.MinValue; }
+
+        for (int i = 0; i < poly.Length; i++)
+        {
+            Vector2 a = poly[i] + new Vector2(offX, offY);
+            Vector2 b = poly[(i + 1) % poly.Length] + new Vector2(offX, offY);
+            if (Mathf.Approximately(a.x, b.x)) continue;
+            if (a.x > b.x) (a, b) = (b, a);
+
+            int x0 = Mathf.Max(0, Mathf.CeilToInt(a.x - 0.5f));
+            int x1 = Mathf.Min(texW - 1, Mathf.FloorToInt(b.x - 0.5f));
+            for (int x = x0; x <= x1; x++)
+            {
+                float y = Mathf.Lerp(a.y, b.y, (x + 0.5f - a.x) / (b.x - a.x));
+                if (y < lo[x]) lo[x] = y;
+                if (y > hi[x]) hi[x] = y;
+            }
+        }
     }
 
     /// <summary>

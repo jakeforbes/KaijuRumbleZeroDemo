@@ -22,11 +22,14 @@ public class Food : MonoBehaviour
     float spawnedAt;
     float magnetSpeed;
 
-    public static void Scatter(Tuning tuning, Vector3 at, int count, bool richer, float ppu)
+    public static void Scatter(Tuning tuning, Vector3 at, int count, float scatter, float ppu)
     {
         EnsureSprites(ppu);
         // Unity's == catches a destroyed transform after a restart; ??= would not.
         if (root == null) root = new GameObject("Food").transform;
+
+        // Bigger buildings throw further and pay better, so the mix richens with spread.
+        bool richer = scatter >= 4.5f;
 
         for (int i = 0; i < count; i++)
         {
@@ -35,7 +38,7 @@ public class Food : MonoBehaviour
                 ? (roll < 45 ? 0 : roll < 85 ? 1 : 2)
                 : (roll < 70 ? 0 : roll < 97 ? 1 : 2);
 
-            Spawn(tuning, at, tier, richer ? tuning.foodScatterLarge : tuning.foodScatter);
+            Spawn(tuning, at, tier, scatter);
         }
     }
 

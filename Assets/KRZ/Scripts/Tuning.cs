@@ -95,21 +95,43 @@ public class Tuning : ScriptableObject
     public bool showSwipeArc = true;
 
     [Header("Buildings")]
-    public float buildingHpSmall = 40f;
+    [Tooltip("Five classes, one per kaiju size. HP is set so a matching size needs " +
+             "about three swipes; the delta table below does the rest.")]
+    public BuildingType[] buildingTypes =
+    {
+        new BuildingType { name = "Shack",    sizeClass = 0, tilesX = 1, tilesY = 1,
+                           minHeightPx = 120, maxHeightPx = 180, hp = 30f,
+                           foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
+                           colour = new Color(0.26f, 0.29f, 0.38f) },
 
-    [Tooltip("Deliberately out of reach at size 1. Towers act as a soft gate that " +
-             "opens as the kaiju grows, so the arena visibly unlocks over a run.")]
-    public float buildingHpLarge = 450f;
+        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 2, tilesY = 1,
+                           minHeightPx = 150, maxHeightPx = 230, hp = 38f,
+                           foodDrops = 9,  foodScatter = 3.2f, weight = 25f,
+                           colour = new Color(0.22f, 0.31f, 0.39f) },
 
-    [Tooltip("Bonus damage against large buildings only, indexed by size. This is what " +
-             "makes being giant feel giant against towers, without inflating the baseline " +
-             "curve against everything else. Small buildings keep their friction.")]
-    public float[] largeBuildingDamageBySize = { 1f, 2f, 3f, 4f, 5f };
+        new BuildingType { name = "Wide Low", sizeClass = 2, tilesX = 2, tilesY = 2,
+                           minHeightPx = 190, maxHeightPx = 260, hp = 47f,
+                           foodDrops = 14, foodScatter = 4.2f, weight = 20f,
+                           colour = new Color(0.29f, 0.27f, 0.37f) },
+
+        new BuildingType { name = "Block",    sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 380, maxHeightPx = 520, hp = 59f,
+                           foodDrops = 22, foodScatter = 5.2f, weight = 15f,
+                           colour = new Color(0.31f, 0.30f, 0.35f) },
+
+        new BuildingType { name = "Tower",    sizeClass = 4, tilesX = 1, tilesY = 3,
+                           minHeightPx = 620, maxHeightPx = 820, hp = 73f,
+                           foodDrops = 34, foodScatter = 7f,  weight = 10f,
+                           colour = new Color(0.25f, 0.26f, 0.42f) },
+    };
+
+    [Tooltip("Damage multiplier by (your size - the building's class), from -4 to +4. " +
+             "The middle entry is your own class and is always 1. Left of it is the wall: " +
+             "each step up in class roughly triples the work. Right of it is the payoff.")]
+    public float[] damageVsBuildingByDelta = { 0.025f, 0.05f, 0.125f, 0.33f, 1f, 2f, 3f, 4f, 5f };
 
     [Tooltip("Progress bar over buildings you have damaged. Intact ones show nothing.")]
     public bool showBuildingHealthBars = true;
-    public int foodDropsSmall = 9;
-    public int foodDropsLarge = 34;
 
     [Header("Food")]
     public float foodValueSmall = 1f;
@@ -130,13 +152,6 @@ public class Tuning : ScriptableObject
     [Tooltip("How quickly a piece takes up the speed the field is asking for. " +
              "Only bites near the body, where the field asks for a lot at once.")]
     public float foodMagnetAccel = 30f;
-
-    [Tooltip("How far food is thrown by a small building, in world units.")]
-    public float foodScatter = 3.4f;
-
-    [Tooltip("How far food is thrown by a large building. Wide enough that clearing a " +
-             "tower means walking the debris field.")]
-    public float foodScatterLarge = 7f;
 
     [Tooltip("Seconds food spends arcing out before it settles.")]
     [Range(0.15f, 2f)] public float foodHopTime = 0.7f;

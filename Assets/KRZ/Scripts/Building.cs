@@ -1,9 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// A smashable building. Three visual states, matching the art spec: pristine,
-/// damaged, then rubble. Rubble keeps its sprite but drops its collider so it
-/// becomes walkable ground.
+/// A smashable building. Difficulty is relative, not absolute: how long it takes
+/// depends on the gap between your size and the building's class. Your own class is
+/// a couple of seconds, one above is a real fight, two above is a wall you come back
+/// to. Three visual states — pristine, damaged, rubble — with rubble walkable.
 /// </summary>
 public class Building : Damageable
 {
@@ -11,12 +12,9 @@ public class Building : Damageable
 
     public override bool IsAlive => hp > 0f;
 
-    /// <summary>Two-tile footprints are the towers the size bonus applies to.</summary>
-    public bool IsLarge => tiles >= 2;
-
-    int tiles;
+    BuildingType type;
+    int tilesX, tilesY;
     int fullHeightPx;
-    Color baseColour;
     float ppu;
 
     float hp;
@@ -27,43 +25,58 @@ public class Building : Damageable
     PolygonCollider2D footprint;
     HealthBar bar;
 
-    public void Init(Tuning t, int tileCount, int heightPx, Color colour, float pixelsPerUnit)
+    public void Init(Tuning t, BuildingType buildingType, int tx, int ty, int heightPx, float pixelsPerUnit)
     {
         tuning = t;
-        tiles = tileCount;
+        type = buildingType;
+        tilesX = tx;
+        tilesY = ty;
         fullHeightPx = heightPx;
-        baseColour = colour;
         ppu = pixelsPerUnit;
 
         sr = GetComponent<SpriteRenderer>();
         footprint = GetComponent<PolygonCollider2D>();
 
-        maxHp = tiles >= 2 ? tuning.buildingHpLarge : tuning.buildingHpSmall;
+        maxHp = type.hp;
         hp = maxHp;
+    }
+
+    /// <summary>
+    /// Multiplier from the size gap. Positive gap is the payoff for having grown,
+    /// negative is the wall — and the wall is what makes growing worth doing.
+    /// </summary>
+    float DeltaMultiplier()
+    {
+        var table = tuning.damageVsBuildingByDelta;
+        if (table == null || table.Length == 0) return 1f;
+
+        int tier = PlayerProgress.Instance != null ? PlayerProgress.Instance.Tier : 0;
+        int delta = tier - type.sizeClass;
+
+        int centre = table.Length / 2;
+        return table[Mathf.Clamp(centre + delta, 0, table.Length - 1)];
     }
 
     public override void TakeDamage(float amount, Vector2 from)
     {
         if (!IsAlive) return;
 
-        // Large buildings take a size-scaled bonus. Applied here rather than in the
-        // attack so the baseline damage curve stays honest against everything else.
-        if (IsLarge)
-        {
-            var progress = PlayerProgress.Instance;
-            int tier = progress != null ? progress.Tier : 0;
-            var table = tuning.largeBuildingDamageBySize;
-            if (table != null && table.Length > 0)
-                amount *= table[Mathf.Clamp(tier, 0, table.Length - 1)];
-        }
-
-        hp -= amount;
+        hp -= amount * DeltaMultiplier();
         AudioEvents.Play(Sfx.BuildingHit, transform.position);
 
         if (hp <= 0f) { Collapse(); return; }
 
         if (!damagedShown && hp <= maxHp * 0.5f) ShowDamaged();
         ShowBar();
+    }
+
+    void ShowDamaged()
+    {
+        damagedShown = true;
+        // Slumped and drained of colour, so the state reads at a glance in greybox.
+        var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
+        sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY,
+                                      Mathf.RoundToInt(fullHeightPx * 0.72f), faded, ppu);
     }
 
     /// <summary>Created on first damage, not up front — an intact building says nothing.</summary>
@@ -73,7 +86,7 @@ public class Building : Damageable
 
         if (bar == null)
         {
-            float width = GreyboxArt.TileW * tiles / ppu * 0.55f;
+            float width = GreyboxArt.TileW * 0.5f * (tilesX + tilesY) / ppu * 0.5f;
             bar = HealthBar.Attach(transform, width, sr.sprite.bounds.max.y, ppu);
         }
         else
@@ -84,14 +97,6 @@ public class Building : Damageable
         bar.Set(hp / maxHp);
     }
 
-    void ShowDamaged()
-    {
-        damagedShown = true;
-        // Slumped and drained of colour, so the state reads at a glance in greybox.
-        var faded = Color.Lerp(baseColour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
-        sr.sprite = GreyboxArt.IsoBox(tiles, Mathf.RoundToInt(fullHeightPx * 0.72f), faded, ppu);
-    }
-
     void Collapse()
     {
         hp = 0f;
@@ -100,12 +105,12 @@ public class Building : Damageable
         if (bar != null) Destroy(bar.gameObject);
 
         var rubble = new Color(0.20f, 0.20f, 0.23f);
-        sr.sprite = GreyboxArt.IsoBox(tiles, Mathf.RoundToInt(GreyboxArt.TileH * tiles * 0.22f), rubble, ppu);
+        int rubbleHeight = Mathf.RoundToInt(GreyboxArt.TileH * 0.5f * (tilesX + tilesY) * 0.22f);
+        sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, rubbleHeight, rubble, ppu);
 
         // Rubble is walkable, so the footprint goes away entirely.
         if (footprint != null) footprint.enabled = false;
 
-        int drops = tiles >= 2 ? tuning.foodDropsLarge : tuning.foodDropsSmall;
-        Food.Scatter(tuning, transform.position, drops, tiles >= 2, ppu);
+        Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, ppu);
     }
 }

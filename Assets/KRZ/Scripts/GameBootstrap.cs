@@ -134,15 +134,9 @@ public class GameBootstrap : MonoBehaviour
         float ppu = tuning.pixelsPerUnit;
         var rng = new System.Random(tuning.randomSeed);
 
-        var palette = new[]
-        {
-            new Color(0.24f, 0.28f, 0.40f),
-            new Color(0.28f, 0.26f, 0.38f),
-            new Color(0.21f, 0.30f, 0.38f),
-            new Color(0.30f, 0.29f, 0.34f),
-        };
-
         var root = new GameObject("City").transform;
+        float totalWeight = 0f;
+        foreach (var t in tuning.buildingTypes) totalWeight += Mathf.Max(0f, t.weight);
 
         for (int by = 0; by < tuning.blocksY; by++)
             for (int bx = 0; bx < tuning.blocksX; bx++)
@@ -150,43 +144,56 @@ public class GameBootstrap : MonoBehaviour
                 // Leave the centre clear so the player has room to start.
                 if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 && Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
 
-                int tiles = rng.Next(0, 4) == 0 ? 2 : 1;
-                int heightPx = tiles == 2 ? rng.Next(340, 760) : rng.Next(150, 380);
-                var colour = palette[rng.Next(palette.Length)];
+                var type = PickType(tuning.buildingTypes, totalWeight, rng);
+                if (type == null) continue;
+
+                // Flip non-square footprints so the grid does not read as one repeated shape.
+                int tilesX = type.tilesX, tilesY = type.tilesY;
+                if (type.AllowsFlip && rng.Next(0, 2) == 0) (tilesX, tilesY) = (tilesY, tilesX);
+
+                int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
 
                 float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
                 float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
 
-                var go = new GameObject($"Building_{bx}_{by}");
+                var go = new GameObject($"{type.name}_{bx}_{by}");
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(x, y, 0f);
 
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = GreyboxArt.IsoBox(tiles, heightPx, colour, ppu);
+                sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, heightPx, type.colour, ppu);
                 fade.Register(sr);
 
                 var building = go.AddComponent<Building>();
 
-                // Footprint only — never the sprite bounds, so the player can
-                // overlap a tower's upper floors without colliding with them.
-                // It is the drawn base diamond exactly, not a capsule approximating
-                // it: a capsule disagrees with the diamond most at the left and
-                // right vertices, which is precisely where the player creeps in.
-                float hw = GreyboxArt.TileW * tiles / ppu * 0.5f * tuning.buildingFootprint;
-                float hh = GreyboxArt.TileH * tiles / ppu * 0.5f * tuning.buildingFootprint;
+                // Footprint only — never the sprite bounds, so the player can overlap
+                // a tower's upper floors without colliding with them. Built from the
+                // same corner function the sprite uses, so art and collision cannot
+                // drift apart the way they did when this was an approximated capsule.
+                var cornersPx = GreyboxArt.FootprintCornersPx(tilesX, tilesY);
+                var points = new Vector2[cornersPx.Length];
+                for (int i = 0; i < cornersPx.Length; i++)
+                    points[i] = cornersPx[i] / ppu * tuning.buildingFootprint;
 
                 var col = go.AddComponent<PolygonCollider2D>();
-                col.points = new[]
-                {
-                    new Vector2(0f, -hh),
-                    new Vector2(hw, 0f),
-                    new Vector2(0f, hh),
-                    new Vector2(-hw, 0f),
-                };
+                col.points = points;
 
                 // Init last: it caches the collider and sprite renderer.
-                building.Init(tuning, tiles, heightPx, colour, ppu);
+                building.Init(tuning, type, tilesX, tilesY, heightPx, ppu);
             }
+    }
+
+    static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)
+    {
+        if (types == null || types.Length == 0 || totalWeight <= 0f) return null;
+
+        float roll = (float)rng.NextDouble() * totalWeight;
+        foreach (var t in types)
+        {
+            roll -= Mathf.Max(0f, t.weight);
+            if (roll <= 0f) return t;
+        }
+        return types[types.Length - 1];
     }
 
     PlayerController BuildPlayer()
