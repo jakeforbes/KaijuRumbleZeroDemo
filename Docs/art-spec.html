@@ -1,0 +1,532 @@
+<title>Kaiju Rumble Sprite Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#E9EDF5; --surface-3:#DEE4EF;
+    --ink:#131A26; --ink-soft:#4A576980; --ink-body:#2C3745; --muted:#6A788E;
+    --line:#D2DAE6; --line-soft:#E3E9F2;
+    --cyan:#0B6F80; --magenta:#A32390;
+    --cyan-fill:#0b6f8018; --magenta-fill:#a3239012;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D1320; --surface:#141C2B; --surface-2:#1B2434; --surface-3:#222D42;
+      --ink:#E2E9F4; --ink-soft:#A3B0C680; --ink-body:#C2CDDE; --muted:#7A899F;
+      --line:#26324A; --line-soft:#1D2739;
+      --cyan:#45DCEC; --magenta:#F27ADD;
+      --cyan-fill:#45dcec14; --magenta-fill:#f27add10;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1320; --surface:#141C2B; --surface-2:#1B2434; --surface-3:#222D42;
+    --ink:#E2E9F4; --ink-soft:#A3B0C680; --ink-body:#C2CDDE; --muted:#7A899F;
+    --line:#26324A; --line-soft:#1D2739;
+    --cyan:#45DCEC; --magenta:#F27ADD;
+    --cyan-fill:#45dcec14; --magenta-fill:#f27add10;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink-body);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1100px; margin:0 auto; padding:40px 24px 88px; display:grid; gap:42px; grid-template-columns:1fr;}
+  @media (min-width:1000px){
+    .wrap{grid-template-columns:174px minmax(0,1fr); align-items:start; padding-top:54px; gap:54px;}
+    nav.toc{position:sticky; top:30px;}
+  }
+
+  header.mast{grid-column:1/-1; border-bottom:1px solid var(--line); padding-bottom:24px;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:500;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--cyan); margin:0 0 12px;
+  }
+  h1{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:700;
+    font-size:clamp(31px,5vw,44px); line-height:1.06; color:var(--ink);
+    margin:0 0 13px; text-wrap:balance;
+  }
+  .standfirst{font-size:16.5px; color:var(--ink-body); max-width:62ch; margin:0;}
+  .metaline{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:20px;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);
+  }
+  .metaline b{color:var(--ink); font-weight:500;}
+
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:block; padding:5px 0 5px 12px; border-left:2px solid var(--line-soft);
+    color:var(--muted); text-decoration:none; font-size:13px; line-height:1.35;
+  }
+  nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink); border-left-color:var(--cyan);}
+  nav.toc .tocnum{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft); margin-right:6px;}
+  @media (max-width:999px){ nav.toc{display:none} }
+
+  main{min-width:0; display:flex; flex-direction:column; gap:52px;}
+  section{scroll-margin-top:26px;}
+
+  h2{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:600;
+    font-size:23px; line-height:1.18; color:var(--ink); margin:0 0 6px;
+  }
+  h2 .num{
+    font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500;
+    color:var(--cyan); margin-right:10px; vertical-align:3px;
+  }
+  h3{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:600; font-size:16px;
+    color:var(--ink); margin:26px 0 8px;
+  }
+  .lede{color:var(--muted); font-size:14.5px; margin:0 0 20px; max-width:68ch;}
+  p{margin:0 0 13px; max-width:68ch;}
+  a{color:var(--cyan);}
+  strong{color:var(--ink); font-weight:600;}
+  code{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.88em;
+    background:var(--surface-2); border:1px solid var(--line-soft);
+    padding:1px 5px; border-radius:3px; color:var(--ink); white-space:nowrap;
+  }
+
+  ul.plain{margin:0 0 13px; padding-left:20px; max-width:68ch;}
+  ul.plain li{margin-bottom:7px;}
+
+  .rules{display:grid; gap:13px; margin:0 0 24px;}
+  .rule{
+    background:var(--magenta-fill); border:1px solid var(--line);
+    border-left:3px solid var(--magenta); border-radius:0 5px 5px 0; padding:15px 18px;
+  }
+  .rule h3{margin:0 0 5px; font-size:15.5px;}
+  .rule p{margin:0; font-size:14px; max-width:none;}
+  .rule .tag{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--magenta); display:block; margin-bottom:6px;
+  }
+
+  .scroll{overflow-x:auto; margin:0 0 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface);}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px;}
+  caption{
+    caption-side:bottom; text-align:left; color:var(--muted); font-size:12.5px;
+    padding:9px 2px 0; font-style:italic;
+  }
+  th,td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--line-soft); vertical-align:top;}
+  thead th{
+    background:var(--surface-2); color:var(--ink); font-weight:600; font-size:11.5px;
+    letter-spacing:.08em; text-transform:uppercase;
+    font-family:"IBM Plex Mono",monospace; border-bottom:1px solid var(--line);
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  td.num,th.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  td.name{color:var(--ink); font-weight:600;}
+  .dim{color:var(--muted);}
+
+  .pri{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+    padding:2px 7px; border-radius:3px; letter-spacing:.05em; white-space:nowrap;
+  }
+  .p0{background:var(--magenta); color:var(--bg);}
+  .p1{background:var(--cyan-fill); color:var(--cyan); border:1px solid var(--cyan);}
+  .p2{background:var(--surface-2); color:var(--muted); border:1px solid var(--line);}
+
+  .specs{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:6px;
+    overflow:hidden; margin:0 0 16px;
+  }
+  .spec{background:var(--surface); padding:14px 16px;}
+  .spec dt{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.11em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:5px;
+  }
+  .spec dd{
+    margin:0; font-family:"Chakra Petch",monospace; font-size:19px; font-weight:600;
+    color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.2;
+  }
+  .spec dd small{
+    display:block; font-family:"IBM Plex Sans",sans-serif; font-size:12px;
+    font-weight:400; color:var(--muted); margin-top:3px; letter-spacing:0;
+  }
+
+  figure{margin:22px 0 8px; padding:20px 18px 14px; background:var(--surface); border:1px solid var(--line); border-radius:6px;}
+  figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink);}
+  figcaption{margin-top:14px; font-size:13px; color:var(--muted); max-width:72ch;}
+
+  ol.steps{list-style:none; margin:0; padding:0; counter-reset:s; display:flex; flex-direction:column;}
+  ol.steps li{counter-increment:s; padding:0 0 22px 44px; position:relative; border-left:1px solid var(--line); margin-left:14px;}
+  ol.steps li:last-child{border-left-color:transparent; padding-bottom:0;}
+  ol.steps li::before{
+    content:counter(s,decimal-leading-zero); position:absolute; left:-15px; top:-2px;
+    width:29px; height:29px; border-radius:50%; background:var(--surface-3); color:var(--cyan);
+    border:1px solid var(--line); display:grid; place-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;
+  }
+  ol.steps h3{margin:2px 0 5px;}
+  ol.steps p{margin:0; font-size:14px;}
+
+  .naming{
+    background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:18px; font-family:"IBM Plex Mono",monospace; font-size:14px; overflow-x:auto;
+    color:var(--ink);
+  }
+  .naming .seg{color:var(--cyan);}
+  .naming .seg2{color:var(--magenta);}
+  .naming .gloss{
+    display:block; font-size:12.5px; color:var(--muted); margin-top:12px;
+    font-family:"IBM Plex Sans",sans-serif; line-height:1.55; white-space:normal;
+  }
+
+  footer.end{
+    grid-column:1/-1; border-top:1px solid var(--line); padding-top:20px; margin-top:6px;
+    font-size:13px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 20px; justify-content:space-between;
+  }
+  :focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Kaiju Rumble Zero &middot; Vertical Slice</p>
+    <h1>Sprite &amp; Render Spec</h1>
+    <p class="standfirst">The asset list, with dimensions, frame counts and the render constraints that let sprites drop into the Unity build without rework. Style direction is yours &mdash; this covers only what the engine requires.</p>
+    <div class="metaline">
+      <span>Engine <b>Unity 6000.6 &middot; 2D sprites</b></span>
+      <span>Display <b>1920 &times; 1080</b></span>
+      <span>Scale <b>128 px = 1 world unit</b></span>
+      <span>Window <b>2 days</b></span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#rules"><span class="tocnum">01</span>Render constraints</a></li>
+      <li><a href="#camera"><span class="tocnum">02</span>Camera rig</a></li>
+      <li><a href="#facings"><span class="tocnum">03</span>Facings</a></li>
+      <li><a href="#characters"><span class="tocnum">04</span>Characters</a></li>
+      <li><a href="#scale"><span class="tocnum">05</span>Relative scale</a></li>
+      <li><a href="#buildings"><span class="tocnum">06</span>Buildings &amp; ground</a></li>
+      <li><a href="#pickups"><span class="tocnum">07</span>Pickups</a></li>
+      <li><a href="#pipeline"><span class="tocnum">08</span>Pipeline</a></li>
+      <li><a href="#naming"><span class="tocnum">09</span>Naming</a></li>
+      <li><a href="#order"><span class="tocnum">10</span>Delivery order</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="rules">
+      <h2><span class="num">01</span>Render constraints</h2>
+      <p class="lede">Every dimension elsewhere on this page can be adjusted later. These four are structural &mdash; break one and the affected sprites need re-rendering, not just re-importing.</p>
+
+      <div class="rules">
+        <div class="rule">
+          <span class="tag">Constraint 1</span>
+          <h3>Fixed frame. Never crop, never trim.</h3>
+          <p>Set the render resolution once per entity and hold it across every frame of every animation. Turn off auto-crop and &ldquo;trim to content&rdquo; on export. The ground contact point must land on the same pixel in all frames &mdash; that pixel becomes the sprite&rsquo;s pivot, and the engine sorts and collides against it.</p>
+        </div>
+        <div class="rule">
+          <span class="tag">Constraint 2</span>
+          <h3>Ground contact at 50% width, 88% height.</h3>
+          <p>In every frame, the point where the model meets the ground sits horizontally centred, 88% of the way down the frame. The 12% below is headroom for feet splay, dust and overshoot on attack frames. One consistent pivot means it is set project-wide rather than per asset.</p>
+        </div>
+        <div class="rule">
+          <span class="tag">Constraint 3</span>
+          <h3>No baked ground shadows.</h3>
+          <p>Do not render a contact shadow into the sprite. The engine draws its own as a separate object so it sorts correctly beneath other things. A baked shadow will sit on top of whatever the character walks over.</p>
+        </div>
+        <div class="rule">
+          <span class="tag">Constraint 4</span>
+          <h3>Bake emission into the diffuse.</h3>
+          <p>No light sources ship in the build &mdash; hundreds of real-time lights would tank the framerate. Neon, glow and self-illumination get baked straight into the render, and one bloom pass in-engine pushes them back up.</p>
+        </div>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 720 330" role="img" aria-label="A building sprite with two kaiju. The kaiju whose pivot sits higher on screen draws behind the building; the one whose pivot sits lower draws in front. Collision uses a small ellipse at the pivot, not the sprite bounds.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <line x1="70" y1="196" x2="650" y2="196" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity=".28"/>
+          <line x1="70" y1="243" x2="650" y2="243" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity=".28"/>
+          <line x1="70" y1="291" x2="650" y2="291" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity=".28"/>
+
+          <g>
+            <ellipse cx="300" cy="196" rx="30" ry="12" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <path d="M282 196 L282 132 Q300 112 318 132 L318 196 Z" fill="var(--surface-3)" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="300" cy="196" r="4" fill="var(--magenta)"/>
+          </g>
+
+          <g>
+            <path d="M360 243 L446 200 L446 132 L360 175 Z" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M360 243 L274 200 L274 132 L360 175 Z" fill="var(--surface-3)" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M360 175 L446 132 L360 89 L274 132 Z" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/>
+            <ellipse cx="360" cy="243" rx="64" ry="19" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-dasharray="5 4"/>
+            <circle cx="360" cy="243" r="4" fill="var(--magenta)"/>
+          </g>
+
+          <g>
+            <rect x="402" y="212" width="72" height="84" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4" opacity=".4"/>
+            <ellipse cx="438" cy="291" rx="30" ry="12" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <path d="M420 291 L420 227 Q438 207 456 227 L456 291 Z" fill="var(--surface-3)" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="438" cy="291" r="4" fill="var(--magenta)"/>
+          </g>
+
+          <text x="64" y="192" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">pivot y = 196</text>
+          <text x="64" y="206" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--magenta)">draws 1st</text>
+          <text x="64" y="239" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">pivot y = 243</text>
+          <text x="64" y="253" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--magenta)">draws 2nd</text>
+          <text x="64" y="287" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">pivot y = 291</text>
+          <text x="64" y="301" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--magenta)">draws 3rd</text>
+
+          <line x1="502" y1="122" x2="470" y2="143" stroke="currentColor" stroke-width="1.2" opacity=".55" marker-end="url(#ar)"/>
+          <text x="508" y="119" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".8">tower hides the</text>
+          <text x="508" y="133" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".8">kaiju behind it</text>
+
+          <line x1="558" y1="248" x2="494" y2="276" stroke="var(--cyan)" stroke-width="1.2" marker-end="url(#ar)"/>
+          <text x="564" y="239" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--cyan)">collision =</text>
+          <text x="564" y="253" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--cyan)">this ellipse,</text>
+          <text x="564" y="267" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--cyan)">not the box</text>
+
+          <circle cx="106" cy="42" r="4" fill="var(--magenta)"/>
+          <text x="118" y="46" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor" opacity=".85">pivot &mdash; ground contact, sets draw order</text>
+          <ellipse cx="106" cy="66" rx="9" ry="4" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+          <text x="118" y="70" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor" opacity=".85">footprint &mdash; the ground the object occupies</text>
+        </svg>
+        <figcaption>Why the pivot rule matters. Sprites draw in order of their pivot&rsquo;s screen Y &mdash; higher on screen means further away, so it draws first and everything nearer covers it. That is the entire &ldquo;walk behind the tower&rdquo; effect, and it comes free as long as pivots are consistent. Collision is a separate, much smaller ellipse at the same pivot, which is why a kaiju can overlap a tower&rsquo;s upper floors without colliding with them.</figcaption>
+      </figure>
+    </section>
+
+    <section id="camera">
+      <h2><span class="num">02</span>Camera rig</h2>
+      <p class="lede">Set once, save as a scene template, reuse for every asset. Assets rendered through different cameras will not sit on the same ground plane.</p>
+
+      <dl class="specs">
+        <div class="spec"><dt>Projection</dt><dd>Orthographic<small>Never perspective</small></dd></div>
+        <div class="spec"><dt>Azimuth</dt><dd>45&deg;<small>Around vertical axis</small></dd></div>
+        <div class="spec"><dt>Elevation</dt><dd>30&deg;<small>Gives exact 2:1 tiles</small></dd></div>
+        <div class="spec"><dt>Ground tile</dt><dd>256 &times; 128<small>The 2:1 diamond</small></dd></div>
+        <div class="spec"><dt>Frame rate</dt><dd>12 fps<small>Animation playback</small></dd></div>
+        <div class="spec"><dt>Format</dt><dd>PNG-24<small>Straight alpha</small></dd></div>
+      </dl>
+
+      <p><strong>30&deg;, not 35.264&deg;.</strong> True isometric foreshortens all three axes equally and yields a 1.73:1 tile that lands on half-pixels. At 30&deg;, <code>sin(30&deg;) = 0.5</code> gives an exact 2:1 diamond that tiles cleanly. This is the StarCraft and Diablo convention and what the engine assumes.</p>
+      <p><strong>Rotate the model, not the camera.</strong> Lock the camera and spin the subject on a turntable for each facing &mdash; that guarantees identical lighting and identical ground contact across directions. Moving the camera does not.</p>
+    </section>
+
+    <section id="facings">
+      <h2><span class="num">03</span>Facings &mdash; render five, ship eight</h2>
+      <p class="lede">Movement is 8-directional. Only five directions need rendering.</p>
+      <p>Isometric views mirror cleanly across the vertical screen axis. Render at <strong>0&deg;, 45&deg;, 90&deg;, 135&deg;, 180&deg;</strong> &mdash; named <code>s</code>, <code>se</code>, <code>e</code>, <code>ne</code>, <code>n</code> &mdash; and the engine flips them horizontally to produce <code>sw</code>, <code>w</code> and <code>nw</code> at no cost. That is <strong>37% less rendering</strong> for an identical result.</p>
+      <p>One condition: <strong>the model must be left-right symmetric.</strong> A scar over one eye, a weapon in one hand, or an asymmetric silhouette will visibly flip when the player turns. If a design needs asymmetry, flag it and that entity gets all eight renders.</p>
+    </section>
+
+    <section id="characters">
+      <h2><span class="num">04</span>Characters</h2>
+      <p class="lede">Frame size is the fixed render resolution. Footprint is the ground occupied, in 256&times;128 tiles &mdash; it drives collision, so it should match what the art looks like it is standing on.</p>
+
+      <div class="scroll">
+        <table>
+          <caption>Frame counts are per direction; the bold figure is the total across all five renders.</caption>
+          <thead>
+            <tr><th>Entity</th><th class="num">Frame size</th><th class="num">Footprint</th><th>Animations</th><th class="num">Frames &times;5</th><th>Priority</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">Kaiju &mdash; player</td>
+              <td class="num">512 &times; 512</td><td class="num">1 &times; 1</td>
+              <td>idle 4 &middot; walk 8 &middot; swipe 6 &middot; blast 6 &middot; hit 3</td>
+              <td class="num">27 &rarr; <b>135</b></td>
+              <td><span class="pri p0">P0</span></td>
+            </tr>
+            <tr>
+              <td class="name">Grunt</td>
+              <td class="num">128 &times; 128</td><td class="num">&frac12; &times; &frac12;</td>
+              <td>walk 6 &middot; attack 4 &middot; die 4</td>
+              <td class="num">14 &rarr; <b>70</b></td>
+              <td><span class="pri p0">P0</span></td>
+            </tr>
+            <tr>
+              <td class="name">Tank</td>
+              <td class="num">192 &times; 192</td><td class="num">1 &times; 1</td>
+              <td>walk 6 &middot; attack 4 &middot; die 4</td>
+              <td class="num">14 &rarr; <b>70</b></td>
+              <td><span class="pri p1">P1</span></td>
+            </tr>
+            <tr>
+              <td class="name">Mech</td>
+              <td class="num">384 &times; 384</td><td class="num">1 &times; 1</td>
+              <td>walk 8 &middot; attack 6 &middot; die 5</td>
+              <td class="num">19 &rarr; <b>95</b></td>
+              <td><span class="pri p1">P1</span></td>
+            </tr>
+            <tr>
+              <td class="name">Adult Abomination &mdash; boss</td>
+              <td class="num">768 &times; 768</td><td class="num">2 &times; 2</td>
+              <td>idle 4 &middot; walk 8 &middot; attack 8 &middot; die 8</td>
+              <td class="num">28 &rarr; <b>140</b></td>
+              <td><span class="pri p2">P2</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why the kaiju renders at 512 when it starts at 128</h3>
+      <p>The kaiju grows to <strong>4&times; its starting size</strong> across a run. Rather than four sets of art, one sprite is scaled in-engine: 128&nbsp;px tall at size 1, 512&nbsp;px at size 4. The camera zooms out as the player grows, so the largest it is ever <em>seen</em> is around 256&nbsp;px. Rendering at 512 means every scale is a downscale (sharp) rather than an upscale (soft), leaves a 2&times; margin, and covers a 4K build later without re-rendering.</p>
+      <p>Same logic applies to enemies: each is rendered at roughly double its maximum on-screen height.</p>
+    </section>
+
+    <section id="scale">
+      <h2><span class="num">05</span>Relative scale</h2>
+      <p class="lede">The single most important thing to get right. Growth is the game&rsquo;s central mechanic, and it only reads if the size relationships are correct &mdash; a size-1 kaiju must feel dwarfed, a size-4 kaiju must feel enormous.</p>
+
+      <div class="scroll">
+        <table>
+          <caption>On-screen heights at 1:1 zoom. Squish thresholds are gameplay: the player kills smaller enemies by walking over them once large enough.</caption>
+          <thead><tr><th>Object</th><th class="num">Displayed height</th><th>Reads as</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Grunt</td><td class="num">64 px</td><td class="dim">Ankle height at size 1. Squishable from size 2.</td></tr>
+            <tr><td class="name">Tank</td><td class="num">96 px</td><td class="dim">Squishable from size 3.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 1</td><td class="num">128 px</td><td class="dim">Shorter than every building. Vulnerable.</td></tr>
+            <tr><td class="name">Mech</td><td class="num">192 px</td><td class="dim">Squishable from size 4.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 2</td><td class="num">256 px</td><td class="dim">Matches the small blocks.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 3</td><td class="num">384 px</td><td class="dim">Over the small blocks, under the towers.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 4</td><td class="num">512 px</td><td class="dim">Taller than everything but the towers.</td></tr>
+            <tr><td class="name">Adult Abomination</td><td class="num">560 px</td><td class="dim">Deliberately edges out a size-4 kaiju.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Silhouette check.</strong> Every entity has to be identifiable as a flat black shape at 25% zoom, because that is roughly what a player sees in a crowded frame. If a Tank and a Mech share a silhouette, the player cannot tell which threat they are dealing with.</p>
+    </section>
+
+    <section id="buildings">
+      <h2><span class="num">06</span>Buildings &amp; ground</h2>
+      <p class="lede">One view each &mdash; the camera never rotates, so a building is a single still per damage state. Cheapest art in the game and the most of it on screen.</p>
+
+      <div class="scroll">
+        <table>
+          <caption>Three damage states, not five: Pristine, Damaged, Rubble. Rubble is short and walkable, so its frame is roughly a third the height.</caption>
+          <thead><tr><th>Type</th><th class="num">Frame size</th><th class="num">Footprint</th><th class="num">States</th><th>Function</th><th>Priority</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Block &mdash; small</td><td class="num">256 &times; 384</td><td class="num">1 &times; 1</td><td class="num">3</td><td class="dim">Filler. Smash for food.</td><td><span class="pri p0">P0</span></td></tr>
+            <tr><td class="name">Block &mdash; wide</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Filler. Smash for food.</td><td><span class="pri p0">P0</span></td></tr>
+            <tr><td class="name">Tower</td><td class="num">512 &times; 768</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Tall enough to hide a size-2 kaiju. Sells the depth effect.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Barracks</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Spawns grunts until smashed.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Laboratory</td><td class="num">512 &times; 448</td><td class="num">2 &times; 2</td><td class="num">3</td><td class="dim">Drops a power-up when destroyed.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Ground tiles &times;3</td><td class="num">256 &times; 128</td><td class="num">1 &times; 1</td><td class="num">1</td><td class="dim">Asphalt, road with markings, pavement edge. Must tile seamlessly in all four directions.</td><td><span class="pri p0">P0</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Barracks and Laboratory are gameplay, not scenery.</strong> A player scanning a dense street needs to spot them in under a second, from silhouette alone, at any zoom. Give each a distinct roof shape or signature feature that no filler block shares. If they read as ordinary buildings, players never learn the mechanic.</p>
+      <p><strong>Rubble state must read as walkable.</strong> Once destroyed, the player and enemies move straight over it &mdash; it should look like ground, not like a low obstacle.</p>
+    </section>
+
+    <section id="pickups">
+      <h2><span class="num">07</span>Pickups</h2>
+      <p class="lede">Single frame, no facings, no animation &mdash; the engine adds bob and spin.</p>
+
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Item</th><th class="num">Frame size</th><th class="num">Count</th><th>Constraint</th><th>Priority</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Food &mdash; small / med / large</td><td class="num">32 / 48 / 64</td><td class="num">3</td><td class="dim">Must read at 32 px against a dark street, and the three sizes must be distinguishable at a glance.</td><td><span class="pri p0">P0</span></td></tr>
+            <tr><td class="name">Power-up icons</td><td class="num">64 &times; 64</td><td class="num">5</td><td class="dim">Brawler, Fleet, Stomp, Beam, Furnace. Share a pedestal or glow treatment so they read as one category.</td><td><span class="pri p1">P1</span></td></tr>
+            <tr><td class="name">Hamburger &mdash; consumable</td><td class="num">64 &times; 64</td><td class="num">1</td><td class="dim">Should read as distinct from the permanent power-ups.</td><td><span class="pri p2">P2</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>One reserved-hue constraint.</strong> Pickups and enemy telegraphs need a hue range that no building or environment asset uses, so the player can find them in a crowded neon frame. Warm and saturated is the obvious choice against a cool city, but the specific range is yours &mdash; it just has to be exclusive.</p>
+    </section>
+
+    <section id="pipeline">
+      <h2><span class="num">08</span>Pipeline</h2>
+      <p class="lede">Order matters &mdash; step 2 is the one that prevents a re-render.</p>
+      <ol class="steps">
+        <li>
+          <h3>Model, texture, rig</h3>
+          <p>Bake emission into the diffuse as you go. Keep the silhouette symmetric so mirroring works.</p>
+        </li>
+        <li>
+          <h3>Build the camera rig once, save as a template</h3>
+          <p>Orthographic, 45&deg; azimuth, 30&deg; elevation, fixed frame size, ground contact locked at 50% / 88%. Every subsequent asset reuses this exact scene rather than rebuilding it.</p>
+        </li>
+        <li>
+          <h3>Turntable the model in 45&deg; steps</h3>
+          <p>Five positions: 0, 45, 90, 135, 180. The camera does not move.</p>
+        </li>
+        <li>
+          <h3>Render each animation to a PNG sequence</h3>
+          <p>12 fps, PNG-24 with straight alpha, no crop, no trim, no per-frame resize.</p>
+        </li>
+        <li>
+          <h3>Name and drop into the shared folder</h3>
+          <p>Deliver per entity as it completes rather than batching &mdash; a kaiju in the build on day one is worth more than a complete set on day two.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="naming">
+      <h2><span class="num">09</span>Naming</h2>
+      <div class="naming">
+        <span class="seg">entity</span>_<span class="seg2">animation</span>_<span class="seg">direction</span>_<span class="seg2">####</span>.png
+        <br><br>
+        kaiju_walk_se_0003.png<br>
+        grunt_die_n_0001.png<br>
+        building_tower_damaged.png<br>
+        food_large.png
+        <span class="gloss">Direction is one of <code>s</code> <code>se</code> <code>e</code> <code>ne</code> <code>n</code>. Frame numbers are 1-based, zero-padded to four digits. All lower case, underscores only &mdash; no spaces, hyphens or capitals. Stills omit the direction and frame number.</span>
+      </div>
+      <p>One folder per entity, one subfolder per animation. Drop them anywhere shared &mdash; Drive, Dropbox, a zip. An importer on the engine side handles slicing, pivots and mirroring automatically, so there is no need to open Unity.</p>
+      <p><strong>Send the first Grunt walk cycle as soon as it exists, even rough.</strong> It validates the whole chain &mdash; camera angle, pivot, naming, import &mdash; on 6 frames instead of on 510. If anything in this spec is wrong, that is when it should surface.</p>
+    </section>
+
+    <section id="order">
+      <h2><span class="num">10</span>Delivery order</h2>
+      <p class="lede">Greybox placeholders are already in the build, so none of this blocks code. This is the order that makes the demo look finished soonest if time runs short.</p>
+
+      <div class="scroll">
+        <table>
+          <caption>P0 alone produces a demo that reads as a real game. Everything after is depth.</caption>
+          <thead><tr><th>Priority</th><th>Assets</th><th class="num">Frames</th><th>Reasoning</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pri p0">P0</span></td>
+              <td class="name">Kaiju idle / walk / swipe &middot; Grunt &middot; 2 filler blocks &middot; ground tiles &middot; food &times;3</td>
+              <td class="num">~165</td>
+              <td class="dim">The player, the thing they smash, the thing they eat. The core loop and 90% of screen time.</td>
+            </tr>
+            <tr>
+              <td><span class="pri p1">P1</span></td>
+              <td class="name">Kaiju blast + hit &middot; Tank &middot; Tower &middot; Barracks &middot; Laboratory &middot; power-up icons</td>
+              <td class="num">~150</td>
+              <td class="dim">Adds the special attack, the armoured enemy, and the two buildings that carry mechanics.</td>
+            </tr>
+            <tr>
+              <td><span class="pri p2">P2</span></td>
+              <td class="name">Mech &middot; Adult Abomination &middot; Hamburger</td>
+              <td class="num">~240</td>
+              <td class="dim">The finale. Greybox stands in acceptably here &mdash; a grey boss still ends the demo.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Full set is roughly <strong>510 animation frames plus 20 stills</strong>. That is a substantial batch render, which is exactly why it is ordered &mdash; if only P0 lands, the demo still works.</p>
+    </section>
+
+  </main>
+
+  <footer class="end">
+    <span>Kaiju Rumble Zero &middot; vertical slice sprite spec</span>
+    <span>Query any number here before rendering, not after.</span>
+  </footer>
+
+</div>

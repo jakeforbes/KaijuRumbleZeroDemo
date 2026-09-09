@@ -1,0 +1,575 @@
+<title>Kaiju Rumble Build Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#E9EDF5; --surface-3:#DEE4EF;
+    --ink:#131A26; --ink-soft:#4A576980; --ink-body:#2C3745; --muted:#6A788E;
+    --line:#D2DAE6; --line-soft:#E3E9F2;
+    --cyan:#0B6F80; --magenta:#A32390; --amber:#8A5300;
+    --cyan-fill:#0b6f8018; --magenta-fill:#a3239012; --amber-fill:#8a530012;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D1320; --surface:#141C2B; --surface-2:#1B2434; --surface-3:#222D42;
+      --ink:#E2E9F4; --ink-soft:#A3B0C680; --ink-body:#C2CDDE; --muted:#7A899F;
+      --line:#26324A; --line-soft:#1D2739;
+      --cyan:#45DCEC; --magenta:#F27ADD; --amber:#EFB553;
+      --cyan-fill:#45dcec14; --magenta-fill:#f27add10; --amber-fill:#efb55310;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1320; --surface:#141C2B; --surface-2:#1B2434; --surface-3:#222D42;
+    --ink:#E2E9F4; --ink-soft:#A3B0C680; --ink-body:#C2CDDE; --muted:#7A899F;
+    --line:#26324A; --line-soft:#1D2739;
+    --cyan:#45DCEC; --magenta:#F27ADD; --amber:#EFB553;
+    --cyan-fill:#45dcec14; --magenta-fill:#f27add10; --amber-fill:#efb55310;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink-body);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1100px; margin:0 auto; padding:40px 24px 88px; display:grid; gap:42px; grid-template-columns:1fr;}
+  @media (min-width:1000px){
+    .wrap{grid-template-columns:174px minmax(0,1fr); align-items:start; padding-top:54px; gap:54px;}
+    nav.toc{position:sticky; top:30px;}
+  }
+
+  header.mast{grid-column:1/-1; border-bottom:1px solid var(--line); padding-bottom:24px;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; font-weight:500;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--cyan); margin:0 0 12px;
+  }
+  h1{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:700;
+    font-size:clamp(31px,5vw,44px); line-height:1.06; color:var(--ink);
+    margin:0 0 13px; text-wrap:balance;
+  }
+  .standfirst{font-size:16.5px; color:var(--ink-body); max-width:64ch; margin:0;}
+  .metaline{
+    display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:20px;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);
+  }
+  .metaline b{color:var(--ink); font-weight:500;}
+
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:block; padding:5px 0 5px 12px; border-left:2px solid var(--line-soft);
+    color:var(--muted); text-decoration:none; font-size:13px; line-height:1.35;
+  }
+  nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink); border-left-color:var(--cyan);}
+  nav.toc .tocnum{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft); margin-right:6px;}
+  @media (max-width:999px){ nav.toc{display:none} }
+
+  main{min-width:0; display:flex; flex-direction:column; gap:52px;}
+  section{scroll-margin-top:26px;}
+
+  h2{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:600;
+    font-size:23px; line-height:1.18; color:var(--ink); margin:0 0 6px;
+  }
+  h2 .num{
+    font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500;
+    color:var(--cyan); margin-right:10px; vertical-align:3px;
+  }
+  h3{
+    font-family:"Chakra Petch",system-ui,sans-serif; font-weight:600; font-size:16px;
+    color:var(--ink); margin:26px 0 8px;
+  }
+  .lede{color:var(--muted); font-size:14.5px; margin:0 0 20px; max-width:68ch;}
+  p{margin:0 0 13px; max-width:68ch;}
+  a{color:var(--cyan);}
+  strong{color:var(--ink); font-weight:600;}
+  code{
+    font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.88em;
+    background:var(--surface-2); border:1px solid var(--line-soft);
+    padding:1px 5px; border-radius:3px; color:var(--ink); white-space:nowrap;
+  }
+  ul.plain{margin:0 0 13px; padding-left:20px; max-width:68ch;}
+  ul.plain li{margin-bottom:7px;}
+
+  /* time budget figure */
+  figure{margin:6px 0 8px; padding:20px 18px 14px; background:var(--surface); border:1px solid var(--line); border-radius:6px;}
+  figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink);}
+  figcaption{margin-top:14px; font-size:13px; color:var(--muted); max-width:72ch;}
+
+  /* stage blocks */
+  .stages{display:flex; flex-direction:column; gap:16px;}
+  .stage{
+    display:grid; grid-template-columns:1fr; gap:0;
+    border:1px solid var(--line); border-radius:6px; background:var(--surface); overflow:hidden;
+  }
+  @media (min-width:720px){ .stage{grid-template-columns:112px minmax(0,1fr);} }
+  .stage .rail{
+    background:var(--surface-2); padding:16px 14px; border-bottom:1px solid var(--line);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  @media (min-width:720px){
+    .stage .rail{
+      flex-direction:column; align-items:flex-start; gap:4px;
+      border-bottom:none; border-right:1px solid var(--line);
+    }
+  }
+  .stage .sid{
+    font-family:"Chakra Petch",monospace; font-size:22px; font-weight:700; color:var(--cyan); line-height:1;
+  }
+  .stage .hrs{
+    font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
+    letter-spacing:.06em; text-transform:uppercase;
+  }
+  .stage .body{padding:18px 20px 16px;}
+  .stage h3{margin:0 0 12px; font-size:17px;}
+  .stage dl{margin:0; display:flex; flex-direction:column; gap:11px;}
+  .stage dt{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:3px;
+  }
+  .stage dd{margin:0; font-size:14px; max-width:70ch;}
+  .stage dd ul{margin:0; padding-left:18px;}
+  .stage dd ul li{margin-bottom:4px;}
+  .stage .check{
+    background:var(--cyan-fill); border-left:3px solid var(--cyan);
+    padding:11px 14px; border-radius:0 4px 4px 0;
+  }
+  .stage .check dt{color:var(--cyan);}
+  .stage .check dd{color:var(--ink); font-weight:500;}
+
+  .daybar{
+    display:flex; align-items:baseline; gap:12px; margin:34px 0 16px;
+    padding-bottom:9px; border-bottom:1px solid var(--line);
+  }
+  .daybar h3{
+    margin:0; font-size:15px; letter-spacing:.1em; text-transform:uppercase;
+    font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--ink);
+  }
+  .daybar span{font-size:13px; color:var(--muted);}
+
+  .scroll{overflow-x:auto; margin:0 0 10px; border:1px solid var(--line); border-radius:6px; background:var(--surface);}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:480px;}
+  caption{caption-side:bottom; text-align:left; color:var(--muted); font-size:12.5px; padding:9px 2px 0; font-style:italic;}
+  th,td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--line-soft); vertical-align:top;}
+  thead th{
+    background:var(--surface-2); color:var(--ink); font-weight:600; font-size:11.5px;
+    letter-spacing:.08em; text-transform:uppercase;
+    font-family:"IBM Plex Mono",monospace; border-bottom:1px solid var(--line);
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  td.num,th.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  td.name{color:var(--ink); font-weight:600;}
+  .dim{color:var(--muted);}
+  .key{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--ink);
+    background:var(--surface-3); border:1px solid var(--line); border-bottom-width:2px;
+    padding:2px 7px; border-radius:4px; white-space:nowrap;
+  }
+
+  .cutlist{display:grid; gap:12px; margin:0 0 8px;}
+  .cut{
+    border:1px solid var(--line); border-left:3px solid var(--amber);
+    background:var(--amber-fill); border-radius:0 5px 5px 0; padding:14px 18px;
+  }
+  .cut h3{margin:0 0 4px; font-size:15px;}
+  .cut p{margin:0; font-size:14px; max-width:none;}
+  .cut .tag{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--amber); display:block; margin-bottom:5px;
+  }
+
+  .done{
+    border:1px solid var(--line); border-left:3px solid var(--magenta);
+    background:var(--magenta-fill); border-radius:0 5px 5px 0; padding:18px 20px;
+  }
+  .done ol{margin:0; padding-left:20px;}
+  .done li{margin-bottom:7px; max-width:66ch;}
+  .done li:last-child{margin-bottom:0;}
+
+  footer.end{
+    grid-column:1/-1; border-top:1px solid var(--line); padding-top:20px; margin-top:6px;
+    font-size:13px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 20px; justify-content:space-between;
+  }
+  :focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Kaiju Rumble Zero &middot; Vertical Slice</p>
+    <h1>Two-Day Build Plan</h1>
+    <p class="standfirst">Nine stages, each ending in something playable. Every stage names what gets built, what to check in Play mode, and which tuning knobs it puts in your hands.</p>
+    <div class="metaline">
+      <span>Engine <b>Unity 6000.6 &middot; 2D</b></span>
+      <span>Budget <b>18 h across 2 days</b></span>
+      <span>Committed <b>16.5 h</b></span>
+      <span>Protected tuning <b>2.5 h</b></span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#shape"><span class="tocnum">01</span>Shape of the two days</a></li>
+      <li><a href="#rules"><span class="tocnum">02</span>Ground rules</a></li>
+      <li><a href="#day1"><span class="tocnum">03</span>Day 1 &mdash; core loop</a></li>
+      <li><a href="#day2"><span class="tocnum">04</span>Day 2 &mdash; content &amp; art</a></li>
+      <li><a href="#debug"><span class="tocnum">05</span>Debug controls</a></li>
+      <li><a href="#knobs"><span class="tocnum">06</span>Tuning knobs</a></li>
+      <li><a href="#cuts"><span class="tocnum">07</span>If we fall behind</a></li>
+      <li><a href="#done"><span class="tocnum">08</span>Definition of done</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="shape">
+      <h2><span class="num">01</span>Shape of the two days</h2>
+      <p class="lede">The honest picture before anyone commits to it. Tuning is a scheduled block, not the time left over &mdash; the demo exists to answer whether incremental growth feels good, and that question is answered by playing, not by shipping features.</p>
+
+      <figure>
+        <svg viewBox="0 0 720 210" role="img" aria-label="Time budget across two days. Day one holds stages 1 to 5 in 8.5 hours with half an hour of slack. Day two holds stages 6 to 9 in 8 hours, of which 2.5 hours is a protected tuning and polish block, plus one hour of slack held for co-op or overrun.">
+          <text x="64" y="24" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".55">0 h</text>
+          <text x="277" y="24" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".55">3 h</text>
+          <text x="490" y="24" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".55">6 h</text>
+          <text x="704" y="24" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity=".55">9 h</text>
+          <line x1="64" y1="32" x2="704" y2="32" stroke="currentColor" stroke-width="1" opacity=".2"/>
+          <line x1="277" y1="32" x2="277" y2="176" stroke="currentColor" stroke-width="1" stroke-dasharray="2 5" opacity=".18"/>
+          <line x1="490" y1="32" x2="490" y2="176" stroke="currentColor" stroke-width="1" stroke-dasharray="2 5" opacity=".18"/>
+
+          <text x="52" y="70" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">DAY 1</text>
+          <text x="52" y="86" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".5">core loop</text>
+          <g>
+            <rect x="64"    y="46" width="141" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="205.2" y="46" width="105.7" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="310.9" y="46" width="105.7" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="416.6" y="46" width="141.2" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="557.8" y="46" width="105.7" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="663.5" y="46" width="40.5" height="38" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".4"/>
+            <text x="134"   y="70" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S1</text>
+            <text x="258"   y="70" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S2</text>
+            <text x="363.7" y="70" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S3</text>
+            <text x="487"   y="70" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S4</text>
+            <text x="610.6" y="70" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S5</text>
+          </g>
+
+          <text x="52" y="138" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">DAY 2</text>
+          <text x="52" y="154" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".5">content &amp; art</text>
+          <g>
+            <rect x="64"    y="114" width="141" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="205.2" y="114" width="105.7" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="310.9" y="114" width="141.2" height="38" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <rect x="452.1" y="114" width="176.9" height="38" fill="var(--magenta-fill)" stroke="var(--magenta)" stroke-width="2"/>
+            <rect x="629"   y="114" width="75" height="38" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".4"/>
+            <text x="134"   y="138" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S6</text>
+            <text x="258"   y="138" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S7</text>
+            <text x="381.5" y="138" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--cyan)">S8</text>
+            <text x="540.5" y="138" text-anchor="middle" font-family="Chakra Petch, monospace" font-size="14" font-weight="600" fill="var(--magenta)">S9 &mdash; TUNING</text>
+            <text x="666.5" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".5">slack</text>
+          </g>
+
+          <rect x="64" y="186" width="14" height="11" fill="var(--cyan-fill)" stroke="var(--cyan)" stroke-width="1.5"/>
+          <text x="86" y="196" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">build</text>
+          <rect x="140" y="186" width="14" height="11" fill="var(--magenta-fill)" stroke="var(--magenta)" stroke-width="2"/>
+          <text x="162" y="196" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">protected tuning</text>
+          <rect x="290" y="186" width="14" height="11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3" opacity=".4"/>
+          <text x="312" y="196" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor" opacity=".75">slack &mdash; overrun, or co-op if everything lands</text>
+        </svg>
+        <figcaption>Sixteen and a half committed hours out of eighteen. There is 1.5 h of genuine slack in the whole project, which is why the cut list further down exists and why co-op sits in the slack block rather than in a stage of its own.</figcaption>
+      </figure>
+
+      <p><strong>Day 1 ends with the complete core loop playable</strong> in greybox: move, smash, eat, grow, shrink, fight, pick up upgrades. If day 1 lands, the design question is already answerable &mdash; day 2 makes it presentable.</p>
+    </section>
+
+    <section id="rules">
+      <h2><span class="num">02</span>Ground rules</h2>
+      <p class="lede">Four working agreements that shape every stage below.</p>
+      <ul class="plain">
+        <li><strong>The arena builds itself from code.</strong> A single bootstrap script spawns the greybox city, the player and the spawners at Play. There is almost no hand-authored scene content, so nothing drifts and nothing has to be re-wired after a change.</li>
+        <li><strong>Tuning lives in one asset the builder never overwrites.</strong> Every number in the knobs table is a field on a <code>Tuning</code> asset you can edit in the Inspector, including while the game is running. Rebuilding the arena never costs you a tweak.</li>
+        <li><strong>Debug HUD and cheat keys ship in stage 1, not at the end.</strong> Forcing a growth tier or skipping to the boss turns a three-minute test into a five-second one. Over two days that difference is worth more than any feature it displaces.</li>
+        <li><strong>One commit per validated stage.</strong> &ldquo;Go back to the last version that felt right&rdquo; is always one command away.</li>
+      </ul>
+    </section>
+
+    <section id="day1">
+      <h2><span class="num">03</span>Day 1 &mdash; core loop in greybox</h2>
+      <p class="lede">No art dependency anywhere in this day. Greybox is coloured rectangles and diamonds generated at runtime, so the artist&rsquo;s schedule and mine never block each other.</p>
+
+      <div class="daybar"><h3>Day 1</h3><span>8.5 h committed &middot; 0.5 h slack</span></div>
+
+      <div class="stages">
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S1</span><span class="hrs">2.0 h</span></div>
+          <div class="body">
+            <h3>Arena, movement, camera</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Clear the Unity sample content; project folders and the <code>Tuning</code> asset</li>
+                <li>Bootstrap script generates a greybox city on a 256&times;128 diamond grid</li>
+                <li>Player movement: WASD 8-way and gamepad analog, with the vertical axis scaled to 0.5 so motion reads as isometric rather than top-down</li>
+                <li>Y-sorting via Transparency Sort Axis, so the player passes behind buildings</li>
+                <li>Camera follow with edge pan, plus the zoom hook growth will drive later</li>
+                <li>Debug HUD and cheat-key framework</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Does moving feel good before anything else exists? Is the isometric squash convincing, or does it read as flat top-down? Can you walk behind a building and still tell where you are?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Move speed, acceleration, camera follow lag, edge-pan margin, iso squash ratio.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S2</span><span class="hrs">1.5 h</span></div>
+          <div class="body">
+            <h3>Smashing and food</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Buildings with HP and three damage states; solid until destroyed, rubble walkable</li>
+                <li>Swipe auto-attack firing on cooldown in the facing direction</li>
+                <li>Food drops in three values, with a pickup radius and magnet-in animation</li>
+                <li>Food meter on the HUD &mdash; visible from the first playtest, not added later</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Is smashing satisfying with no art and no sound? How many hits should a building take &mdash; is the current number tedious or trivial? Does food fly in fast enough to feel like reward rather than chore?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Building HP by type, swipe damage, swipe cooldown, swipe range and arc, food values, pickup radius, magnet speed.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S3</span><span class="hrs">1.5 h</span></div>
+          <div class="body">
+            <h3>Growth &mdash; the feature the demo exists to prove</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Continuous scale lerp as the food meter fills, with a punctuated snap and screen shake at each tier</li>
+                <li>Four tiers: HP cap raised, full heal on tier-up</li>
+                <li>Stat scaling &mdash; damage &times;1.35 per tier, move speed &times;1.08 per tier, swipe range tracking the sprite</li>
+                <li>Camera zoom at the square root of scale, so you dominate more of the frame without losing situational awareness</li>
+                <li>Cheat keys to force a tier up or down instantly</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>The important one. Does growing feel like a reward moment by moment, or only at the tier jumps? Is the continuous scaling visible enough to register, or too subtle? At size 4, can you still see enough of the field to play? This is the session worth repeating five times.</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Food per tier, scale per tier, continuous-growth fraction, HP per tier, damage and speed scaling per tier, camera zoom exponent, tier-up shake and pause.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S4</span><span class="hrs">2.0 h</span></div>
+          <div class="body">
+            <h3>Enemies, damage, squish, shrink</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Grunt: chases, attacks on contact cooldown, dies, drops food</li>
+                <li>Player HP, damage flash, 0.5 s invulnerability after a hit</li>
+                <li>Squish &mdash; walking over a small-enough enemy kills it instantly and drops its food, no input needed</li>
+                <li>Shrink on death: drop a tier, heal to the new cap, 1.5 s invulnerability and a shockwave that clears space</li>
+                <li>Game over at size 1</li>
+                <li>Cheat keys: spawn a swarm, kill all, toggle invulnerability</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Is the first squish at size 2 the payoff it should be? Does shrinking read as a setback you can recover from, or a death spiral? Are grunts a threat at size 1 and harmless clutter at size 4 &mdash; and is that the right feeling?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Grunt HP, damage, speed, attack cooldown; player invulnerability windows; squish size thresholds; shockwave radius and force.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S5</span><span class="hrs">1.5 h</span></div>
+          <div class="body">
+            <h3>Special attack and upgrades</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Blast &mdash; manually triggered, damages in a line, on its own cooldown</li>
+                <li>Upgrade pickups and the stacking system</li>
+                <li>Five upgrades: Brawler, Fleet, Stomp, Beam, Furnace &mdash; all percentage multipliers so they keep pace as size scales your base stats</li>
+                <li>HUD showing what you have collected</li>
+                <li>Cheat key: grant a random upgrade</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Do upgrades still feel meaningful once size has multiplied your base damage? Is Blast worth aiming, or does auto-swipe make it irrelevant? Does Stomp change how you move &mdash; the qualitative upgrades are the ones that should matter most.</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Blast damage, range, width, cooldown; per-upgrade multiplier and stack cap; drop rates.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="day2">
+      <h2><span class="num">04</span>Day 2 &mdash; content, art, tuning</h2>
+      <p class="lede">Art arrives during this day rather than before it. Stage 8 is written so sprites can be swapped in as they land, in any order, without blocking anything else.</p>
+
+      <div class="daybar"><h3>Day 2</h3><span>8.0 h committed &middot; 1.0 h slack</span></div>
+
+      <div class="stages">
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S6</span><span class="hrs">2.0 h</span></div>
+          <div class="body">
+            <h3>Wave director and the rest of the roster</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Timeline-driven spawner running the three-minute arc</li>
+                <li>Tank &mdash; armour as flat damage subtraction, so auto-swipe alone will not cut it</li>
+                <li>Mech &mdash; elite, drops a power-up</li>
+                <li>Barracks spawning grunts until smashed; Laboratory dropping a power-up</li>
+                <li>Cheat key: jump forward 30 s in the timeline</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Does the three-minute arc escalate, or does it spike and flatten? Are you reaching size 3 around the 1:15 mark as intended? Does armour make Blast feel necessary rather than optional?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>The full wave timeline &mdash; spawn times, counts, types; enemy stat block; barracks spawn rate; drop rates.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S7</span><span class="hrs">1.5 h</span></div>
+          <div class="body">
+            <h3>Boss and end states</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Adult Abomination: telegraphed attacks, meaningful HP, arrival beat</li>
+                <li>Win screen with run stats &mdash; buildings smashed, food eaten, peak size</li>
+                <li>Game over and restart, fast enough to re-run without reloading</li>
+                <li>Cheat key: spawn the boss immediately</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Can a size-4 kaiju beat the boss but a size-3 kaiju struggle? That gap is what makes the growth mechanic matter. Does the fight last long enough to feel like a finale without outstaying it?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Boss HP, damage, attack cadence, telegraph duration, arrival time.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S8</span><span class="hrs">2.0 h</span></div>
+          <div class="body">
+            <h3>Art integration</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Importer script: slices frame sequences, applies the 50% / 88% pivot, generates the three mirrored facings, builds the animation clips</li>
+                <li>Greybox stands in for anything not yet delivered, so partial art is never a blocker</li>
+                <li>Bloom and the engine-side ground shadows</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Do the real sprites sort correctly against buildings? Do collision footprints match what the art looks like it is standing on? Is anything unreadable at size 1 or at full zoom-out?</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Bloom intensity and threshold, shadow opacity and size, per-entity footprint offsets.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="stage">
+          <div class="rail"><span class="sid">S9</span><span class="hrs">2.5 h</span></div>
+          <div class="body">
+            <h3>Tuning pass and juice</h3>
+            <dl>
+              <div><dt>Build</dt><dd><ul>
+                <li>Hit stop on heavy impacts, screen shake scaled by your size, impact particles, damage numbers</li>
+                <li>Building collapse effect</li>
+                <li>Full balance pass across the three-minute arc, driven by what you find playing it</li>
+              </ul></dd></div>
+              <div class="check"><dt>Play and answer</dt><dd>Play the full run repeatedly and tune. The question is no longer whether anything works &mdash; it is whether the growth curve peaks at the right moment and whether the ending lands.</dd></div>
+              <div><dt>Knobs unlocked</dt><dd>Everything, all at once, with you driving.</dd></div>
+            </dl>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="debug">
+      <h2><span class="num">05</span>Debug controls</h2>
+      <p class="lede">In from stage 1. These exist so you can test the end of a run without playing the start of one.</p>
+      <div class="scroll">
+        <table>
+          <caption>All keys are stripped from a final build with one flag on the Tuning asset.</caption>
+          <thead><tr><th class="num">Key</th><th>Action</th><th>Available from</th></tr></thead>
+          <tbody>
+            <tr><td class="num"><span class="key">F1</span></td><td class="name">Toggle debug HUD</td><td class="dim">S1</td></tr>
+            <tr><td class="num"><span class="key">F2</span> / <span class="key">F3</span></td><td class="name">Grow / shrink one tier</td><td class="dim">S3</td></tr>
+            <tr><td class="num"><span class="key">F4</span></td><td class="name">Spawn a swarm at the cursor</td><td class="dim">S4</td></tr>
+            <tr><td class="num"><span class="key">F5</span></td><td class="name">Kill all enemies</td><td class="dim">S4</td></tr>
+            <tr><td class="num"><span class="key">F6</span></td><td class="name">Toggle invulnerability</td><td class="dim">S4</td></tr>
+            <tr><td class="num"><span class="key">F7</span></td><td class="name">Grant a random upgrade</td><td class="dim">S5</td></tr>
+            <tr><td class="num"><span class="key">F8</span></td><td class="name">Skip 30 s of the wave timeline</td><td class="dim">S6</td></tr>
+            <tr><td class="num"><span class="key">F9</span></td><td class="name">Spawn the boss now</td><td class="dim">S7</td></tr>
+            <tr><td class="num"><span class="key">F10</span></td><td class="name">Restart the run</td><td class="dim">S1</td></tr>
+            <tr><td class="num"><span class="key">[</span> / <span class="key">]</span></td><td class="name">Slow down / speed up time</td><td class="dim">S1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="knobs">
+      <h2><span class="num">06</span>Tuning knobs</h2>
+      <p class="lede">All of it on one <code>Tuning</code> asset, editable in the Inspector while the game runs. Change a number, watch it take effect, keep the value.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Group</th><th>Contains</th><th>From</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Movement</td><td class="dim">Base speed, acceleration, iso squash ratio, speed multiplier per size tier</td><td class="num">S1</td></tr>
+            <tr><td class="name">Camera</td><td class="dim">Follow lag, edge-pan margin, base zoom, zoom exponent, shake amount</td><td class="num">S1</td></tr>
+            <tr><td class="name">Growth</td><td class="dim">Food per tier, scale per tier, continuous-growth fraction, HP per tier, damage multiplier per tier</td><td class="num">S3</td></tr>
+            <tr><td class="name">Swipe</td><td class="dim">Damage, cooldown, range, arc, range scaling with size</td><td class="num">S2</td></tr>
+            <tr><td class="name">Blast</td><td class="dim">Damage, range, width, cooldown, beam count</td><td class="num">S5</td></tr>
+            <tr><td class="name">Survival</td><td class="dim">Hit invulnerability, shrink invulnerability, shockwave radius and force</td><td class="num">S4</td></tr>
+            <tr><td class="name">Enemies</td><td class="dim">Per type: HP, damage, speed, armour, attack range and cooldown, loot value</td><td class="num">S4</td></tr>
+            <tr><td class="name">Food</td><td class="dim">Value per size, pickup radius, radius scaling with size, magnet speed</td><td class="num">S2</td></tr>
+            <tr><td class="name">Buildings</td><td class="dim">HP per type, food yield, barracks spawn rate, drop rates</td><td class="num">S2</td></tr>
+            <tr><td class="name">Waves</td><td class="dim">The full spawn timeline &mdash; time, type, count, position</td><td class="num">S6</td></tr>
+            <tr><td class="name">Upgrades</td><td class="dim">Per upgrade: multiplier, stack cap, drop weight</td><td class="num">S5</td></tr>
+            <tr><td class="name">Juice</td><td class="dim">Hit stop duration, shake curves, damage number size, bloom</td><td class="num">S9</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cuts">
+      <h2><span class="num">07</span>If we fall behind</h2>
+      <p class="lede">Decided now, calmly, rather than at 9pm on day two. Cuts run in this order.</p>
+      <div class="cutlist">
+        <div class="cut">
+          <span class="tag">Cut first</span>
+          <h3>Two-player co-op</h3>
+          <p>Already outside the committed hours &mdash; it lives in day 2 slack. The input layer is written with two slots from stage 1, so adding P2 is cheap if the time exists and costs nothing if it does not. The shared camera is the real work, not the second player.</p>
+        </div>
+        <div class="cut">
+          <span class="tag">Cut second</span>
+          <h3>Mech, and upgrades beyond three</h3>
+          <p>Pure content on systems that already exist. Tank covers the armour lesson on its own; three upgrades still make two runs differ. Each is roughly 20 minutes to add back if the clock allows.</p>
+        </div>
+        <div class="cut">
+          <span class="tag">Cut third</span>
+          <h3>Boss art, not the boss</h3>
+          <p>If sprites do not arrive in time, the Adult Abomination ships as a large greybox shape. A grey boss still ends the demo; no boss at all means the run has no ending, which is much worse.</p>
+        </div>
+        <div class="cut">
+          <span class="tag">Never cut</span>
+          <h3>Stage 9</h3>
+          <p>If the tuning block gets eaten, the demo ships at whatever values I guessed while writing it, and the thing it was built to prove goes unproven. Everything above exists so that this does not happen.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="done">
+      <h2><span class="num">08</span>Definition of done</h2>
+      <p class="lede">The demo is finished when a person who has never seen it can do all of this without being told how.</p>
+      <div class="done">
+        <ol>
+          <li>Pick up a controller and move a kaiju through a city without instruction.</li>
+          <li>Smash buildings, watch food fly in, and see the meter fill.</li>
+          <li>Visibly grow &mdash; continuously, and in four distinct jumps.</li>
+          <li>Walk over a grunt that was a threat two minutes earlier and feel the difference.</li>
+          <li>Take a beating, shrink a tier, and fight back rather than quit.</li>
+          <li>Collect a power-up and notice what changed.</li>
+          <li>Reach the boss at around three minutes and beat it &mdash; or lose and immediately want another run.</li>
+        </ol>
+      </div>
+      <p style="margin-top:18px;">Point seven is the real test. If the first thing a player says at the end is &ldquo;let me try that again,&rdquo; the vertical slice has done its job.</p>
+    </section>
+
+  </main>
+
+  <footer class="end">
+    <span>Kaiju Rumble Zero &middot; vertical slice build plan</span>
+    <span>Nine stages &middot; 18 h &middot; every stage playable</span>
+  </footer>
+
+</div>
