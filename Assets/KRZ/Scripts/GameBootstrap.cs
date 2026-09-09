@@ -201,12 +201,32 @@ public class GameBootstrap : MonoBehaviour
     public void SpawnOne(string typeName)
     {
         var type = FindType(typeName);
-        if (type == null || player == null) return;
+        if (type == null || player == null)
+        {
+            Debug.LogWarning($"KRZ: no enemy type named '{typeName}'.");
+            return;
+        }
 
+        // Big bodies need room. Clear a radius matching the thing being spawned,
+        // stepping outward until the ground is free, or the physics solver will
+        // fling it out of the building it was born inside.
+        float clearance = Mathf.Max(0.6f, type.bodyPx * 0.5f / tuning.pixelsPerUnit);
         float angle = Random.value * Mathf.PI * 2f;
-        var at = player.transform.position +
-                 new Vector3(Mathf.Cos(angle) * 6f, Mathf.Sin(angle) * 6f * tuning.isoSquash, 0f);
-        Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            float r = clearance + 4f + attempt * 1.5f;
+            var at = player.transform.position +
+                     new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+
+            if (Physics2D.OverlapCircle(at, clearance) != null) continue;
+
+            Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+            Debug.Log($"KRZ: spawned {type.name}.");
+            return;
+        }
+
+        Debug.LogWarning($"KRZ: no clear ground for {type.name}. Move somewhere more open.");
     }
 
     static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)

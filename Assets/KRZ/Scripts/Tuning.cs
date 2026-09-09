@@ -103,6 +103,15 @@ public class Tuning : ScriptableObject
                         attackCooldown = 1.8f, attackWindup = 0.5f,
                         foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
                         bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
+
+        // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
+        // one thing in the game you can never walk over. Armour is set so the swipe
+        // still contributes but the Blast is what actually fells it.
+        new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
+                        contactDamage = 45f, moveSpeed = 2.2f, attackRange = 3f,
+                        ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
+                        foodDrops = 0, foodScatter = 4f,
+                        bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
     };
 
     [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
