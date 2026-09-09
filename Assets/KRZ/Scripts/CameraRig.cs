@@ -51,17 +51,22 @@ public class CameraRig : MonoBehaviour
         float halfH = cam.orthographicSize;
         float halfW = halfH * cam.aspect;
 
-        Vector3 pos = transform.position;
-        Vector2 offset = (Vector2)target.position - (Vector2)pos;
+        // The camera always wants the player centred. All of the trailing comes from
+        // the smoothing, not from a dead zone: a dead zone lets the player sit out at
+        // the margins for as long as they keep walking, which is what we do not want.
+        var want = new Vector3(target.position.x, target.position.y, transform.position.z);
+        transform.position = Vector3.SmoothDamp(transform.position, want, ref vel, tuning.followLag);
 
-        float boxW = halfW * (1f - tuning.deadZoneX * 2f);
-        float boxH = halfH * (1f - tuning.deadZoneY * 2f);
+        // Hard containment. Smoothing alone lets a fast kaiju drift further out the
+        // faster it moves, so this caps how far from centre the player can ever be.
+        float maxX = halfW * tuning.maxPlayerOffset;
+        float maxY = halfH * tuning.maxPlayerOffset;
+        Vector2 off = (Vector2)target.position - (Vector2)transform.position;
 
-        Vector3 want = pos;
-        if (Mathf.Abs(offset.x) > boxW) want.x += offset.x - Mathf.Sign(offset.x) * boxW;
-        if (Mathf.Abs(offset.y) > boxH) want.y += offset.y - Mathf.Sign(offset.y) * boxH;
-
-        transform.position = Vector3.SmoothDamp(pos, want, ref vel, tuning.followLag);
+        Vector3 clamped = transform.position;
+        if (Mathf.Abs(off.x) > maxX) clamped.x = target.position.x - Mathf.Sign(off.x) * maxX;
+        if (Mathf.Abs(off.y) > maxY) clamped.y = target.position.y - Mathf.Sign(off.y) * maxY;
+        transform.position = clamped;
 
         // Shake rides on top of the settled position so it never fights the follow.
         if (shakeLeft > 0f)

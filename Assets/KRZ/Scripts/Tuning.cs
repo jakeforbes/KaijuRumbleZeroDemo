@@ -29,12 +29,14 @@ public class Tuning : ScriptableObject
     [Tooltip("Orthographic half-height. 4.21875 shows sprites 1:1 at 1080p with 128 PPU.")]
     public float baseOrthoSize = 4.21875f;
 
-    [Tooltip("Fraction of the screen the player can move within before the camera follows.")]
-    [Range(0f, 0.45f)] public float deadZoneX = 0.20f;
-    [Range(0f, 0.45f)] public float deadZoneY = 0.16f;
+    [Tooltip("Seconds for the camera to catch up. This is the only source of trailing — " +
+             "higher is looser and calmer, lower is tighter and busier.")]
+    public float followLag = 0.28f;
 
-    [Tooltip("Seconds for the camera to catch up. Higher is looser.")]
-    public float followLag = 0.18f;
+    [Tooltip("Hard cap on how far from centre the player can ever get, as a fraction of " +
+             "the half-screen. Smoothing alone lets a fast kaiju drift further the faster " +
+             "it moves; this is the box it can never leave.")]
+    [Range(0.05f, 0.5f)] public float maxPlayerOffset = 0.22f;
 
     [Tooltip("Camera zooms out by (player scale ^ this). 0.5 is square root, 0 is no zoom, " +
              "1.0 fully cancels the growth fantasy.")]
@@ -51,8 +53,10 @@ public class Tuning : ScriptableObject
 
     [Header("Growth")]
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
-             "Totals 600 across the run, the same as the four-size version did.")]
-    public float[] foodPerTier = { 75f, 125f, 175f, 225f };
+             "Roughly geometric rather than arithmetic: income accelerates hard as you " +
+             "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
+             "so a flat +50 per gate meant later tiers arrived faster than earlier ones.")]
+    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length.")]
@@ -83,12 +87,12 @@ public class Tuning : ScriptableObject
     public EnemyType[] enemyTypes =
     {
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
-                        contactDamage = 6f,  moveSpeed = 3.4f, attackRange = 0.9f,
+                        contactDamage = 6f,  moveSpeed = 1.28f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
-                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f,
+                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
                         bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
 
@@ -96,7 +100,29 @@ public class Tuning : ScriptableObject
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+
+        // Elite grunt. Same silhouette and speed, ten times the health, double the
+        // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
+        // Ranged, so it stays dangerous even though you outrun it five to one.
+        new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
+                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f, ranged = true,
+                        attackCooldown = 1.8f, attackWindup = 0.5f,
+                        foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
+                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
+
+        // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
+        // one thing in the game you can never walk over. Armour is set so the swipe
+        // still contributes but the Blast is what actually fells it.
+        new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
+                        contactDamage = 45f, moveSpeed = 2.2f, attackRange = 3f,
+                        ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
+                        foodDrops = 0, foodScatter = 4f,
+                        bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
     };
+
+    [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
+    public int commanderPerMin = 25;
+    public int commanderPerMax = 50;
 
     [Header("Survival")]
     [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]
@@ -112,7 +138,17 @@ public class Tuning : ScriptableObject
     [Tooltip("How close an outgrown enemy has to be to die underfoot, scaled by size.")]
     public float squishRange = 0.85f;
 
+    [Tooltip("Smallest size that can squish anything, as a tier index. 2 means size 3.")]
+    [Range(0, 4)] public int squishFirstTier = 2;
+
+    [Tooltip("Extra sizes needed per enemy class. 2 means every other size unlocks the " +
+             "next class up: smalls at size 3, mediums at size 5, larges never.")]
+    [Range(1, 4)] public int squishTiersPerClass = 2;
+
     public float hitShake = 0.18f;
+
+    [Tooltip("Floating damage numbers. The only way to tune damage by eye.")]
+    public bool showDamageNumbers = true;
 
     [Header("Footprints")]
     [Tooltip("Building collision diamond as a fraction of its drawn base. " +
@@ -126,14 +162,98 @@ public class Tuning : ScriptableObject
     public float swipeDamage = 10f;
     public float swipeCooldown = 2f;
 
-    [Tooltip("Reach in world units at size 1. Scales with the kaiju in Stage 3.")]
-    public float swipeRange = 2.2f;
+    [Tooltip("Reach in world units at size 1, measured from the kaiju's edge outward. " +
+             "Deliberately short: melee should mean getting close, with reach coming " +
+             "from upgrades. Scales with size so the animation reaches what it hits.")]
+    public float swipeRange = 1.3f;
 
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
 
+    [Tooltip("Ceiling on the cone once Claws has widened it. 180 is a half circle — " +
+             "everything in front of the kaiju.")]
+    [Range(30f, 360f)] public float swipeArcMax = 180f;
+
+    [Tooltip("Gap between the hits of a multi-hit swipe. Short enough to read as one " +
+             "flurry, long enough that each hit is visible.")]
+    public float swipeBurstInterval = 0.13f;
+
     [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
     public bool showSwipeArc = true;
+
+    [Header("Blast — the manual special")]
+    [Tooltip("One big number rather than chip damage: this is the answer to armour.")]
+    public float blastDamage = 45f;
+    public float blastCooldown = 6f;
+    public float blastRange = 14f;
+
+    [Tooltip("Full width of the beam in world units. A ground tile is 2 wide, so 1.0 " +
+             "is half a tile.")]
+    public float blastWidth = 1f;
+
+    [Tooltip("Height the beam is drawn from, in world units at size 1, scaling with the " +
+             "kaiju. The body is 1.0 tall, so 0.8 is about mouth height. Visual only — " +
+             "hits stay on the ground plane where the footprints are.")]
+    public float blastOriginHeight = 0.8f;
+
+    [Header("Stomp — granted by the upgrade")]
+    [Tooltip("Damage at one stack, deliberately half of blastDamage. Extra stacks " +
+             "multiply from here rather than from a boosted first stack.")]
+    public float stompDamage = 22.5f;
+    public float stompCooldown = 4f;
+
+    [Tooltip("Radius in world units at size 1. A ground tile is 2 wide, so 3.0 reaches " +
+             "about a tile and a half around the kaiju.")]
+    public float stompRadius = 3f;
+
+    [Tooltip("How the radius grows with size: radius x (scale ^ this). 1.0 quadruples " +
+             "it by size 5, which is sixteen times the area. 0.5 doubles it instead.")]
+    [Range(0f, 1f)] public float stompRadiusExponent = 0.5f;
+
+    [Tooltip("Stomp's damage against buildings only. It fires automatically with no " +
+             "aiming, so at full strength it demolishes whatever you happen to stand " +
+             "near and removes the choice of what to smash. Enemies still take full.")]
+    [Range(0f, 1f)] public float stompBuildingMultiplier = 0.35f;
+
+    [Header("Upgrades")]
+    public UpgradeType[] upgrades =
+    {
+        // Brawler changes the rhythm: one extra strike per activation, per stack.
+        // perStack stays 1.0 so it does not also shorten the cooldown — stacking a
+        // rate cut with extra hits multiplies DPS far faster than either alone.
+        new UpgradeType { id = UpgradeId.Brawler, displayName = "Brawler",
+                          effect = "One extra strike per attack",
+                          perStack = 1f, extraHitsPerStack = 1, maxStacks = 4,
+                          weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
+
+        // Claws changes the shape: longer and wider, up to a 180 degree half circle.
+        new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
+                          effect = "Swipe reaches 25% further and 12 degrees wider",
+                          perStack = 1.25f, arcPerStack = 12.5f, maxStacks = 4,
+                          weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
+
+        new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",
+                          effect = "Move 12% faster", perStack = 1.12f, maxStacks = 5,
+                          weight = 1f, colour = new Color(0.5f, 0.9f, 0.75f) },
+
+        new UpgradeType { id = UpgradeId.Stomp,   displayName = "Stomp",
+                          effect = "Shockwave around you every few seconds", perStack = 1.4f,
+                          maxStacks = 4, weight = 0.9f, colour = new Color(1f, 0.8f, 0.35f) },
+
+        new UpgradeType { id = UpgradeId.Beam,    displayName = "Beam",
+                          effect = "Blast hits 30% harder and further", perStack = 1.3f,
+                          maxStacks = 4, weight = 0.9f, colour = new Color(0.5f, 0.85f, 1f) },
+
+        new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
+                          effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.75f, 0.6f, 1f) },
+    };
+
+    [Tooltip("Chance a destroyed building leaves an upgrade. Labs in Stage 6 replace this.")]
+    [Range(0f, 1f)] public float upgradeDropChance = 0.12f;
+
+    [Tooltip("How close you must walk to collect one. Upgrades are not vacuumed.")]
+    public float upgradePickupRange = 1.2f;
 
     [Header("Buildings")]
     [Tooltip("Five classes, one per kaiju size. HP is set so a matching size needs " +
@@ -179,9 +299,13 @@ public class Tuning : ScriptableObject
     public float foodValueMedium = 5f;
     public float foodValueLarge = 20f;
 
-    [Tooltip("Outer edge of the pull field. Food further out is untouched. " +
-             "Grows with size in Stage 3.")]
+    [Tooltip("Outer edge of the pull field at size 1. Food further out is untouched.")]
     public float foodInfluenceRadius = 6.5f;
+
+    [Tooltip("How the pull radius grows with size: radius x (scale ^ this). 1.0 is linear " +
+             "and quadruples the radius by size 5 — sixteen times the collection area, " +
+             "which is most of why the level curve ran away. 0.5 doubles it instead.")]
+    [Range(0f, 1f)] public float foodRadiusExponent = 0.5f;
 
     [Tooltip("How sharply the pull falls off toward the edge. 1 is linear; higher keeps the " +
              "outer field nearly dead while ramping hard close to the body.")]

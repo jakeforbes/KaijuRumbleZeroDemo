@@ -34,7 +34,8 @@ public class PlayerProgress : MonoBehaviour
 
     public float DamageMultiplier => Mathf.Pow(tuning.damagePerTier, Tier);
     public float SpeedMultiplier => Mathf.Pow(tuning.speedPerTier, Tier);
-    public float InfluenceRadius => tuning.foodInfluenceRadius * currentScale;
+    public float InfluenceRadius =>
+        tuning.foodInfluenceRadius * Mathf.Pow(currentScale, tuning.foodRadiusExponent);
 
     /// <summary>Set when the kaiju dies at size 1. The run is over until F10.</summary>
     public bool IsDead { get; private set; }
@@ -96,7 +97,10 @@ public class PlayerProgress : MonoBehaviour
         flashUntil = Time.time + 0.1f;
         invulnerableUntil = Time.time + tuning.hitInvulnerability;
         AudioEvents.Play(Sfx.PlayerHit, transform.position, owner: gameObject);
+        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Hit);
         Shake(tuning.hitShake);
+        Popups.Add(transform.position + Vector3.up * currentScale,
+                   $"<b>-{amount:0}</b>", new Color(1f, 0.35f, 0.3f));
 
         if (Hp <= 0f) Die();
     }
@@ -180,6 +184,9 @@ public class PlayerProgress : MonoBehaviour
         AudioEvents.Play(Sfx.Shrink, transform.position, owner: gameObject);
         Shake(tuning.tierUpShake);
     }
+
+    /// <summary>Lets attacks shake the camera without each of them finding the rig.</summary>
+    public void ShakeExternal(float amount) => Shake(amount);
 
     void Shake(float amount)
     {

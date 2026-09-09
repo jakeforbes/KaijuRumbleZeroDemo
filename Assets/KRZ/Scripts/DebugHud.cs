@@ -18,6 +18,7 @@ public class DebugHud : MonoBehaviour
     void Update()
     {
         fps = Mathf.Lerp(fps, 1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f), 0.1f);
+        Popups.show = tuning.showDamageNumbers;
         if (tuning.enableCheatKeys) ReadCheats();
         if (tuning.showColliders) DrawColliders();
     }
@@ -75,12 +76,24 @@ public class DebugHud : MonoBehaviour
             if (kb.f6Key.wasPressedThisFrame) progress.godMode = !progress.godMode;
         }
 
+        var up = PlayerUpgrades.Instance;
+        if (up != null && kb.f7Key.wasPressedThisFrame)
+        {
+            var rolled = up.RollDrop();
+            if (rolled != null) up.Grant(rolled.id);
+        }
+
         if (GameBootstrap.Instance != null)
         {
             // Shift picks the heavier species, so armour can be tested without waves.
             bool heavy = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
             if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
             if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
+
+            // Direct spawns for anything the swarm key cannot reach.
+            if (kb.f11Key.wasPressedThisFrame)
+                GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
+            if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
         }
 
         if (kb.leftBracketKey.wasPressedThisFrame)
@@ -104,7 +117,7 @@ public class DebugHud : MonoBehaviour
 
         var cam = Camera.main;
         string text =
-            $"<b>KRZ — Stage 1</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
+            $"<b>KRZ</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
             $"pos  {player.transform.position.x:0.0}, {player.transform.position.y:0.0}\n" +
             $"speed  {player.Velocity.magnitude:0.00}   facing  {player.FacingName}\n" +
             $"size  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.SizeNumber : 1)}" +
@@ -114,7 +127,8 @@ public class DebugHud : MonoBehaviour
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"enemies  {Enemy.All.Count}{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
-            $"\n<b>F6</b> god   <b>F10</b> restart   <b>F12</b> colliders   <b>[ ]</b> timescale   <b>\\</b> reset";
+            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>[ ]</b> time" +
+            $"\n<b>Space / E / pad A</b> blast";
 
         var size = style.CalcSize(new GUIContent(text));
         var rect = new Rect(12, 12, size.x + 16, size.y + 10);
@@ -173,7 +187,55 @@ public class DebugHud : MonoBehaviour
         GUI.DrawTexture(new Rect(x + 2f, hy + 2f, (w - 4f) * frac, hh - 4f), Texture2D.whiteTexture);
         GUI.color = Color.white;
 
+        DrawBlastAndUpgrades(x, hy);
+
         if (progress.IsDead) DrawGameOver();
+    }
+
+    /// <summary>Blast readiness on the left, collected upgrades stacked beside it.</summary>
+    void DrawBlastAndUpgrades(float x, float meterY)
+    {
+        var special = player != null ? player.GetComponent<PlayerSpecial>() : null;
+        var up = PlayerUpgrades.Instance;
+
+        float y = meterY - 26f;
+
+        if (special != null)
+        {
+            bool ready = special.BlastCooldownRemaining <= 0f;
+            float frac = ready ? 1f
+                : 1f - Mathf.Clamp01(special.BlastCooldownRemaining / Mathf.Max(0.01f, special.BlastCooldownTotal));
+
+            var box = new Rect(x, y, 120f, 18f);
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
+            GUI.DrawTexture(box, Texture2D.whiteTexture);
+            GUI.color = ready ? new Color(0.45f, 0.85f, 1f, 0.95f) : new Color(0.3f, 0.45f, 0.6f, 0.9f);
+            GUI.DrawTexture(new Rect(x + 2f, y + 2f, 116f * frac, 14f), Texture2D.whiteTexture);
+            GUI.color = Color.white;
+            GUI.Label(box, ready ? "<b>BLAST  ready</b>" : "BLAST", meterStyle);
+        }
+
+        if (up == null) return;
+
+        float ux = x + 132f;
+        foreach (var pair in up.Stacks)
+        {
+            if (pair.Value <= 0) continue;
+            var type = up.Find(pair.Key);
+            if (type == null) continue;
+
+            string text = $"{type.displayName} x{pair.Value}";
+            var size = meterStyle.CalcSize(new GUIContent(text));
+            var chip = new Rect(ux, y, size.x + 14f, 18f);
+
+            GUI.color = new Color(type.colour.r, type.colour.g, type.colour.b, 0.22f);
+            GUI.DrawTexture(chip, Texture2D.whiteTexture);
+            GUI.color = type.colour;
+            GUI.Label(chip, text, meterStyle);
+            GUI.color = Color.white;
+
+            ux += chip.width + 6f;
+        }
     }
 
     void DrawGameOver()

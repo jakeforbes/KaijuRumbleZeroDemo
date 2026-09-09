@@ -54,6 +54,9 @@ public class GameBootstrap : MonoBehaviour
 
         Food.Reset();
         Enemy.Reset();
+        HitFx.Reset();
+        UpgradePickup.Reset();
+        Popups.Clear();
         ClearScene();
         var cam = BuildCamera();
         RuntimeSoundPlayer.Ensure();
@@ -68,6 +71,8 @@ public class GameBootstrap : MonoBehaviour
 
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
+
+        gameObject.AddComponent<Popups>();
 
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
@@ -186,6 +191,46 @@ public class GameBootstrap : MonoBehaviour
             }
     }
 
+    public EnemyType FindType(string name)
+    {
+        if (tuning.enemyTypes == null) return null;
+        foreach (var t in tuning.enemyTypes)
+            if (t.name == name) return t;
+        return null;
+    }
+
+    /// <summary>Cheat spawn: one named enemy, for testing a type without waiting on the ratio.</summary>
+    public void SpawnOne(string typeName)
+    {
+        var type = FindType(typeName);
+        if (type == null || player == null)
+        {
+            Debug.LogWarning($"KRZ: no enemy type named '{typeName}'.");
+            return;
+        }
+
+        // Big bodies need room. Clear a radius matching the thing being spawned,
+        // stepping outward until the ground is free, or the physics solver will
+        // fling it out of the building it was born inside.
+        float clearance = Mathf.Max(0.6f, type.bodyPx * 0.5f / tuning.pixelsPerUnit);
+        float angle = Random.value * Mathf.PI * 2f;
+
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            float r = clearance + 4f + attempt * 1.5f;
+            var at = player.transform.position +
+                     new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+
+            if (Physics2D.OverlapCircle(at, clearance) != null) continue;
+
+            Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+            Debug.Log($"KRZ: spawned {type.name}.");
+            return;
+        }
+
+        Debug.LogWarning($"KRZ: no clear ground for {type.name}. Move somewhere more open.");
+    }
+
     static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)
     {
         if (types == null || types.Length == 0 || totalWeight <= 0f) return null;
@@ -218,9 +263,15 @@ public class GameBootstrap : MonoBehaviour
         var progress = go.AddComponent<PlayerProgress>();
         progress.tuning = tuning;
 
+        var upgrades = go.AddComponent<PlayerUpgrades>();
+        upgrades.tuning = tuning;
+
         var attack = go.AddComponent<PlayerAttack>();
         attack.tuning = tuning;
         SoundPlayer.Attach(go, tuning.playerSounds);
+
+        var special = go.AddComponent<PlayerSpecial>();
+        special.tuning = tuning;
 
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;
@@ -237,24 +288,65 @@ public class GameBootstrap : MonoBehaviour
         var bsr = bodyGo.AddComponent<SpriteRenderer>();
         bsr.sprite = GreyboxArt.Capsule(96, 128, new Color(0.55f, 0.85f, 0.45f), ppu);
 
+        // Real art takes over if the package is present; greybox stays otherwise, so
+        // the build never depends on the art having been delivered.
+        var uries = go.AddComponent<UriesArt>();
+        uries.target = bsr;
+        uries.player = pc;
+        if (UriesArt.Available) bodyGo.transform.localScale = Vector3.one * UriesArt.CanvasScale;
+
         fade.playerArt = bsr;
         progress.bodyArt = bsr;
         pc.BindArt(art);
         return pc;
     }
 
-    /// <summary>Cheat spawn: a ring of enemies around the player, just off screen.</summary>
+    /// <summary>Cheat spawn: a ring of enemies around the player, at the screen edge.</summary>
     public void SpawnSwarm(int count, int typeIndex = 0)
     {
-        if (player == null || tuning.enemyTypes == null || tuning.enemyTypes.Length == 0) return;
+        if (player == null)
+        {
+            Debug.LogWarning("KRZ: no player, cannot spawn.");
+            return;
+        }
+        if (tuning.enemyTypes == null || tuning.enemyTypes.Length == 0)
+        {
+            Debug.LogWarning("KRZ: Tuning.enemyTypes is empty. Reset the Tuning asset or refill it.");
+            return;
+        }
 
         var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
+        var commander = FindType("Commander");
+        bool rollCommanders = type != commander && commander != null;
+        int spawned = 0;
+
         for (int i = 0; i < count; i++)
         {
+            var spawning = type;
+            if (rollCommanders)
+            {
+                int per = Random.Range(tuning.commanderPerMin, tuning.commanderPerMax + 1);
+                if (per > 0 && Random.value < 1f / per) spawning = commander;
+            }
+
             float angle = i / (float)count * Mathf.PI * 2f + Random.value;
-            float r = Random.Range(7f, 10f);
-            var offset = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
-            Enemy.Spawn(tuning, type, player.transform.position + offset, tuning.pixelsPerUnit);
+
+            // Try a few radii outward. A dynamic body spawned inside a building gets
+            // violently depenetrated and flung off, so find clear ground first.
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                float r = 5.5f + attempt * 1.2f;
+                var at = player.transform.position +
+                         new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+
+                if (Physics2D.OverlapCircle(at, 0.5f) != null) continue;
+
+                Enemy.Spawn(tuning, spawning, at, tuning.pixelsPerUnit);
+                spawned++;
+                break;
+            }
         }
+
+        Debug.Log($"KRZ: spawned {spawned}/{count} {type.name}. Total alive: {Enemy.All.Count}");
     }
 }

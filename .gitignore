@@ -51,3 +51,7 @@ crashlytics-build.properties
 
 # Stray nested repo, not part of the Unity project
 /KaijuRumbleZero/
+
+# Artist art package: 102MB. Uncomment to keep it out of git, or delete
+# these lines to commit it so collaborators get art on pull.
+/Assets/KRZ/Resources/Uries/

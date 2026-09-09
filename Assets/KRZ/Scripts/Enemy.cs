@@ -20,6 +20,8 @@ public class Enemy : Damageable
     float hp;
     float nextAttackAt;
     float flashUntil;
+    float windEndsAt;
+    bool winding;
 
     Rigidbody2D body;
     SpriteRenderer sr;
@@ -82,8 +84,10 @@ public class Enemy : Damageable
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
 
         // Outgrown enemies die underfoot. No input, no damage taken — this is the
-        // whole reward for having grown.
-        if (progress.Tier > type.sizeClass && flat <= tuning.squishRange * progress.Scale)
+        // whole reward for having grown. Thresholds are spaced so each class stays
+        // a real threat for several sizes rather than going trivial immediately.
+        int squishAt = tuning.squishFirstTier + type.sizeClass * tuning.squishTiersPerClass;
+        if (progress.Tier >= squishAt && flat <= tuning.squishRange * progress.Scale)
         {
             Squish();
             return;
@@ -91,22 +95,59 @@ public class Enemy : Damageable
 
         if (flat > type.attackRange)
         {
+            winding = false;
             Vector2 dir = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized;
             body.linearVelocity = new Vector2(dir.x, dir.y * tuning.isoSquash) * type.moveSpeed;
         }
         else
         {
             body.linearVelocity = Vector2.zero;
-            if (Time.time >= nextAttackAt)
+
+            if (!winding && Time.time >= nextAttackAt)
             {
+                winding = true;
+                windEndsAt = Time.time + type.attackWindup;
+            }
+
+            if (winding && Time.time >= windEndsAt)
+            {
+                winding = false;
                 nextAttackAt = Time.time + type.attackCooldown;
                 AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
-                progress.TakeDamage(type.contactDamage);
+                Strike(progress);
             }
         }
 
-        if (Time.time < flashUntil) sr.color = Color.white;
-        else sr.color = baseColour;
+        Recolour();
+    }
+
+    void Recolour()
+    {
+        if (Time.time < flashUntil) { sr.color = Color.white; return; }
+
+        if (winding)
+        {
+            // Pulses harder as the strike approaches, so the timing is readable.
+            float t = 1f - Mathf.Clamp01((windEndsAt - Time.time) / Mathf.Max(0.01f, type.attackWindup));
+            sr.color = Color.Lerp(baseColour, new Color(1f, 0.95f, 0.85f), t * t);
+            return;
+        }
+
+        sr.color = baseColour;
+    }
+
+    void Strike(PlayerProgress progress)
+    {
+        Vector3 target = progress.transform.position;
+
+        if (type.ranged)
+            HitFx.Line(transform.position + Vector3.up * (type.bodyPx * 0.6f / tuning.pixelsPerUnit),
+                       target, new Color(1f, 0.7f, 0.35f), tuning.pixelsPerUnit, 0.16f, 0.18f);
+        else
+            body.linearVelocity = ((Vector2)(target - transform.position)).normalized * 6f;
+
+        HitFx.Burst(target, new Color(1f, 0.45f, 0.35f), 0.9f * progress.Scale, tuning.pixelsPerUnit);
+        progress.TakeDamage(type.contactDamage);
     }
 
     public override void TakeDamage(float amount, Vector2 from)
@@ -115,11 +156,20 @@ public class Enemy : Damageable
 
         // Armour is flat subtraction, so chip damage genuinely bounces off heavies.
         float dealt = Mathf.Max(0f, amount - type.armour);
-        if (dealt <= 0f) { flashUntil = Time.time + 0.06f; AudioEvents.Play(Sfx.EnemyBlocked, transform.position, owner: gameObject); return; }
+
+        if (dealt <= 0f)
+        {
+            // Says "your weapon is wrong" rather than looking like a missed hit.
+            flashUntil = Time.time + 0.06f;
+            AudioEvents.Play(Sfx.EnemyBlocked, transform.position, owner: gameObject);
+            Popups.Add(transform.position, "<b>BLOCKED</b>", new Color(0.65f, 0.7f, 0.8f));
+            return;
+        }
 
         hp -= dealt;
         AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
+        Popups.Add(transform.position, $"{dealt:0}", Color.white);
 
         if (hp <= 0f) Die(Sfx.EnemyDeath);
     }
@@ -135,6 +185,11 @@ public class Enemy : Damageable
         hp = 0f;
         if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f, owner: gameObject);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);
+
+        if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
+            UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
+                                transform.position, tuning.pixelsPerUnit);
+
         Destroy(gameObject);
     }
 

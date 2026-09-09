@@ -70,7 +70,10 @@ public class PlayerController : MonoBehaviour
         // would outrun the camera and the arena. Growth should feel like an upgrade,
         // not a different game.
         var progress = PlayerProgress.Instance;
-        float speed = tuning.moveSpeed * (progress != null ? progress.SpeedMultiplier : 1f);
+        var upgrades = PlayerUpgrades.Instance;
+        float speed = tuning.moveSpeed
+                      * (progress != null ? progress.SpeedMultiplier : 1f)
+                      * (upgrades != null ? upgrades.MoveSpeedMul : 1f);
         Vector2 target = desired * speed;
         float rate = desired.sqrMagnitude > 0.001f ? tuning.acceleration : tuning.deceleration;
         body.linearVelocity = Vector2.MoveTowards(body.linearVelocity, target, rate * Time.fixedDeltaTime);

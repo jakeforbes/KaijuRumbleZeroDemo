@@ -26,10 +26,23 @@ public class EnemyType
 
     [Tooltip("How close it gets before it stops and attacks.")]
     public float attackRange = 0.9f;
+
+    [Tooltip("Fires a tracer from where it stands instead of lunging. Set this rather " +
+             "than relying on attackRange, so retuning a range cannot silently turn a " +
+             "ranged attacker into a melee one.")]
+    public bool ranged;
     public float attackCooldown = 1.1f;
+
+    [Tooltip("Telegraph before the hit lands. Damage arriving with no warning reads as " +
+             "unfair and cannot be tuned, because you never see what hit you.")]
+    public float attackWindup = 0.35f;
 
     public int foodDrops = 2;
     public float foodScatter = 1.2f;
+
+    [Tooltip("Leaves a power-up on death. Elites only — it is the reason to fight one " +
+             "rather than walk away from it.")]
+    public bool dropsUpgrade;
 
     [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
     public int bodyPx = 64;
