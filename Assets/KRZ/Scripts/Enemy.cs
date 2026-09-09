@@ -136,10 +136,12 @@ public class Enemy : Damageable
     void Strike(PlayerProgress progress)
     {
         Vector3 target = progress.transform.position;
-        bool ranged = type.attackRange > 2f;
 
-        if (ranged) HitFx.Line(transform.position, target, new Color(1f, 0.7f, 0.35f), tuning.pixelsPerUnit);
-        else body.linearVelocity = ((Vector2)(target - transform.position)).normalized * 6f;
+        if (type.ranged)
+            HitFx.Line(transform.position + Vector3.up * (type.bodyPx * 0.6f / tuning.pixelsPerUnit),
+                       target, new Color(1f, 0.7f, 0.35f), tuning.pixelsPerUnit, 0.16f, 0.18f);
+        else
+            body.linearVelocity = ((Vector2)(target - transform.position)).normalized * 6f;
 
         HitFx.Burst(target, new Color(1f, 0.45f, 0.35f), 0.9f * progress.Scale, tuning.pixelsPerUnit);
         progress.TakeDamage(type.contactDamage);

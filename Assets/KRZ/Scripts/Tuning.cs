@@ -86,7 +86,7 @@ public class Tuning : ScriptableObject
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
-                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f,
+                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
                         bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
 
@@ -99,7 +99,7 @@ public class Tuning : ScriptableObject
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
         // Ranged, so it stays dangerous even though you outrun it five to one.
         new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
-                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f,
+                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
                         foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
                         bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },

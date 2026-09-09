@@ -24,6 +24,11 @@ public class EnemyType
 
     [Tooltip("How close it gets before it stops and attacks.")]
     public float attackRange = 0.9f;
+
+    [Tooltip("Fires a tracer from where it stands instead of lunging. Set this rather " +
+             "than relying on attackRange, so retuning a range cannot silently turn a " +
+             "ranged attacker into a melee one.")]
+    public bool ranged;
     public float attackCooldown = 1.1f;
 
     [Tooltip("Telegraph before the hit lands. Damage arriving with no warning reads as " +
