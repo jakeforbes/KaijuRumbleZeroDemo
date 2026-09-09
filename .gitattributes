@@ -1,0 +1,17 @@
+* text=auto
+
+# Unity YAML — keep as text, never merged automatically
+*.unity     -merge text
+*.prefab    -merge text
+*.asset     -merge text
+*.meta      -merge text
+*.controller -merge text
+*.anim      -merge text
+*.mat       -merge text
+
+# Binary
+*.png binary
+*.jpg binary
+*.fbx binary
+*.wav binary
+*.mp3 binary
