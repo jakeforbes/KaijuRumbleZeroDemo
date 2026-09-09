@@ -32,7 +32,8 @@ public class PlayerAttack : MonoBehaviour
         CooldownRemaining -= Time.deltaTime;
         if (CooldownRemaining > 0f) return;
 
-        CooldownRemaining = tuning.swipeCooldown;
+        var up = PlayerUpgrades.Instance;
+        CooldownRemaining = tuning.swipeCooldown * (up != null ? up.SwipeCooldownMul : 1f);
         Swipe();
     }
 
@@ -41,7 +42,9 @@ public class PlayerAttack : MonoBehaviour
         LastSwipeAt = Time.time;
         AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f);
 
-        float range = tuning.swipeRange * player.Scale;
+        var upgrades = PlayerUpgrades.Instance;
+        float range = tuning.swipeRange * player.Scale *
+                      (upgrades != null ? upgrades.SwipeRangeMul : 1f);
         Vector2 origin = transform.position;
         Vector2 aim = player.AimDir;
 

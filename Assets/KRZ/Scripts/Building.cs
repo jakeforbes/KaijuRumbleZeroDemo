@@ -121,5 +121,10 @@ public class Building : Damageable
         if (footprint != null) footprint.enabled = false;
 
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, ppu);
+
+        // Stage 6 moves this onto Laboratories; for now any building can pay out so
+        // the upgrade system is testable without the wave director.
+        if (Random.value < tuning.upgradeDropChance && PlayerUpgrades.Instance != null)
+            UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(), transform.position, ppu);
     }
 }

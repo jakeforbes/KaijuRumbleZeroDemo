@@ -55,6 +55,7 @@ public class GameBootstrap : MonoBehaviour
         Food.Reset();
         Enemy.Reset();
         HitFx.Reset();
+        UpgradePickup.Reset();
         Popups.Clear();
         ClearScene();
         var cam = BuildCamera();
@@ -220,8 +221,14 @@ public class GameBootstrap : MonoBehaviour
         var progress = go.AddComponent<PlayerProgress>();
         progress.tuning = tuning;
 
+        var upgrades = go.AddComponent<PlayerUpgrades>();
+        upgrades.tuning = tuning;
+
         var attack = go.AddComponent<PlayerAttack>();
         attack.tuning = tuning;
+
+        var special = go.AddComponent<PlayerSpecial>();
+        special.tuning = tuning;
 
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;

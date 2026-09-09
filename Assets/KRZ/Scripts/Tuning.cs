@@ -145,6 +145,52 @@ public class Tuning : ScriptableObject
     [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
     public bool showSwipeArc = true;
 
+    [Header("Blast — the manual special")]
+    [Tooltip("One big number rather than chip damage: this is the answer to armour.")]
+    public float blastDamage = 45f;
+    public float blastCooldown = 6f;
+    public float blastRange = 7f;
+    public float blastWidth = 1.6f;
+
+    [Header("Stomp — granted by the upgrade")]
+    public float stompDamage = 18f;
+    public float stompCooldown = 4f;
+    public float stompRadius = 2.6f;
+
+    [Header("Upgrades")]
+    public UpgradeType[] upgrades =
+    {
+        new UpgradeType { id = UpgradeId.Brawler, displayName = "Brawler",
+                          effect = "Swipe fires 15% faster", perStack = 0.85f, maxStacks = 5,
+                          weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
+
+        new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
+                          effect = "Swipe reaches 25% further", perStack = 1.25f, maxStacks = 4,
+                          weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
+
+        new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",
+                          effect = "Move 12% faster", perStack = 1.12f, maxStacks = 5,
+                          weight = 1f, colour = new Color(0.5f, 0.9f, 0.75f) },
+
+        new UpgradeType { id = UpgradeId.Stomp,   displayName = "Stomp",
+                          effect = "Shockwave around you every few seconds", perStack = 1.4f,
+                          maxStacks = 4, weight = 0.9f, colour = new Color(1f, 0.8f, 0.35f) },
+
+        new UpgradeType { id = UpgradeId.Beam,    displayName = "Beam",
+                          effect = "Blast hits 30% harder and further", perStack = 1.3f,
+                          maxStacks = 4, weight = 0.9f, colour = new Color(0.5f, 0.85f, 1f) },
+
+        new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
+                          effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.75f, 0.6f, 1f) },
+    };
+
+    [Tooltip("Chance a destroyed building leaves an upgrade. Labs in Stage 6 replace this.")]
+    [Range(0f, 1f)] public float upgradeDropChance = 0.12f;
+
+    [Tooltip("How close you must walk to collect one. Upgrades are not vacuumed.")]
+    public float upgradePickupRange = 1.2f;
+
     [Header("Buildings")]
     [Tooltip("Five classes, one per kaiju size. HP is set so a matching size needs " +
              "about three swipes; the delta table below does the rest.")]

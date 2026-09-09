@@ -183,6 +183,9 @@ public class PlayerProgress : MonoBehaviour
         Shake(tuning.tierUpShake);
     }
 
+    /// <summary>Lets attacks shake the camera without each of them finding the rig.</summary>
+    public void ShakeExternal(float amount) => Shake(amount);
+
     void Shake(float amount)
     {
         if (rig == null && Camera.main != null) rig = Camera.main.GetComponent<CameraRig>();
