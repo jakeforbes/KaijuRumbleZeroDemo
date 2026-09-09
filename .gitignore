@@ -48,3 +48,6 @@ desktop.ini
 # Crash reports
 sysinfo.txt
 crashlytics-build.properties
+
+# Stray nested repo, not part of the Unity project
+/KaijuRumbleZero/
