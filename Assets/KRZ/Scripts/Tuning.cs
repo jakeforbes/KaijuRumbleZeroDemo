@@ -165,7 +165,19 @@ public class Tuning : ScriptableObject
              "multiply from here rather than from a boosted first stack.")]
     public float stompDamage = 22.5f;
     public float stompCooldown = 4f;
-    public float stompRadius = 2.6f;
+
+    [Tooltip("Radius in world units at size 1. A ground tile is 2 wide, so 3.0 reaches " +
+             "about a tile and a half around the kaiju.")]
+    public float stompRadius = 3f;
+
+    [Tooltip("How the radius grows with size: radius x (scale ^ this). 1.0 quadruples " +
+             "it by size 5, which is sixteen times the area. 0.5 doubles it instead.")]
+    [Range(0f, 1f)] public float stompRadiusExponent = 0.5f;
+
+    [Tooltip("Stomp's damage against buildings only. It fires automatically with no " +
+             "aiming, so at full strength it demolishes whatever you happen to stand " +
+             "near and removes the choice of what to smash. Enemies still take full.")]
+    [Range(0f, 1f)] public float stompBuildingMultiplier = 0.35f;
 
     [Header("Upgrades")]
     public UpgradeType[] upgrades =

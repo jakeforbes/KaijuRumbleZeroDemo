@@ -105,7 +105,7 @@ public class PlayerSpecial : MonoBehaviour
 
     void Stomp(PlayerProgress progress)
     {
-        float radius = tuning.stompRadius * progress.Scale;
+        float radius = tuning.stompRadius * Mathf.Pow(progress.Scale, tuning.stompRadiusExponent);
         float damage = tuning.stompDamage * upgrades.StompPowerMul * progress.DamageMultiplier;
 
         Vector2 origin = transform.position;
@@ -116,7 +116,12 @@ public class PlayerSpecial : MonoBehaviour
         {
             var target = hits[i].GetComponentInParent<Damageable>();
             if (target == null || !target.IsAlive) continue;
-            target.TakeDamage(damage, origin);
+
+            // Buildings take a fraction. Stomp is automatic and unaimed, so at full
+            // strength it flattens whatever you stand near and takes the choice of
+            // what to smash away from the player. Enemies still take the full hit.
+            float dealt = target is Building ? damage * tuning.stompBuildingMultiplier : damage;
+            target.TakeDamage(dealt, origin);
         }
     }
 }
