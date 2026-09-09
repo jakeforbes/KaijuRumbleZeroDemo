@@ -57,16 +57,16 @@ public class PlayerController : MonoBehaviour
             Facing = FacingFromInput(raw);
             AimDir = desired.normalized;
         }
-
-        // Stage 3 replaces this with the growth system; for now it previews sizes.
-        if (!Mathf.Approximately(Scale, tuning.previewScale)) SetScale(tuning.previewScale);
     }
 
     void FixedUpdate()
     {
-        // Speed is flat here on purpose: Stage 3 owns the per-tier scaling, and
-        // Stage 1 exists to judge base movement feel without that confounding it.
-        Vector2 target = desired * tuning.moveSpeed;
+        // Speed compounds per tier, not with raw scale: a 4x kaiju moving 4x as fast
+        // would outrun the camera and the arena. Growth should feel like an upgrade,
+        // not a different game.
+        var progress = PlayerProgress.Instance;
+        float speed = tuning.moveSpeed * (progress != null ? progress.SpeedMultiplier : 1f);
+        Vector2 target = desired * speed;
         float rate = desired.sqrMagnitude > 0.001f ? tuning.acceleration : tuning.deceleration;
         body.linearVelocity = Vector2.MoveTowards(body.linearVelocity, target, rate * Time.fixedDeltaTime);
     }

@@ -13,6 +13,16 @@ public class CameraRig : MonoBehaviour
 
     Camera cam;
     Vector3 vel;
+    float shakeAmount;
+    float shakeLeft;
+    float shakeTotal;
+
+    public void Shake(float amount, float duration)
+    {
+        shakeAmount = Mathf.Max(shakeAmount, amount);
+        shakeTotal = duration;
+        shakeLeft = duration;
+    }
 
     void Awake()
     {
@@ -52,5 +62,15 @@ public class CameraRig : MonoBehaviour
         if (Mathf.Abs(offset.y) > boxH) want.y += offset.y - Mathf.Sign(offset.y) * boxH;
 
         transform.position = Vector3.SmoothDamp(pos, want, ref vel, tuning.followLag);
+
+        // Shake rides on top of the settled position so it never fights the follow.
+        if (shakeLeft > 0f)
+        {
+            shakeLeft -= Time.deltaTime;
+            float falloff = Mathf.Clamp01(shakeLeft / Mathf.Max(0.01f, shakeTotal));
+            float amp = shakeAmount * falloff * falloff;
+            transform.position += new Vector3(Random.Range(-amp, amp), Random.Range(-amp, amp) * 0.6f, 0f);
+            if (shakeLeft <= 0f) shakeAmount = 0f;
+        }
     }
 }

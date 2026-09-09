@@ -67,11 +67,12 @@ public class DebugHud : MonoBehaviour
         if (kb.f4Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
         if (kb.f10Key.wasPressedThisFrame) GameBootstrap.Restart();
 
-        // Stage 3 hands F2/F3 to the growth system; until then they preview sizes.
-        if (kb.f2Key.wasPressedThisFrame)
-            tuning.previewScale = Mathf.Min(4f, Mathf.Round(tuning.previewScale) + 1f);
-        if (kb.f3Key.wasPressedThisFrame)
-            tuning.previewScale = Mathf.Max(1f, Mathf.Round(tuning.previewScale) - 1f);
+        var progress = PlayerProgress.Instance;
+        if (progress != null)
+        {
+            if (kb.f2Key.wasPressedThisFrame) progress.GrowTier();
+            if (kb.f3Key.wasPressedThisFrame) progress.ShrinkTier();
+        }
 
         if (kb.leftBracketKey.wasPressedThisFrame)
             Time.timeScale = Mathf.Max(0.1f, Time.timeScale - 0.25f);
@@ -97,7 +98,10 @@ public class DebugHud : MonoBehaviour
             $"<b>KRZ — Stage 1</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
             $"pos  {player.transform.position.x:0.0}, {player.transform.position.y:0.0}\n" +
             $"speed  {player.Velocity.magnitude:0.00}   facing  {player.FacingName}\n" +
-            $"food  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.FoodTotal : 0f):0} total\n" +
+            $"size  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.SizeNumber : 1)}" +
+            $"   hp  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.Hp : 0f):0}" +
+            $"/{(PlayerProgress.Instance != null ? PlayerProgress.Instance.MaxHp : 0f):0}" +
+            $"   food  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.FoodTotal : 0f):0} total\n" +
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> colliders   <b>F10</b> restart   <b>[ ]</b> timescale   <b>\\</b> reset";
 
@@ -139,6 +143,9 @@ public class DebugHud : MonoBehaviour
                         Texture2D.whiteTexture);
 
         GUI.color = Color.white;
-        GUI.Label(bar, $"<b>FOOD</b>   {progress.FoodThisTier:0} / {progress.FoodForNextTier:0}", meterStyle);
+        string label = progress.AtMaxTier
+            ? $"<b>SIZE {progress.SizeNumber}</b>   MAX"
+            : $"<b>SIZE {progress.SizeNumber}</b>   {progress.FoodThisTier:0} / {progress.FoodForNextTier:0}";
+        GUI.Label(bar, label, meterStyle);
     }
 }

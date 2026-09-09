@@ -63,7 +63,8 @@ public class PlayerAttack : MonoBehaviour
             Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
             if (Vector2.Dot(flat, aimFlat) < cosHalfArc) continue;
 
-            target.TakeDamage(tuning.swipeDamage * player.Scale, origin);
+            float mul = PlayerProgress.Instance != null ? PlayerProgress.Instance.DamageMultiplier : 1f;
+            target.TakeDamage(tuning.swipeDamage * mul, origin);
             connected = true;
         }
 

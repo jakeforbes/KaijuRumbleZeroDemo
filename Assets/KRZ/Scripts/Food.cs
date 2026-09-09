@@ -14,12 +14,12 @@ public class Food : MonoBehaviour
     float value;
 
     Vector3 from, to;
+    Vector3 pos;          // logical ground position; the bob is applied on top
     float hopT;
     float hopTime;
     float hopHeight;
     float bobPhase;
     float spawnedAt;
-    bool homing;
     float magnetSpeed;
 
     public static void Scatter(Tuning tuning, Vector3 at, int count, bool richer, float ppu)
@@ -63,6 +63,7 @@ public class Food : MonoBehaviour
         // spreads pieces evenly across the disc instead of clumping them at the centre.
         Vector2 dir = Random.insideUnitCircle.normalized * Mathf.Sqrt(Random.Range(0.12f, 1f));
         f.from = at;
+        f.pos = at;
         f.to = at + new Vector3(dir.x, dir.y * tuning.isoSquash, 0f) * scatter;
         f.hopTime = tuning.foodHopTime * Random.Range(0.85f, 1.25f);
         f.hopHeight = 0.3f + dir.magnitude * 0.5f;   // further throws arc higher
@@ -75,36 +76,40 @@ public class Food : MonoBehaviour
         var progress = PlayerProgress.Instance;
         if (progress == null) return;
 
-        if (!homing && hopT < 1f)
+        // Thrown out of the collapse, not yet settled.
+        if (hopT < 1f)
         {
             hopT = Mathf.Min(1f, hopT + Time.deltaTime / hopTime);
-            // Ease out, plus an arc so it reads as thrown rather than slid.
-            float e = 1f - (1f - hopT) * (1f - hopT);
-            transform.position = Vector3.Lerp(from, to, e) + Vector3.up * (Mathf.Sin(hopT * Mathf.PI) * hopHeight);
+            float e = 1f - (1f - hopT) * (1f - hopT);   // ease out
+            pos = Vector3.Lerp(from, to, e);
+            transform.position = pos + Vector3.up * (Mathf.Sin(hopT * Mathf.PI) * hopHeight);
             return;
         }
 
-        Vector2 toPlayer = progress.transform.position - transform.position;
+        Vector3 playerPos = progress.transform.position;
+        Vector2 toPlayer = playerPos - pos;
 
-        // Compare on the unsquashed plane so the radius is a circle in world terms
-        // rather than the ellipse the projection would otherwise make it.
+        // Measure on the unsquashed plane, so the field is a circle in world terms
+        // rather than the ellipse the projection would otherwise make of it.
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
+        float radius = progress.InfluenceRadius;
 
-        if (!homing)
+        // Strength rises from nothing at the edge of the field to full at the player.
+        // The exponent is what makes distant food barely stir while close food is
+        // hauled in — a linear falloff reads as one uniform vacuum.
+        float wanted = 0f;
+        if (Time.time - spawnedAt >= tuning.foodArmDelay && flat < radius)
         {
-            if (Time.time - spawnedAt < tuning.foodArmDelay) { Bob(); return; }
-            if (flat > progress.PickupRadius) { Bob(); return; }
-            homing = true;
-            magnetSpeed = tuning.foodMagnetStartSpeed;
+            float t = 1f - flat / radius;
+            wanted = tuning.foodMagnetMaxSpeed * Mathf.Pow(t, tuning.foodPullFalloff);
         }
 
-        // Drifts off slowly and builds speed, so it reads as being pulled in rather
-        // than snapped in. By the time it reaches you it is moving fast.
-        magnetSpeed = Mathf.Min(tuning.foodMagnetMaxSpeed,
-                                magnetSpeed + tuning.foodMagnetAccel * Time.deltaTime);
+        magnetSpeed = Mathf.MoveTowards(magnetSpeed, wanted, tuning.foodMagnetAccel * Time.deltaTime);
+        if (magnetSpeed > 0.001f)
+            pos = Vector3.MoveTowards(pos, playerPos, magnetSpeed * Time.deltaTime);
 
-        transform.position = Vector2.MoveTowards(
-            transform.position, progress.transform.position, magnetSpeed * Time.deltaTime);
+        // Bob rides on top of the pulled position rather than fighting it.
+        transform.position = pos + Vector3.up * (Mathf.Sin(Time.time * 3.2f + bobPhase) * 0.05f);
 
         if (toPlayer.sqrMagnitude < 0.09f)
         {
@@ -112,13 +117,6 @@ public class Food : MonoBehaviour
             AudioEvents.Play(Sfx.FoodPickup, transform.position, 0.5f);
             Destroy(gameObject);
         }
-    }
-
-    void Bob()
-    {
-        var p = to;
-        p.y += Mathf.Sin(Time.time * 3.2f + bobPhase) * 0.05f;
-        transform.position = p;
     }
 
     static void EnsureSprites(float ppu)

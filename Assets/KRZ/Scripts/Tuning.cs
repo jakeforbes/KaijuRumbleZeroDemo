@@ -43,6 +43,36 @@ public class Tuning : ScriptableObject
     public float blockSpacingY = 3.5f;
     public int randomSeed = 1337;
 
+    [Header("Growth")]
+    [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
+             "Totals 600 across the run, the same as the four-size version did.")]
+    public float[] foodPerTier = { 75f, 125f, 175f, 225f };
+
+    [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
+             "sizes exist — everything else derives from this array's length.")]
+    public float[] tierScale = { 1f, 1.75f, 2.5f, 3.25f, 4f };
+
+    [Tooltip("Health cap at each tier. Reaching a tier heals you to its cap.")]
+    public float[] tierMaxHp = { 100f, 140f, 175f, 210f, 250f };
+
+    [Tooltip("How much of the gap to the next size is covered continuously as the meter " +
+             "fills, with the rest arriving as a jump at tier-up. 0 makes growth purely " +
+             "stepped, which is what makes most of a run read as nothing happening.")]
+    [Range(0f, 1f)] public float withinTierGrowth = 0.7f;
+
+    [Tooltip("Damage multiplier compounded per tier. Lowered from 1.35 when a fifth size " +
+             "was added, so four steps land on the same 2.45x total three steps did.")]
+    public float damagePerTier = 1.25f;
+
+    [Tooltip("Move speed multiplier compounded per tier. Growth should never feel slower. " +
+             "Lowered from 1.08 for the same reason as damage.")]
+    public float speedPerTier = 1.06f;
+
+    [Tooltip("How fast the body catches up to its target size. Lower is more elastic.")]
+    public float growthLerpSpeed = 7f;
+
+    public float tierUpShake = 0.5f;
+
     [Header("Footprints")]
     [Tooltip("Building collision diamond as a fraction of its drawn base. " +
              "1.0 matches the art exactly. Below 1.0 lets the player creep onto the base.")]
@@ -81,18 +111,21 @@ public class Tuning : ScriptableObject
     public float foodValueMedium = 5f;
     public float foodValueLarge = 20f;
 
-    [Tooltip("How close food has to be before it flies to you. Grows with size in Stage 3. " +
-             "Keep it tight so collecting is a decision rather than a side effect of walking.")]
-    public float pickupRadius = 1.8f;
+    [Tooltip("Outer edge of the pull field. Food further out is untouched. " +
+             "Grows with size in Stage 3.")]
+    public float foodInfluenceRadius = 6.5f;
 
-    [Tooltip("Speed food leaves at once it starts homing. Low reads as floaty.")]
-    public float foodMagnetStartSpeed = 1.2f;
+    [Tooltip("How sharply the pull falls off toward the edge. 1 is linear; higher makes " +
+             "distant food barely twitch while close food is yanked in. 2.5 is a strong curve.")]
+    [Range(1f, 5f)] public float foodPullFalloff = 2.5f;
 
-    [Tooltip("How hard it accelerates while homing, in units per second squared.")]
-    public float foodMagnetAccel = 14f;
+    [Tooltip("Speed at the moment food reaches you — the top of the curve. " +
+             "This is the overall strength of the pull.")]
+    public float foodMagnetMaxSpeed = 8f;
 
-    [Tooltip("Ceiling on homing speed, so it snaps in at the end rather than overshooting.")]
-    public float foodMagnetMaxSpeed = 16f;
+    [Tooltip("How quickly a piece takes up the speed the field is asking for. " +
+             "Lower feels heavier and laggier.")]
+    public float foodMagnetAccel = 13.3f;
 
     [Tooltip("How far food is thrown by a small building, in world units.")]
     public float foodScatter = 3.4f;
@@ -117,9 +150,6 @@ public class Tuning : ScriptableObject
 
     [Tooltip("Seconds to fade in and out. Too fast reintroduces the pop, too slow smears.")]
     [Range(0.02f, 0.6f)] public float occluderFadeTime = 0.12f;
-
-    [Header("Player size (previewed here, driven by growth in Stage 3)")]
-    [Range(1f, 4f)] public float previewScale = 1f;
 
     [Header("Debug")]
     public bool showDebugHud = true;

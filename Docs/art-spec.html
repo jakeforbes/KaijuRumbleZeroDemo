@@ -377,7 +377,7 @@
       </div>
 
       <h3>Why the kaiju renders at 512 when it starts at 128</h3>
-      <p>The kaiju grows to <strong>4&times; its starting size</strong> across a run. Rather than four sets of art, one sprite is scaled in-engine: 128&nbsp;px tall at size 1, 512&nbsp;px at size 4. The camera zooms out as the player grows, so the largest it is ever <em>seen</em> is around 256&nbsp;px. Rendering at 512 means every scale is a downscale (sharp) rather than an upscale (soft), leaves a 2&times; margin, and covers a 4K build later without re-rendering.</p>
+      <p>The kaiju grows to <strong>4&times; its starting size</strong> across a run, through <strong>five size thresholds</strong>. Rather than five sets of art, one sprite is scaled in-engine: 128&nbsp;px tall at size 1, 512&nbsp;px at size 5. The camera zooms out as the player grows, so the largest it is ever <em>seen</em> is around 256&nbsp;px. Rendering at 512 means every scale is a downscale (sharp) rather than an upscale (soft), leaves a 2&times; margin, and covers a 4K build later without re-rendering.</p>
       <p>Same logic applies to enemies: each is rendered at roughly double its maximum on-screen height.</p>
     </section>
 
@@ -394,10 +394,11 @@
             <tr><td class="name">Tank</td><td class="num">96 px</td><td class="dim">Squishable from size 3.</td></tr>
             <tr><td class="name">Kaiju &mdash; size 1</td><td class="num">128 px</td><td class="dim">Shorter than every building. Vulnerable.</td></tr>
             <tr><td class="name">Mech</td><td class="num">192 px</td><td class="dim">Squishable from size 4.</td></tr>
-            <tr><td class="name">Kaiju &mdash; size 2</td><td class="num">256 px</td><td class="dim">Matches the small blocks.</td></tr>
-            <tr><td class="name">Kaiju &mdash; size 3</td><td class="num">384 px</td><td class="dim">Over the small blocks, under the towers.</td></tr>
-            <tr><td class="name">Kaiju &mdash; size 4</td><td class="num">512 px</td><td class="dim">Taller than everything but the towers.</td></tr>
-            <tr><td class="name">Adult Abomination</td><td class="num">560 px</td><td class="dim">Deliberately edges out a size-4 kaiju.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 2</td><td class="num">224 px</td><td class="dim">Matches the small blocks.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 3</td><td class="num">320 px</td><td class="dim">Over the small blocks, under the towers.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 4</td><td class="num">416 px</td><td class="dim">Clears everything but the towers.</td></tr>
+            <tr><td class="name">Kaiju &mdash; size 5</td><td class="num">512 px</td><td class="dim">Tramples small blocks by walking through them.</td></tr>
+            <tr><td class="name">Adult Abomination</td><td class="num">560 px</td><td class="dim">Deliberately edges out a size-5 kaiju.</td></tr>
           </tbody>
         </table>
       </div>
