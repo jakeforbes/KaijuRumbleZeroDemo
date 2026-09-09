@@ -115,7 +115,7 @@ public class DebugHud : MonoBehaviour
 
         var cam = Camera.main;
         string text =
-            $"<b>KRZ — Stage 1</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
+            $"<b>KRZ</b>   {fps:0} fps   timescale {Time.timeScale:0.00}\n" +
             $"pos  {player.transform.position.x:0.0}, {player.transform.position.y:0.0}\n" +
             $"speed  {player.Velocity.magnitude:0.00}   facing  {player.FacingName}\n" +
             $"size  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.SizeNumber : 1)}" +
