@@ -155,6 +155,10 @@ public class Tuning : ScriptableObject
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
 
+    [Tooltip("Gap between the hits of a multi-hit swipe. Short enough to read as one " +
+             "flurry, long enough that each hit is visible.")]
+    public float swipeBurstInterval = 0.13f;
+
     [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
     public bool showSwipeArc = true;
 
@@ -200,7 +204,8 @@ public class Tuning : ScriptableObject
                           weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
 
         new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
-                          effect = "Swipe reaches 25% further", perStack = 1.25f, maxStacks = 4,
+                          effect = "One extra swipe per attack, slightly longer reach",
+                          perStack = 1.12f, extraHitsPerStack = 1, maxStacks = 4,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
         new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",

@@ -15,6 +15,8 @@ public class PlayerAttack : MonoBehaviour
     PlayerController player;
     readonly List<Collider2D> hits = new();
     ContactFilter2D filter;
+    int pendingHits;
+    float nextHitAt;
 
     void Awake()
     {
@@ -29,12 +31,25 @@ public class PlayerAttack : MonoBehaviour
     {
         if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsDead) return;
 
+        // Land any remaining hits of the current burst. Claws turns one activation
+        // into several in quick succession, so the rhythm changes rather than the
+        // numbers: X...X...X becomes XX...XX...XX.
+        if (pendingHits > 0 && Time.time >= nextHitAt)
+        {
+            pendingHits--;
+            nextHitAt = Time.time + tuning.swipeBurstInterval;
+            Swipe();
+        }
+
         CooldownRemaining -= Time.deltaTime;
-        if (CooldownRemaining > 0f) return;
+        if (CooldownRemaining > 0f || pendingHits > 0) return;
 
         var up = PlayerUpgrades.Instance;
         CooldownRemaining = tuning.swipeCooldown * (up != null ? up.SwipeCooldownMul : 1f);
+
         Swipe();
+        pendingHits = up != null ? up.SwipeExtraHits : 0;
+        nextHitAt = Time.time + tuning.swipeBurstInterval;
     }
 
     void Swipe()

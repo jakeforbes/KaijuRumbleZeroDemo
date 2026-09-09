@@ -28,6 +28,10 @@ public class UpgradeType
              "a cooldown, above 1 for anything that grows.")]
     public float perStack = 1.2f;
 
+    [Tooltip("Extra swipes added to each activation, per stack. One stack turns " +
+             "X...X...X into XX...XX...XX rather than making X bigger.")]
+    public int extraHitsPerStack;
+
     public int maxStacks = 5;
 
     [Tooltip("Relative chance of being the one that drops.")]
