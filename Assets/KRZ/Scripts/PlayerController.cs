@@ -22,6 +22,9 @@ public class PlayerController : MonoBehaviour
 
     public Vector2 Velocity => body.linearVelocity;
 
+    /// <summary>Stick movement below this is treated as drift, not intent.</summary>
+    const float DeadZone = 0.2f;
+
     static readonly string[] FacingNames = { "s", "se", "e", "ne", "n", "nw", "w", "sw" };
     public string FacingName => FacingNames[Facing];
 
@@ -81,22 +84,29 @@ public class PlayerController : MonoBehaviour
 
     static Vector2 ReadInput()
     {
-        Vector2 v = Vector2.zero;
-
-        var pad = Gamepad.current;
-        if (pad != null) v = pad.leftStick.ReadValue();
-
+        Vector2 keys = Vector2.zero;
         var kb = Keyboard.current;
-        if (kb != null && v.sqrMagnitude < 0.04f)
+        if (kb != null)
         {
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) v.x -= 1f;
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) v.x += 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) v.y -= 1f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) v.y += 1f;
-            if (v.sqrMagnitude > 1f) v.Normalize();
+            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) keys.x -= 1f;
+            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) keys.x += 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) keys.y -= 1f;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) keys.y += 1f;
+            if (keys.sqrMagnitude > 1f) keys.Normalize();
         }
 
-        return v.sqrMagnitude < 0.04f ? Vector2.zero : v;
+        Vector2 pad = Vector2.zero;
+        var gamepad = Gamepad.current;
+        if (gamepad != null)
+        {
+            pad = gamepad.leftStick.ReadValue();
+            if (pad.sqrMagnitude < DeadZone * DeadZone) pad = Vector2.zero;
+        }
+
+        // Whichever is being pushed harder wins. Reading the pad first and only
+        // falling back to keys meant a controller with any stick drift silently
+        // locked out the keyboard and walked the kaiju on its own.
+        return pad.sqrMagnitude > keys.sqrMagnitude ? pad : keys;
     }
 
     /// <summary>Snaps any input direction to one of eight facings for sprite selection.</summary>
