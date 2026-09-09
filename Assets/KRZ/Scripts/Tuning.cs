@@ -81,7 +81,7 @@ public class Tuning : ScriptableObject
     public EnemyType[] enemyTypes =
     {
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
-                        contactDamage = 6f,  moveSpeed = 2.55f, attackRange = 0.9f,
+                        contactDamage = 6f,  moveSpeed = 1.28f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
