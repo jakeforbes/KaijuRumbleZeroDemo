@@ -240,18 +240,43 @@ public class GameBootstrap : MonoBehaviour
         return pc;
     }
 
-    /// <summary>Cheat spawn: a ring of enemies around the player, just off screen.</summary>
+    /// <summary>Cheat spawn: a ring of enemies around the player, at the screen edge.</summary>
     public void SpawnSwarm(int count, int typeIndex = 0)
     {
-        if (player == null || tuning.enemyTypes == null || tuning.enemyTypes.Length == 0) return;
+        if (player == null)
+        {
+            Debug.LogWarning("KRZ: no player, cannot spawn.");
+            return;
+        }
+        if (tuning.enemyTypes == null || tuning.enemyTypes.Length == 0)
+        {
+            Debug.LogWarning("KRZ: Tuning.enemyTypes is empty. Reset the Tuning asset or refill it.");
+            return;
+        }
 
         var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
+        int spawned = 0;
+
         for (int i = 0; i < count; i++)
         {
             float angle = i / (float)count * Mathf.PI * 2f + Random.value;
-            float r = Random.Range(7f, 10f);
-            var offset = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
-            Enemy.Spawn(tuning, type, player.transform.position + offset, tuning.pixelsPerUnit);
+
+            // Try a few radii outward. A dynamic body spawned inside a building gets
+            // violently depenetrated and flung off, so find clear ground first.
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                float r = 5.5f + attempt * 1.2f;
+                var at = player.transform.position +
+                         new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+
+                if (Physics2D.OverlapCircle(at, 0.5f) != null) continue;
+
+                Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+                spawned++;
+                break;
+            }
         }
+
+        Debug.Log($"KRZ: spawned {spawned}/{count} {type.name}. Total alive: {Enemy.All.Count}");
     }
 }
