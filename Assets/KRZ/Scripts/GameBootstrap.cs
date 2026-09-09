@@ -53,6 +53,7 @@ public class GameBootstrap : MonoBehaviour
         }
 
         Food.Reset();
+        Enemy.Reset();
         ClearScene();
         var cam = BuildCamera();
 
@@ -234,7 +235,23 @@ public class GameBootstrap : MonoBehaviour
         bsr.sprite = GreyboxArt.Capsule(96, 128, new Color(0.55f, 0.85f, 0.45f), ppu);
 
         fade.playerArt = bsr;
+        progress.bodyArt = bsr;
         pc.BindArt(art);
         return pc;
+    }
+
+    /// <summary>Cheat spawn: a ring of enemies around the player, just off screen.</summary>
+    public void SpawnSwarm(int count, int typeIndex = 0)
+    {
+        if (player == null || tuning.enemyTypes == null || tuning.enemyTypes.Length == 0) return;
+
+        var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
+        for (int i = 0; i < count; i++)
+        {
+            float angle = i / (float)count * Mathf.PI * 2f + Random.value;
+            float r = Random.Range(7f, 10f);
+            var offset = new Vector3(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+            Enemy.Spawn(tuning, type, player.transform.position + offset, tuning.pixelsPerUnit);
+        }
     }
 }

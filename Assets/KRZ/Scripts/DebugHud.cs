@@ -64,7 +64,7 @@ public class DebugHud : MonoBehaviour
         if (kb == null) return;
 
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
-        if (kb.f4Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
+        if (kb.f12Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
         if (kb.f10Key.wasPressedThisFrame) GameBootstrap.Restart();
 
         var progress = PlayerProgress.Instance;
@@ -72,6 +72,15 @@ public class DebugHud : MonoBehaviour
         {
             if (kb.f2Key.wasPressedThisFrame) progress.GrowTier();
             if (kb.f3Key.wasPressedThisFrame) progress.ShrinkTier();
+            if (kb.f6Key.wasPressedThisFrame) progress.godMode = !progress.godMode;
+        }
+
+        if (GameBootstrap.Instance != null)
+        {
+            // Shift picks the heavier species, so armour can be tested without waves.
+            bool heavy = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+            if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
+            if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
         }
 
         if (kb.leftBracketKey.wasPressedThisFrame)
@@ -103,7 +112,9 @@ public class DebugHud : MonoBehaviour
             $"/{(PlayerProgress.Instance != null ? PlayerProgress.Instance.MaxHp : 0f):0}" +
             $"   food  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.FoodTotal : 0f):0} total\n" +
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
-            $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> colliders   <b>F10</b> restart   <b>[ ]</b> timescale   <b>\\</b> reset";
+            $"enemies  {Enemy.All.Count}{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
+            $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
+            $"\n<b>F6</b> god   <b>F10</b> restart   <b>F12</b> colliders   <b>[ ]</b> timescale   <b>\\</b> reset";
 
         var size = style.CalcSize(new GUIContent(text));
         var rect = new Rect(12, 12, size.x + 16, size.y + 10);
@@ -147,5 +158,34 @@ public class DebugHud : MonoBehaviour
             ? $"<b>SIZE {progress.SizeNumber}</b>   MAX"
             : $"<b>SIZE {progress.SizeNumber}</b>   {progress.FoodThisTier:0} / {progress.FoodForNextTier:0}";
         GUI.Label(bar, label, meterStyle);
+
+        // Health sits directly above the food meter: the two numbers that decide a run.
+        const float hh = 12f;
+        float hy = y - hh - 5f;
+        var hbar = new Rect(x, hy, w, hh);
+        float frac = progress.MaxHp > 0f ? Mathf.Clamp01(progress.Hp / progress.MaxHp) : 0f;
+
+        GUI.color = new Color(0f, 0f, 0f, 0.60f);
+        GUI.DrawTexture(hbar, Texture2D.whiteTexture);
+
+        GUI.color = frac > 0.35f ? new Color(0.45f, 0.85f, 0.42f, 0.92f)
+                                 : new Color(0.93f, 0.30f, 0.26f, 0.95f);
+        GUI.DrawTexture(new Rect(x + 2f, hy + 2f, (w - 4f) * frac, hh - 4f), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        if (progress.IsDead) DrawGameOver();
+    }
+
+    void DrawGameOver()
+    {
+        var box = new Rect((Screen.width - 380f) * 0.5f, Screen.height * 0.38f, 380f, 92f);
+        GUI.color = new Color(0f, 0f, 0f, 0.78f);
+        GUI.DrawTexture(box, Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        var big = new GUIStyle(meterStyle) { fontSize = 26 };
+        GUI.Label(new Rect(box.x, box.y + 16f, box.width, 34f), "<b>GAME OVER</b>", big);
+        GUI.Label(new Rect(box.x, box.y + 52f, box.width, 24f),
+                  $"food eaten {PlayerProgress.Instance.FoodTotal:0}   —   F10 to restart", meterStyle);
     }
 }

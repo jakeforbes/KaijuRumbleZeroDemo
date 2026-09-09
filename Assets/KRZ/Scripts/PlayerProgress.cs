@@ -35,7 +35,21 @@ public class PlayerProgress : MonoBehaviour
     public float SpeedMultiplier => Mathf.Pow(tuning.speedPerTier, Tier);
     public float InfluenceRadius => tuning.foodInfluenceRadius * currentScale;
 
+    /// <summary>Set when the kaiju dies at size 1. The run is over until F10.</summary>
+    public bool IsDead { get; private set; }
+
+    public bool Invulnerable => Time.time < invulnerableUntil || godMode;
+    public float Scale => currentScale;
+
+    /// <summary>Body sprite, so damage can flash it.</summary>
+    public SpriteRenderer bodyArt;
+
+    public bool godMode;
+
     float currentScale = 1f;
+    float invulnerableUntil;
+    float flashUntil;
+    Color bodyColour;
     PlayerController controller;
     CameraRig rig;
 
@@ -63,6 +77,58 @@ public class PlayerProgress : MonoBehaviour
         currentScale = Mathf.Lerp(currentScale, TargetScale(),
                                   1f - Mathf.Exp(-tuning.growthLerpSpeed * Time.deltaTime));
         controller.SetScale(currentScale);
+
+        if (bodyArt == null) return;
+        if (bodyColour.a <= 0f) bodyColour = bodyArt.color;
+
+        if (Time.time < flashUntil) bodyArt.color = Color.white;
+        else if (Invulnerable) bodyArt.color = Color.Lerp(bodyColour, Color.white,
+                                                          Mathf.PingPong(Time.time * 8f, 1f) * 0.5f);
+        else bodyArt.color = bodyColour;
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (IsDead || Invulnerable) return;
+
+        Hp -= amount;
+        flashUntil = Time.time + 0.1f;
+        invulnerableUntil = Time.time + tuning.hitInvulnerability;
+        AudioEvents.Play(Sfx.PlayerHit, transform.position);
+        Shake(tuning.hitShake);
+
+        if (Hp <= 0f) Die();
+    }
+
+    void Die()
+    {
+        if (Tier <= 0)
+        {
+            IsDead = true;
+            Hp = 0f;
+            AudioEvents.Play(Sfx.Lose, transform.position);
+            Shake(tuning.tierUpShake * 1.5f);
+            return;
+        }
+
+        ShrinkTier();
+
+        // Buy space on the way down. Without this, whatever killed you is still
+        // standing on you at the lower tier and the run collapses in one bad moment.
+        invulnerableUntil = Time.time + tuning.shrinkInvulnerability;
+        Shockwave();
+    }
+
+    void Shockwave()
+    {
+        float radius = tuning.shockwaveRadius * currentScale;
+        foreach (var e in Enemy.All)
+        {
+            if (e == null) continue;
+            Vector2 d = e.transform.position - transform.position;
+            if (new Vector2(d.x, d.y / tuning.isoSquash).magnitude <= radius)
+                e.Push(transform.position, tuning.shockwaveForce);
+        }
     }
 
     /// <summary>

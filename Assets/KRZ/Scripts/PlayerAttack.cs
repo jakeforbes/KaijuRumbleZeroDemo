@@ -27,6 +27,8 @@ public class PlayerAttack : MonoBehaviour
 
     void Update()
     {
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsDead) return;
+
         CooldownRemaining -= Time.deltaTime;
         if (CooldownRemaining > 0f) return;
 

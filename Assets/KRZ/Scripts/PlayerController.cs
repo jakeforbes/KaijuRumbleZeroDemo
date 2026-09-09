@@ -46,7 +46,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        Vector2 raw = ReadInput();
+        var state = PlayerProgress.Instance;
+        Vector2 raw = state != null && state.IsDead ? Vector2.zero : ReadInput();
 
         // Squash the vertical component so movement matches the isometric projection.
         desired = new Vector2(raw.x, raw.y * tuning.isoSquash);

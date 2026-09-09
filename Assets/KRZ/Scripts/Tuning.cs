@@ -73,6 +73,41 @@ public class Tuning : ScriptableObject
 
     public float tierUpShake = 0.5f;
 
+    [Header("Enemies")]
+    public EnemyType[] enemyTypes =
+    {
+        new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
+                        contactDamage = 6f,  moveSpeed = 3.4f, attackRange = 0.9f,
+                        attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
+                        bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
+
+        new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
+                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f,
+                        attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
+                        bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
+
+        new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
+                        contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
+                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+    };
+
+    [Header("Survival")]
+    [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]
+    public float hitInvulnerability = 0.5f;
+
+    [Tooltip("Grace after shrinking a tier, so a death is a setback rather than a spiral.")]
+    public float shrinkInvulnerability = 1.5f;
+
+    [Tooltip("How far the shrink shockwave reaches, scaled by your size.")]
+    public float shockwaveRadius = 5f;
+    public float shockwaveForce = 16f;
+
+    [Tooltip("How close an outgrown enemy has to be to die underfoot, scaled by size.")]
+    public float squishRange = 0.85f;
+
+    public float hitShake = 0.18f;
+
     [Header("Footprints")]
     [Tooltip("Building collision diamond as a fraction of its drawn base. " +
              "1.0 matches the art exactly. Below 1.0 lets the player creep onto the base.")]
