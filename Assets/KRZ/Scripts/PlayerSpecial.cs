@@ -74,7 +74,9 @@ public class PlayerSpecial : MonoBehaviour
         Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
 
         AudioEvents.Play(Sfx.Blast, origin);
-        HitFx.Line(origin, origin + aim * range, new Color(0.55f, 0.9f, 1f), tuning.pixelsPerUnit, 0.22f);
+        // Drawn at the width it actually hits, so range and width are tunable by eye.
+        HitFx.Line(origin, origin + aim * range, new Color(0.55f, 0.9f, 1f),
+                   tuning.pixelsPerUnit, 0.22f, tuning.blastWidth);
         progress.ShakeExternal(tuning.hitShake * 1.4f);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);

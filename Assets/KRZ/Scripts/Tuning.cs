@@ -149,8 +149,11 @@ public class Tuning : ScriptableObject
     [Tooltip("One big number rather than chip damage: this is the answer to armour.")]
     public float blastDamage = 45f;
     public float blastCooldown = 6f;
-    public float blastRange = 7f;
-    public float blastWidth = 1.6f;
+    public float blastRange = 14f;
+
+    [Tooltip("Full width of the beam in world units. A ground tile is 2 wide, so 1.0 " +
+             "is half a tile.")]
+    public float blastWidth = 1f;
 
     [Header("Stomp — granted by the upgrade")]
     public float stompDamage = 18f;

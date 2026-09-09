@@ -17,8 +17,12 @@ public class HitFx : MonoBehaviour
 
     public static void Reset() => root = null;
 
-    /// <summary>A tracer between two points, for attacks that land at range.</summary>
-    public static void Line(Vector3 from, Vector3 to, Color colour, float ppu, float life = 0.14f)
+    /// <summary>
+    /// A tracer between two points. Thickness is in world units, so a beam can be
+    /// drawn at the width it actually hits rather than as a hairline.
+    /// </summary>
+    public static void Line(Vector3 from, Vector3 to, Color colour, float ppu,
+                            float life = 0.14f, float thickness = 0.1f)
     {
         EnsureSprites(ppu);
         var go = New("tracer", from, colour, 3);
@@ -28,8 +32,9 @@ public class HitFx : MonoBehaviour
         if (len < 0.01f) return;
 
         go.transform.right = delta.normalized;
-        // The bar sprite is 64 px long with a left-edge pivot, so this scales it to reach.
-        go.transform.localScale = new Vector3(len / (64f / ppu), 0.09f, 1f);
+        // The bar sprite is 64 x 8 px with a left-edge pivot, so both axes convert
+        // from world units through the sprite's own size.
+        go.transform.localScale = new Vector3(len / (64f / ppu), thickness / (8f / ppu), 1f);
 
         Finish(go, life);
     }
