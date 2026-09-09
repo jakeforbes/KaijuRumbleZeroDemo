@@ -74,8 +74,12 @@ public class PlayerSpecial : MonoBehaviour
         Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
 
         AudioEvents.Play(Sfx.Blast, origin);
-        // Drawn at the width it actually hits, so range and width are tunable by eye.
-        HitFx.Line(origin, origin + aim * range, new Color(0.55f, 0.9f, 1f),
+        // Fired from roughly mouth height. The offset is visual only: hit detection
+        // stays on the ground plane, because that is where every footprint lives and
+        // a raised hit band would damage things the beam is not drawn over.
+        Vector3 muzzle = (Vector3)origin + Vector3.up * (tuning.blastOriginHeight * progress.Scale);
+
+        HitFx.Line(muzzle, muzzle + (Vector3)(aim * range), new Color(0.55f, 0.9f, 1f),
                    tuning.pixelsPerUnit, 0.22f, tuning.blastWidth);
         progress.ShakeExternal(tuning.hitShake * 1.4f);
 

@@ -155,6 +155,11 @@ public class Tuning : ScriptableObject
              "is half a tile.")]
     public float blastWidth = 1f;
 
+    [Tooltip("Height the beam is drawn from, in world units at size 1, scaling with the " +
+             "kaiju. The body is 1.0 tall, so 0.8 is about mouth height. Visual only — " +
+             "hits stay on the ground plane where the footprints are.")]
+    public float blastOriginHeight = 0.8f;
+
     [Header("Stomp — granted by the upgrade")]
     public float stompDamage = 18f;
     public float stompCooldown = 4f;
