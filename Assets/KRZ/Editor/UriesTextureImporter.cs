@@ -6,37 +6,52 @@ using UnityEngine;
 /// UriesSpriteImporter.cs shipped with the art package — same settings, pointed at
 /// where the frames live in this project.
 ///
-/// Runs once automatically after the frames are first imported, and can be re-run
-/// from the menu if settings ever drift.
+/// Runs automatically whenever it finds frames that are not yet configured, so it
+/// is self-healing rather than relying on a "have I run before" flag.
 /// </summary>
 public static class UriesTextureImporter
 {
     const string Root = "Assets/KRZ/Resources/Uries";
-    const string DoneKey = "KRZ_UriesTexturesConfigured";
 
     [InitializeOnLoadMethod]
-    static void AutoConfigureOnce()
+    static void AutoConfigure()
     {
-        if (SessionState.GetBool(DoneKey, false)) return;
         EditorApplication.delayCall += () =>
         {
             if (!AssetDatabase.IsValidFolder(Root)) return;
-            SessionState.SetBool(DoneKey, true);
-            if (Configure(silent: true) > 0)
-                Debug.Log("KRZ: Uries frames configured on first import.");
+            if (CountUnconfigured() == 0) return;
+            Configure();
         };
     }
 
     [MenuItem("KRZ/Configure Uries Textures")]
-    static void ConfigureFromMenu() =>
-        Debug.Log($"KRZ: configured {Configure(silent: false)} Uries textures.");
+    static void ConfigureFromMenu() => Configure();
 
-    static int Configure(bool silent)
+    /// <summary>Cheap probe so the automatic pass costs nothing once settings are right.</summary>
+    static int CountUnconfigured()
+    {
+        var guids = AssetDatabase.FindAssets("t:Texture2D", new[] { Root });
+        int n = 0;
+        foreach (var guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (AssetImporter.GetAtPath(path) is TextureImporter t && NeedsWork(t)) n++;
+        }
+        return n;
+    }
+
+    static bool NeedsWork(TextureImporter t) =>
+        t.textureType != TextureImporterType.Sprite ||
+        !Mathf.Approximately(t.spritePixelsPerUnit, 128f) ||
+        !t.alphaIsTransparency ||
+        t.textureCompression != TextureImporterCompression.Uncompressed;
+
+    static void Configure()
     {
         if (!AssetDatabase.IsValidFolder(Root))
         {
-            if (!silent) Debug.LogWarning($"KRZ: {Root} not found.");
-            return 0;
+            Debug.LogWarning($"KRZ: {Root} not found.");
+            return;
         }
 
         var guids = AssetDatabase.FindAssets("t:Texture2D", new[] { Root });
@@ -44,18 +59,17 @@ public static class UriesTextureImporter
 
         try
         {
-            AssetDatabase.StartAssetEditing();
-            foreach (var guid in guids)
+            for (int i = 0; i < guids.Length; i++)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
                 if (AssetImporter.GetAtPath(path) is not TextureImporter importer) continue;
+                if (!NeedsWork(importer)) continue;
 
-                // Already correct: skip, so re-running is cheap.
-                if (importer.textureType == TextureImporterType.Sprite &&
-                    Mathf.Approximately(importer.spritePixelsPerUnit, 128f) &&
-                    importer.alphaIsTransparency &&
-                    importer.textureCompression == TextureImporterCompression.Uncompressed)
-                    continue;
+                if (EditorUtility.DisplayCancelableProgressBar(
+                        "Configuring Uries frames",
+                        $"{i + 1} / {guids.Length}   {System.IO.Path.GetFileName(path)}",
+                        (i + 1) / (float)guids.Length))
+                    break;
 
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
@@ -73,16 +87,18 @@ public static class UriesTextureImporter
                 settings.spriteGenerateFallbackPhysicsShape = false;
                 importer.SetTextureSettings(settings);
 
-                EditorUtility.SetDirty(importer);
+                // SaveAndReimport is what actually writes the .meta and rebuilds the
+                // asset. SetDirty alone leaves the settings unapplied — which is what
+                // silently left every frame as a plain texture the first time round.
+                importer.SaveAndReimport();
                 changed++;
             }
         }
         finally
         {
-            AssetDatabase.StopAssetEditing();
-            AssetDatabase.Refresh();
+            EditorUtility.ClearProgressBar();
         }
 
-        return changed;
+        Debug.Log($"KRZ: configured {changed} Uries textures at 128 PPU, pivot (0.5, 0.12).");
     }
 }

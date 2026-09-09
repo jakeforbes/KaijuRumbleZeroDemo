@@ -52,6 +52,11 @@ public class UriesArt : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        // Drop anything cached from a previous play, so a run that started before
+        // the textures were configured does not poison the next one with nulls.
+        cache.Clear();
+
         // One probe tells us whether the art is present at all, so the build still
         // runs on greybox if the package has not been copied in.
         Available = Load(1, Clip.Idle, "south") != null;
