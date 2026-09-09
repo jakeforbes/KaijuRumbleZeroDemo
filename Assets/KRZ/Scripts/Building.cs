@@ -8,6 +8,9 @@ using UnityEngine;
 /// </summary>
 public class Building : Damageable
 {
+    /// <summary>Above the ground tiles at -100, below everything that sorts by Y at 0.</summary>
+    const int RubbleSortingOrder = -50;
+
     public Tuning tuning;
 
     public override bool IsAlive => hp > 0f;
@@ -107,6 +110,12 @@ public class Building : Damageable
         var rubble = new Color(0.20f, 0.20f, 0.23f);
         int rubbleHeight = Mathf.RoundToInt(GreyboxArt.TileH * 0.5f * (tilesX + tilesY) * 0.22f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, rubbleHeight, rubble, ppu);
+
+        // Taken off the Y-sort entirely. Rubble is walkable, so the player can stand
+        // north of it, and Y-sorting would then draw debris over them. Anything you
+        // can walk on should stay under you.
+        sr.sortingOrder = RubbleSortingOrder;
+        if (OccluderFade.Instance != null) OccluderFade.Instance.Unregister(sr);
 
         // Rubble is walkable, so the footprint goes away entirely.
         if (footprint != null) footprint.enabled = false;

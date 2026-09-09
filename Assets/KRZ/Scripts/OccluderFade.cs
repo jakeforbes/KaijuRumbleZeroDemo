@@ -12,12 +12,32 @@ using UnityEngine;
 /// </summary>
 public class OccluderFade : MonoBehaviour
 {
+    public static OccluderFade Instance { get; private set; }
+
     public Tuning tuning;
     public SpriteRenderer playerArt;
 
     readonly List<SpriteRenderer> occluders = new();
 
+    void Awake() => Instance = this;
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     public void Register(SpriteRenderer sr) => occluders.Add(sr);
+
+    /// <summary>Called when a building collapses — rubble can never occlude, so it stops being tracked.</summary>
+    public void Unregister(SpriteRenderer sr)
+    {
+        if (occluders.Remove(sr) && sr != null)
+        {
+            var c = sr.color;
+            c.a = 1f;
+            sr.color = c;
+        }
+    }
 
     void LateUpdate()
     {
