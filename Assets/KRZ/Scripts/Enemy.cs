@@ -178,6 +178,11 @@ public class Enemy : Damageable
         hp = 0f;
         if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);
+
+        if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
+            UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
+                                transform.position, tuning.pixelsPerUnit);
+
         Destroy(gameObject);
     }
 

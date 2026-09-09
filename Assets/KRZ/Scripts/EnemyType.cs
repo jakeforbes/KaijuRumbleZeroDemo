@@ -33,6 +33,10 @@ public class EnemyType
     public int foodDrops = 2;
     public float foodScatter = 1.2f;
 
+    [Tooltip("Leaves a power-up on death. Elites only — it is the reason to fight one " +
+             "rather than walk away from it.")]
+    public bool dropsUpgrade;
+
     [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
     public int bodyPx = 64;
 

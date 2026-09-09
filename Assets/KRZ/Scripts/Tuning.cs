@@ -94,7 +94,20 @@ public class Tuning : ScriptableObject
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+
+        // Elite grunt. Same silhouette and speed, ten times the health, double the
+        // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
+        // Ranged, so it stays dangerous even though you outrun it five to one.
+        new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
+                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f,
+                        attackCooldown = 1.8f, attackWindup = 0.5f,
+                        foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
+                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
     };
+
+    [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
+    public int commanderPerMin = 25;
+    public int commanderPerMax = 50;
 
     [Header("Survival")]
     [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]

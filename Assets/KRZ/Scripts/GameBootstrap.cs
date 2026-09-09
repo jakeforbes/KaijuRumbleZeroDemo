@@ -189,6 +189,26 @@ public class GameBootstrap : MonoBehaviour
             }
     }
 
+    public EnemyType FindType(string name)
+    {
+        if (tuning.enemyTypes == null) return null;
+        foreach (var t in tuning.enemyTypes)
+            if (t.name == name) return t;
+        return null;
+    }
+
+    /// <summary>Cheat spawn: one named enemy, for testing a type without waiting on the ratio.</summary>
+    public void SpawnOne(string typeName)
+    {
+        var type = FindType(typeName);
+        if (type == null || player == null) return;
+
+        float angle = Random.value * Mathf.PI * 2f;
+        var at = player.transform.position +
+                 new Vector3(Mathf.Cos(angle) * 6f, Mathf.Sin(angle) * 6f * tuning.isoSquash, 0f);
+        Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+    }
+
     static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)
     {
         if (types == null || types.Length == 0 || totalWeight <= 0f) return null;
@@ -266,10 +286,19 @@ public class GameBootstrap : MonoBehaviour
         }
 
         var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
+        var commander = FindType("Commander");
+        bool rollCommanders = type != commander && commander != null;
         int spawned = 0;
 
         for (int i = 0; i < count; i++)
         {
+            var spawning = type;
+            if (rollCommanders)
+            {
+                int per = Random.Range(tuning.commanderPerMin, tuning.commanderPerMax + 1);
+                if (per > 0 && Random.value < 1f / per) spawning = commander;
+            }
+
             float angle = i / (float)count * Mathf.PI * 2f + Random.value;
 
             // Try a few radii outward. A dynamic body spawned inside a building gets
@@ -282,7 +311,7 @@ public class GameBootstrap : MonoBehaviour
 
                 if (Physics2D.OverlapCircle(at, 0.5f) != null) continue;
 
-                Enemy.Spawn(tuning, type, at, tuning.pixelsPerUnit);
+                Enemy.Spawn(tuning, spawning, at, tuning.pixelsPerUnit);
                 spawned++;
                 break;
             }

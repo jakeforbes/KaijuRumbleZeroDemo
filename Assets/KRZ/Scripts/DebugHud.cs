@@ -89,6 +89,9 @@ public class DebugHud : MonoBehaviour
             bool heavy = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
             if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
             if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
+
+            // Commanders roll at roughly 1 in 37, so testing one needs a direct key.
+            if (kb.f11Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Commander");
         }
 
         if (kb.leftBracketKey.wasPressedThisFrame)
@@ -122,7 +125,7 @@ public class DebugHud : MonoBehaviour
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"enemies  {Enemy.All.Count}{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
-            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F12</b> colliders   <b>[ ]</b> timescale" +
+            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F11</b> commander   <b>F12</b> colliders   <b>[ ]</b> time" +
             $"\n<b>Space / E / pad A</b> blast";
 
         var size = style.CalcSize(new GUIContent(text));
