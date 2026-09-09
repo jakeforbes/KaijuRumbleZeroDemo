@@ -56,14 +56,21 @@ public class PlayerAttack : MonoBehaviour
             var target = hits[i].GetComponentInParent<Damageable>();
             if (target == null || !target.IsAlive) continue;
 
-            Vector2 delta = (Vector2)target.transform.position - origin;
-            if (delta.sqrMagnitude < 0.0001f) continue;
+            // Aim at the nearest point on the collider, not the object's centre. A
+            // tower's centre can be metres from the face you are standing against, so
+            // centre-based angles reject hits that visibly connect — which only shows
+            // up once the range is short.
+            Vector2 delta = hits[i].ClosestPoint(origin) - origin;
 
-            // Unsquash before measuring the angle, so the arc is the shape it looks
-            // like on the ground rather than a squashed version of itself.
-            Vector2 flat = new Vector2(delta.x, delta.y / tuning.isoSquash).normalized;
-            Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
-            if (Vector2.Dot(flat, aimFlat) < cosHalfArc) continue;
+            // Origin inside the collider: you are standing in it, so it is a hit.
+            if (delta.sqrMagnitude > 0.0001f)
+            {
+                // Unsquash before measuring the angle, so the arc is the shape it looks
+                // like on the ground rather than a squashed version of itself.
+                Vector2 flat = new Vector2(delta.x, delta.y / tuning.isoSquash).normalized;
+                Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
+                if (Vector2.Dot(flat, aimFlat) < cosHalfArc) continue;
+            }
 
             float mul = PlayerProgress.Instance != null ? PlayerProgress.Instance.DamageMultiplier : 1f;
             target.TakeDamage(tuning.swipeDamage * mul, origin);

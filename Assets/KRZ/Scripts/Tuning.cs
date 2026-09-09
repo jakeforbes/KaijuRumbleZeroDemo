@@ -134,8 +134,10 @@ public class Tuning : ScriptableObject
     public float swipeDamage = 10f;
     public float swipeCooldown = 2f;
 
-    [Tooltip("Reach in world units at size 1. Scales with the kaiju in Stage 3.")]
-    public float swipeRange = 2.2f;
+    [Tooltip("Reach in world units at size 1, measured from the kaiju's edge outward. " +
+             "Deliberately short: melee should mean getting close, with reach coming " +
+             "from upgrades. Scales with size so the animation reaches what it hits.")]
+    public float swipeRange = 1.3f;
 
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
