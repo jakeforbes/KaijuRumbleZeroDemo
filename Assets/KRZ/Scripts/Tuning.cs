@@ -161,7 +161,9 @@ public class Tuning : ScriptableObject
     public float blastOriginHeight = 0.8f;
 
     [Header("Stomp — granted by the upgrade")]
-    public float stompDamage = 18f;
+    [Tooltip("Damage at one stack, deliberately half of blastDamage. Extra stacks " +
+             "multiply from here rather than from a boosted first stack.")]
+    public float stompDamage = 22.5f;
     public float stompCooldown = 4f;
     public float stompRadius = 2.6f;
 

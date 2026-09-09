@@ -34,7 +34,21 @@ public class PlayerUpgrades : MonoBehaviour
     public float MoveSpeedMul => Mul(UpgradeId.Fleet);
     public float BlastCooldownMul => Mul(UpgradeId.Furnace);
     public float BlastPowerMul => Mul(UpgradeId.Beam);
-    public float StompPowerMul => Mul(UpgradeId.Stomp);
+    /// <summary>
+    /// Stomp is the one upgrade that creates an ability rather than modifying one,
+    /// so its first stack grants it at base power and only later stacks multiply.
+    /// Otherwise picking it up once already lands a boosted hit.
+    /// </summary>
+    public float StompPowerMul
+    {
+        get
+        {
+            int n = Count(UpgradeId.Stomp);
+            if (n <= 0) return 0f;
+            var type = Find(UpgradeId.Stomp);
+            return type == null ? 1f : Mathf.Pow(type.perStack, n - 1);
+        }
+    }
 
     /// <summary>perStack compounded by how many are held, so stacking is smooth.</summary>
     float Mul(UpgradeId id)
