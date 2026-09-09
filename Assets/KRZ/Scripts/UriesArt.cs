@@ -32,6 +32,10 @@ public class UriesArt : MonoBehaviour
     /// <summary>Sprites are 512 px tall; size 1 shows at 128 px, so the base is a quarter.</summary>
     public const float CanvasScale = 0.25f;
 
+    /// <summary>From the art spec and the package manifest, not from import settings.</summary>
+    public const float PixelsPerUnit = 128f;
+    public static readonly Vector2 Pivot = new(0.5f, 0.12f);
+
     public SpriteRenderer target;
     public PlayerController player;
 
@@ -118,6 +122,15 @@ public class UriesArt : MonoBehaviour
         target.flipX = DirFlip[facing];
     }
 
+    /// <summary>
+    /// Loads the raw textures and builds sprites in code, rather than loading
+    /// Sprite assets that depend on Unity import settings being right.
+    ///
+    /// A PNG imported with default settings is still a Texture2D, so this works on
+    /// a fresh clone with no menu item run and no per-machine setup — the same
+    /// reason the rest of the project builds itself at Play instead of being wired
+    /// in the Editor. Pivot and PPU come from the art spec, not from the .meta.
+    /// </summary>
     static Sprite[] Load(int level, Clip clip, string direction)
     {
         string key = $"Uries/Level_{level}/{ClipNames[(int)clip]}/{direction}";
@@ -125,11 +138,17 @@ public class UriesArt : MonoBehaviour
 
         int count = FrameCounts[clip];
         var frames = new Sprite[count];
+
         for (int i = 0; i < count; i++)
         {
             string file = $"uries_l{level}_{ClipNames[(int)clip]}_{direction}_{i:00}";
-            frames[i] = Resources.Load<Sprite>($"{key}/{file}");
-            if (frames[i] == null) { cache[key] = null; return null; }
+            var tex = Resources.Load<Texture2D>($"{key}/{file}");
+            if (tex == null) { cache[key] = null; return null; }
+
+            frames[i] = Sprite.Create(tex,
+                                      new Rect(0f, 0f, tex.width, tex.height),
+                                      Pivot, PixelsPerUnit,
+                                      0, SpriteMeshType.FullRect);
         }
 
         cache[key] = frames;
