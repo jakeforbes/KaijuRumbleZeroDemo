@@ -23,12 +23,14 @@ public class Tuning : ScriptableObject
     [Tooltip("Orthographic half-height. 4.21875 shows sprites 1:1 at 1080p with 128 PPU.")]
     public float baseOrthoSize = 4.21875f;
 
-    [Tooltip("Fraction of the screen the player can move within before the camera follows.")]
-    [Range(0f, 0.45f)] public float deadZoneX = 0.20f;
-    [Range(0f, 0.45f)] public float deadZoneY = 0.16f;
+    [Tooltip("Seconds for the camera to catch up. This is the only source of trailing — " +
+             "higher is looser and calmer, lower is tighter and busier.")]
+    public float followLag = 0.28f;
 
-    [Tooltip("Seconds for the camera to catch up. Higher is looser.")]
-    public float followLag = 0.18f;
+    [Tooltip("Hard cap on how far from centre the player can ever get, as a fraction of " +
+             "the half-screen. Smoothing alone lets a fast kaiju drift further the faster " +
+             "it moves; this is the box it can never leave.")]
+    [Range(0.05f, 0.5f)] public float maxPlayerOffset = 0.22f;
 
     [Tooltip("Camera zooms out by (player scale ^ this). 0.5 is square root, 0 is no zoom, " +
              "1.0 fully cancels the growth fantasy.")]
