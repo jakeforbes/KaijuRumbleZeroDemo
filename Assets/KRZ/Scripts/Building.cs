@@ -41,6 +41,8 @@ public class Building : Damageable
         ppu = pixelsPerUnit;
 
         sr = GetComponent<SpriteRenderer>();
+        // Match character ground-position sorting, independent of building height.
+        sr.spriteSortPoint = SpriteSortPoint.Pivot;
         footprint = GetComponent<PolygonCollider2D>();
 
         // Delivered art replaces the greybox box. Authored at 256x128 per tile, which

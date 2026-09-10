@@ -53,6 +53,9 @@ public class Enemy : Damageable
         var go = new GameObject(type.name);
         go.transform.SetParent(root, false);
         go.transform.position = at;
+        // Sort the entire enemy (including its health bar) from its ground position.
+        // Child sprite centres and UI sorting orders must not put it above a building.
+        go.AddComponent<UnityEngine.Rendering.SortingGroup>();
 
         var rb = go.AddComponent<Rigidbody2D>();
         rb.gravityScale = 0f;

@@ -456,6 +456,8 @@ public class GameBootstrap : MonoBehaviour
         if (UriesArt.Available) bodyGo.transform.localScale = Vector3.one * UriesArt.CanvasScale;
 
         fade.playerArt = bsr;
+        // OccluderFade compares ground pivots; render from that same point.
+        bsr.spriteSortPoint = SpriteSortPoint.Pivot;
         progress.bodyArt = bsr;
         pc.BindArt(art);
         return pc;
