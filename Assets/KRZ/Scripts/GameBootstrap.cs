@@ -189,13 +189,17 @@ public class GameBootstrap : MonoBehaviour
         int rows = Mathf.CeilToInt(spanY / (tileH * 0.5f)) + 8;
 
         LayGround(new GameObject("Ground").transform, landBounds.center, cols, rows,
-                  tileW, tileH, a, b, shallowA, shallowB);
+                  tileW, tileH, null, null, shallowA, shallowB);
     }
 
     /// <summary>
     /// Lays the interlocking diamond lattice. When shallow sprites are supplied, tiles
     /// whose centre falls outside the land are drawn as water instead of skipped, so
     /// the coast keeps the lattice instead of ending on a straight edge.
+    ///
+    /// Passing a null land sprite switches the floor to the generated city surface —
+    /// roads on the block boundaries, lots inside them. The Gym keeps the flat
+    /// checker, because a street plan drawn under a row of specimens is noise.
     /// </summary>
     void LayGround(Transform root, Vector2 centre, int cols, int rows, float tileW, float tileH,
                    Sprite a, Sprite b, Sprite shallowA, Sprite shallowB)
@@ -209,7 +213,9 @@ public class GameBootstrap : MonoBehaviour
 
                 bool even = (r + c) % 2 == 0;
                 bool water = shallowA != null && !landBounds.Contains(new Vector2(x, y));
-                Sprite sprite = water ? (even ? shallowA : shallowB) : (even ? a : b);
+                Sprite sprite = water ? (even ? shallowA : shallowB)
+                              : a != null ? (even ? a : b)
+                              : CityTile(x, y);
 
                 var go = new GameObject("t");
                 go.transform.SetParent(root, false);
@@ -224,6 +230,51 @@ public class GameBootstrap : MonoBehaviour
                 if (water) sr.color = new Color(1f, 1f, 1f, tuning.shallowOpacity);
             }
     }
+
+    /// <summary>
+    /// Picks a floor tile for a world position: road where it straddles a street
+    /// between blocks, kerb just off one, lot everywhere else.
+    ///
+    /// Tested in world units against the block gridlines rather than in tile indices,
+    /// because block spacing is 7 by 3.5 and tiles are 2 by 1 — the two grids do not
+    /// divide, and forcing them to would mean changing the city's spacing to suit its
+    /// paving. The road sprite is symmetrical, so being half a tile out of phase with
+    /// the street it marks does not show.
+    /// </summary>
+    Sprite CityTile(float x, float y)
+    {
+        // Streets run down the middle between block centres, hence the half offset.
+        float gx = Mathf.Abs(Mathf.Repeat(x / tuning.blockSpacingX + 0.5f, 1f) - 0.5f) * tuning.blockSpacingX;
+        float gy = Mathf.Abs(Mathf.Repeat(y / tuning.blockSpacingY + 0.5f, 1f) - 0.5f) * tuning.blockSpacingY;
+
+        float half = tuning.roadWidth * 0.5f;
+        bool onX = gx <= half;     // a street running north to south
+        bool onY = gy <= half;     // a street running east to west
+
+        if (onX && onY) return Floor(CityGroundArt.Kind.Crossing, 0);
+        if (onX) return Floor(CityGroundArt.Kind.RoadV, 0);
+        if (onY) return Floor(CityGroundArt.Kind.RoadU, 0);
+
+        if (gx <= half + tuning.kerbWidth || gy <= half + tuning.kerbWidth)
+            return Floor(CityGroundArt.Kind.Kerb, 0);
+
+        // Lot variety is hashed off the position, so it is stable across a rebuild
+        // and does not need the seeded generator threaded down here.
+        int hash = Mathf.Abs(Mathf.RoundToInt(x * 7.3f) * 73856093 ^ Mathf.RoundToInt(y * 11.7f) * 19349663);
+        return Floor(CityGroundArt.Kind.Lot, hash % 4);
+    }
+
+    Sprite Floor(CityGroundArt.Kind kind, int variant)
+    {
+        int key = (int)kind * 8 + variant;
+        if (floorTiles.TryGetValue(key, out var s)) return s;
+
+        s = CityGroundArt.Tile(kind, variant, tuning.pixelsPerUnit);
+        floorTiles[key] = s;
+        return s;
+    }
+
+    readonly System.Collections.Generic.Dictionary<int, Sprite> floorTiles = new();
 
     /// <summary>
     /// Deep water, and the walls that make it impassable.

@@ -120,6 +120,16 @@ public class Tuning : ScriptableObject
              "across a district, since going to get one is the whole decision.")]
     public int hamburgerPx = 96;
 
+    [Header("City floor")]
+    [Tooltip("Width of the streets between blocks, in world units. Roads are drawn on " +
+             "the block boundaries, so this is how much of each street is carriageway " +
+             "rather than kerb and lot.")]
+    public float roadWidth = 2.4f;
+
+    [Tooltip("Kerb strip either side of a road, in world units. Its whole job is to " +
+             "stop lots from meeting tarmac on a hard line.")]
+    public float kerbWidth = 0.9f;
+
     [Header("Ocean")]
     [Tooltip("Walkable ground kept outside the outermost buildings, in world units. " +
              "This is the beach: enough to fight along without the shoreline reading " +
