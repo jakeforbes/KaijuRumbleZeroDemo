@@ -23,14 +23,26 @@ public class Building : Damageable
 
     float hp;
     float maxHp;
-    bool damagedShown;
     bool usingArt;
+
+    /// <summary>Four states, any of which may be null. Never goes backwards.</summary>
+    Sprite[] stages;
+    int stage;
+    bool mirrored;
 
     SpriteRenderer sr;
     PolygonCollider2D footprint;
     HealthBar bar;
 
-    public void Init(Tuning t, BuildingType buildingType, int tx, int ty, int heightPx, float pixelsPerUnit)
+    /// <summary>
+    /// <paramref name="flipped"/> is set when the placer swapped a non-square footprint.
+    /// Art is authored in one orientation only, but mirroring a sprite horizontally maps
+    /// a 1x2 ground diamond exactly onto a 2x1 one in this projection — the corner sets
+    /// come out identical — so a mirror stands in for the rotation and the city keeps
+    /// its variety instead of every Row facing the same way.
+    /// </summary>
+    public void Init(Tuning t, BuildingType buildingType, int tx, int ty, int heightPx,
+                     float pixelsPerUnit, bool flipped = false)
     {
         tuning = t;
         SoundPlayer.Attach(gameObject, t.buildingSounds);
@@ -47,13 +59,13 @@ public class Building : Damageable
 
         // Delivered art replaces the greybox box. Authored at 256x128 per tile, which
         // is this project's own scale at 128 PPU, so it drops straight in at 1:1.
-        var sprite = BuildingArt.Load(type.artSprite, tilesX, tilesY, ppu);
-        if (sprite != null)
-        {
-            sr.sprite = sprite;
-            sr.color = Color.white;
-            usingArt = true;
-        }
+        mirrored = flipped;
+
+        // The art is authored for the type's declared footprint, so it is loaded
+        // against those tiles rather than the swapped ones the collider uses.
+        stages = BuildingArt.LoadStages(type.artSprite, type.tilesX, type.tilesY, ppu);
+        usingArt = stages[BuildingArt.Pristine] != null;
+        if (usingArt) ApplyStage();
 
         maxHp = type.hp;
         hp = maxHp;
@@ -84,30 +96,61 @@ public class Building : Damageable
 
         if (hp <= 0f) { Collapse(); return; }
 
-        if (!damagedShown && hp <= maxHp * 0.5f) ShowDamaged();
+        UpdateStage();
         ShowBar();
     }
 
-    void ShowDamaged()
+    /// <summary>
+    /// Two damage steps on the way down, at two thirds and one third. Only ever
+    /// advances — healing is not a thing here, and a building flickering back to
+    /// pristine on a rounding error would read as a bug.
+    /// </summary>
+    void UpdateStage()
     {
-        damagedShown = true;
-        AudioEvents.Play(Sfx.BuildingStageChanged, transform.position, owner: gameObject);
+        float frac = maxHp > 0f ? hp / maxHp : 0f;
+        int want = frac > 0.66f ? BuildingArt.Pristine
+                 : frac > 0.33f ? BuildingArt.Damaged1
+                 : BuildingArt.Damaged2;
 
-        // Only a pristine render was delivered, so an art building darkens in place
-        // rather than swapping to a second sprite. Keeping the silhouette also keeps
-        // the footprint honest — a shorter box would stop matching its collider.
+        if (want <= stage) return;
+
+        stage = want;
+        AudioEvents.Play(Sfx.BuildingStageChanged, transform.position, owner: gameObject);
+        ApplyStage();
+    }
+
+    /// <summary>
+    /// Three ways to show a state, in descending order of how good it looks: a real
+    /// render for that state, a darkened pristine render, or a slumped greybox box.
+    /// Every type falls into whichever it has art for.
+    /// </summary>
+    void ApplyStage()
+    {
+        if (usingArt && stages[stage] != null)
+        {
+            sr.sprite = stages[stage];
+            sr.flipX = mirrored;
+            sr.color = new Color(1f, 1f, 1f, sr.color.a);
+            return;
+        }
+
         if (usingArt)
         {
-            float t = type.damagedTint;
+            // Pristine render only. Darkening in place keeps the silhouette, which
+            // keeps the footprint honest — a shorter box would stop matching its
+            // collider. Two steps down so the second hit still reads as progress.
+            float t = Mathf.Lerp(1f, type.damagedTint, stage / (float)BuildingArt.Damaged2);
             sr.color = new Color(t, t, t, sr.color.a);
             return;
         }
 
-        // Slumped and drained of colour, so the state reads at a glance in greybox.
-        var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
+        // Greybox: slumped and drained of colour, so the state reads at a glance.
+        sr.flipX = false;
+        float slump = stage == BuildingArt.Damaged1 ? 0.82f : 0.62f;
+        var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f),
+                               0.25f * stage + 0.20f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY,
-                                      Mathf.RoundToInt(fullHeightPx * 0.72f), faded, ppu);
-
+                                      Mathf.RoundToInt(fullHeightPx * slump), faded, ppu);
     }
 
     /// <summary>Created on first damage, not up front — an intact building says nothing.</summary>
@@ -183,13 +226,27 @@ public class Building : Damageable
 
         if (bar != null) Destroy(bar.gameObject);
 
-        // No rubble render was delivered, so every building — art or greybox — falls
-        // back to the greybox debris box. Its colour is baked into the sprite, so the
-        // damaged tint has to come back off the renderer or the debris reads black.
-        var rubble = new Color(0.20f, 0.20f, 0.23f);
-        int rubbleHeight = Mathf.RoundToInt(GreyboxArt.TileH * 0.5f * (tilesX + tilesY) * 0.22f);
-        sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, rubbleHeight, rubble, ppu);
+        stage = BuildingArt.Destroyed;
+
+        // A destroyed render if one was delivered, otherwise the greybox debris box.
+        // Either way the tint comes back off the renderer: the greybox colour is baked
+        // into its sprite, so leaving a damage tint on would make the debris read black.
         sr.color = new Color(1f, 1f, 1f, sr.color.a);
+
+        if (usingArt && stages[BuildingArt.Destroyed] != null)
+        {
+            sr.sprite = stages[BuildingArt.Destroyed];
+            sr.flipX = mirrored;
+        }
+        else
+        {
+            // IsoBox is built from the swapped tiles directly, so the mirror that
+            // stands in for a rotation has to come back off or it flips twice.
+            sr.flipX = false;
+            var rubble = new Color(0.20f, 0.20f, 0.23f);
+            int rubbleHeight = Mathf.RoundToInt(GreyboxArt.TileH * 0.5f * (tilesX + tilesY) * 0.22f);
+            sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, rubbleHeight, rubble, ppu);
+        }
 
         // Taken off the Y-sort entirely. Rubble is walkable, so the player can stand
         // north of it, and Y-sorting would then draw debris over them. Anything you

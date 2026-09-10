@@ -17,8 +17,11 @@ public enum SpecialAction
     MissileVolley,
     DeployTroops,
 
-    /// <summary>Hurls the player away, and into whatever is behind them.</summary>
-    Roar,
+    /// <summary>
+    /// Hurls the player away, and into whatever is behind them. The Abomination's roar
+    /// and a heavy mech's punch are the same action with different numbers.
+    /// </summary>
+    Knockback,
 }
 
 /// <summary>
@@ -97,6 +100,20 @@ public class EnemyType
     [Tooltip("Will not trigger from further than this, so off-screen enemies stay quiet.")]
     public float specialRange = 18f;
 
+    [Header("Special: knockback")]
+    [Tooltip("Damage the shove itself deals. 0 makes it pure displacement, which is " +
+             "what the Abomination's roar is — losing your position mid-fight is the " +
+             "punishment. A mech's punch sets this high and its cooldown long.")]
+    public float specialDamage;
+
+    [Tooltip("How far the player is thrown, in world units. 0 falls back to " +
+             "Tuning.knockbackDistance.")]
+    public float specialKnockback;
+
+    [Tooltip("Sound for the shove. Each unit's own Sound Player prefab can point this " +
+             "at a different clip, so a roar and a punch never share one.")]
+    public Sfx specialSound = Sfx.BossRoar;
+
     [Header("Special: missile volley")]
     public int volleyCount = 8;
     public float missileDamage = 12f;
@@ -131,6 +148,15 @@ public class EnemyType
              "With delivered art this is only the collider and shadow size — the " +
              "sprite's own scale comes from artDisplayPx.")]
     public int bodyPx = 64;
+
+    [Tooltip("Rigidbody mass. 0 derives it from bodyPx, which is right for everything " +
+             "the kaiju is meant to brush aside. The player's mass grows with the " +
+             "square of size and reaches 900 at size 5, so anything that should stand " +
+             "its ground against a full-grown kaiju has to say so here.")]
+    public float mass;
+
+    [Tooltip("Draws arcs of electricity across the body. Purely cosmetic.")]
+    public bool electrified;
 
     [Header("Delivered art (blank = greybox)")]
     [Tooltip("Resources folder holding the frames, e.g. \"Mech\".")]

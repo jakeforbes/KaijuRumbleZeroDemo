@@ -91,9 +91,11 @@ public class DebugHud : MonoBehaviour
             if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
             if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
 
-            // Direct spawns for anything the swarm key cannot reach.
+            // Direct spawns for anything the swarm key cannot reach. Ctrl is a third
+            // modifier rather than another key, so the F-row stays learnable.
+            bool brawler = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             if (kb.f11Key.wasPressedThisFrame)
-                GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
+                GameBootstrap.Instance.SpawnOne(brawler ? "Bruiser" : heavy ? "Mech" : "Commander");
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
             if (kb.f8Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Scavenger" : "Dropship");

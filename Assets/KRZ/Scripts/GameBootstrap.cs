@@ -177,7 +177,8 @@ public class GameBootstrap : MonoBehaviour
 
                 // Flip non-square footprints so the grid does not read as one repeated shape.
                 int tilesX = type.tilesX, tilesY = type.tilesY;
-                if (type.AllowsFlip && rng.Next(0, 2) == 0) (tilesX, tilesY) = (tilesY, tilesX);
+                bool flipped = type.AllowsFlip && rng.Next(0, 2) == 0;
+                if (flipped) (tilesX, tilesY) = (tilesY, tilesX);
 
                 int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
 
@@ -207,7 +208,7 @@ public class GameBootstrap : MonoBehaviour
                 col.points = points;
 
                 // Init last: it caches the collider and sprite renderer.
-                building.Init(tuning, type, tilesX, tilesY, heightPx, ppu);
+                building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped);
             }
     }
 

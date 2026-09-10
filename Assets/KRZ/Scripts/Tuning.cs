@@ -186,6 +186,30 @@ public class Tuning : ScriptableObject
                         artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
+        // Bruiser. The same chassis a fifth larger, with the missiles taken away and a
+        // punch put in — the one thing in the roster that closes on you deliberately
+        // and wants to be in your face.
+        //
+        // Everything about it is the long telegraph. 1.5 seconds planted, a punch reach
+        // barely longer than its own arm, and nine seconds before it can do it again.
+        // Read it and you walk out of the ring for free; miss it and you lose a third
+        // of your health and your position at once. That trade is the whole unit.
+        //
+        // Heavier than the player until size 4, so it shoulders you around rather than
+        // being brushed aside like the rest of the roster.
+        new EnemyType { name = "Bruiser", sizeClass = 2, hp = 190f, armour = 14f,
+                        contactDamage = 30f, moveSpeed = 1.55f, attackRange = 1.8f,
+                        attackCooldown = 1.8f, attackWindup = 0.5f,
+                        foodDrops = 14, foodScatter = 3.5f,
+                        special = SpecialAction.Knockback,
+                        specialCooldown = 9f, specialWindup = 1.5f, specialRange = 4.5f,
+                        specialDamage = 85f, specialKnockback = 7f,
+                        specialSound = Sfx.MechPunch,
+                        bodyPx = 470, mass = 420f, colour = new Color(0.95f, 0.50f, 0.28f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 470,
+                        footprintFraction = 0.34f, artFrameDigits = 4, artFirstFrame = 1,
+                        artTint = new Color(1f, 0.62f, 0.42f) },
+
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
         // so it replaces the cut Barracks with something mobile and killable. Ignoring
         // it costs you the swarm rather than health, which makes it a priority target
@@ -237,13 +261,39 @@ public class Tuning : ScriptableObject
         // at size 5 turns a boss into a stationary target you circle. The knockback
         // takes your spacing away and hands it back on the boss's terms — and points
         // you at whatever building is behind you.
+        // Built from the player's own size-5 frames, recoloured and a fifth larger.
+        // A boss that is unmistakably your own kind, bigger, is a cheaper and clearer
+        // read than any amount of new art would have been — and the size difference
+        // does the talking the moment it walks on.
+        //
+        // artDisplayPx 922 is not arbitrary: a 512 frame at 128 PPU is 4 world units,
+        // so 922/512 of that is 7.2 — exactly 20% over the player's 6 at size 5.
+        //
+        // Mass 900 matches a size-5 kaiju's own, so the two of them shove rather than
+        // one bulldozing the other. Everything else in the roster is meant to be
+        // brushed aside; this is the one thing that is not.
+        //
+        // The roar deals no damage on purpose. Losing your position and your footing
+        // in the middle of the only fight that matters is the punishment, and the
+        // building you land in takes the hit instead.
         new EnemyType { name = "Abomination", sizeClass = 4, hp = 2400f, armour = 12f,
                         contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
-                        special = SpecialAction.Roar,
+                        special = SpecialAction.Knockback,
                         specialCooldown = 7f, specialWindup = 1.1f, specialRange = 9f,
+                        specialSound = Sfx.BossRoar,
                         foodDrops = 0, foodScatter = 4f,
-                        bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
+                        bodyPx = 700, mass = 900f, electrified = true,
+                        colour = new Color(0.45f, 0.85f, 0.40f),
+                        artFolder = "Uries/Level_5", artPrefix = "uries_l5",
+                        artPathFormat = "{root}/{clip}/{dir}/{prefix}_{clip}_{dir}_{frame}",
+                        artClipNames = new[] { "idle", "walk", "swipe", "hit", "hit" },
+                        artDirectionStyle = DirectionStyle.LongLower, artMirrored = true,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 8, attackFrames = 6,
+                        hitFrames = 3, deathFrames = 3,
+                        artDisplayPx = 922, footprintFraction = 0.45f,
+                        artTint = new Color(0.45f, 1f, 0.55f) },
     };
 
     [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
@@ -317,6 +367,17 @@ public class Tuning : ScriptableObject
 
         new WaveEntry { label = "push", startTime = 145f,
                         enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
+
+        // Bruisers arrive after the Mech has taught you to keep moving, and ask the
+        // opposite: something that wants to be close, that you have to read rather
+        // than outrun. Two of them, so the second lands while the first is winding up
+        // — and Ahead puts one in your path rather than behind you, which is the only
+        // placement a punch this slow can survive.
+        new WaveEntry { label = "bruisers", startTime = 105f, endTime = 155f, interval = 40f,
+                        enemyType = "Bruiser", count = 1, shape = SpawnShape.Ahead },
+
+        new WaveEntry { label = "push", startTime = 150f,
+                        enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
 
         // The finale.
         new WaveEntry { label = "BOSS", startTime = 160f,
@@ -503,29 +564,45 @@ public class Tuning : ScriptableObject
              "about three swipes; the delta table below does the rest.")]
     public BuildingType[] buildingTypes =
     {
+        // Art paths are wired ahead of the frames existing. A missing file loads as
+        // null and the type stays on greybox, so the next delivery is a file drop
+        // rather than another pass through here.
         new BuildingType { name = "Shack",    sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
+                           artSprite = "Buildings/civilian_1x1",
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
-        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 2, tilesY = 1,
+        // Declared 1x2 rather than 2x1 to match the orientation the art is authored
+        // in. The placer still flips half of them; a flipped one mirrors the sprite,
+        // which lands exactly on the swapped footprint in this projection.
+        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
                            foodDrops = 9,  foodScatter = 3.2f, weight = 25f,
+                           artSprite = "Buildings/civilian_1x2",
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
         new BuildingType { name = "Wide Low", sizeClass = 2, tilesX = 2, tilesY = 2,
                            minHeightPx = 190, maxHeightPx = 260, hp = 47f,
                            foodDrops = 14, foodScatter = 4.2f, weight = 20f,
+                           artSprite = "Buildings/civilian_2x2",
                            colour = new Color(0.29f, 0.27f, 0.37f) },
 
+        // Shares Wide Low's render, because the delivered set has one 2x2 civilian and
+        // this roster has two. In greybox they read apart by height; in art they will
+        // not. Either the artist adds a tall 2x2, or this moves to the 3x3 footprint
+        // and takes civilian_3x3 — which is currently the one delivered civilian with
+        // nothing pointing at it.
         new BuildingType { name = "Block",    sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 15f,
+                           artSprite = "Buildings/civilian_2x2",
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
         new BuildingType { name = "Tower",    sizeClass = 4, tilesX = 1, tilesY = 3,
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
                            foodDrops = 34, foodScatter = 7f,  weight = 10f,
+                           artSprite = "Buildings/civilian_1x3",
                            colour = new Color(0.25f, 0.26f, 0.42f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
@@ -534,12 +611,13 @@ public class Tuning : ScriptableObject
         new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
                            foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
+                           artSprite = "Buildings/laboratory_1x2",
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
-                           artSprite = "Buildings/laboratory",
+                           artSprite = "Buildings/laboratory_2x2",
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and

@@ -40,6 +40,7 @@ public enum Sfx
     ReactorPulse,
     BuildingStageChanged,
     BossRoar,
+    MechPunch,
     KaijuImpact
 }
 

@@ -56,13 +56,17 @@ public class BuildingType
     [Tooltip("Relative chance of being picked when the city is generated.")]
     public float weight = 30f;
 
-    [Tooltip("Resources path to a pristine still, e.g. \"Buildings/laboratory\". Blank " +
-             "leaves this type on greybox. The art is authored at 256x128 per tile, " +
-             "which is exactly this project's scale, so it needs no scaling.")]
+    [Tooltip("Resources path stem for this building's art, e.g. \"Buildings/reactor_1x1\". " +
+             "Four states are looked for beside it — _pristine, _damaged_1, _damaged_2 " +
+             "and _destroyed — and any that are missing fall back. Blank leaves this " +
+             "type on greybox.\n\n" +
+             "The art is authored at 256x128 per tile, which is exactly this project's " +
+             "scale, so it needs no scaling. A bare file with no suffix is still " +
+             "accepted as the pristine state, which is how the first delivery landed.")]
     public string artSprite = "";
 
-    [Tooltip("How much the sprite darkens when damaged. The delivered art is pristine " +
-             "only, so the middle state is a tint rather than a second render.")]
+    [Tooltip("How dark the sprite goes at the last damage step when only a pristine " +
+             "render exists. Ignored once real damage states are delivered.")]
     [Range(0f, 1f)] public float damagedTint = 0.55f;
 
     public Color colour = new Color(0.24f, 0.28f, 0.40f);

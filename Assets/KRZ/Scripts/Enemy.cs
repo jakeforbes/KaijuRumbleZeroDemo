@@ -5,7 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
-[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar)]
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar, Sfx.MechPunch)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -63,8 +63,9 @@ public class Enemy : Damageable
 
         // Mass by body size. The kaiju's mass scales with its own growth, so infantry
         // are brushed aside while a Mech still has real presence at size 1 — and by
-        // size 5 nothing short of the boss can move you.
-        rb.mass = Mathf.Max(0.2f, type.bodyPx / 64f);
+        // size 5 nothing short of the boss can move you. Anything that has to hold its
+        // ground against a full-grown kaiju states its own mass instead.
+        rb.mass = type.mass > 0f ? type.mass : Mathf.Max(0.2f, type.bodyPx / 64f);
 
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
@@ -110,6 +111,14 @@ public class Enemy : Damageable
             // and a 512px one sit side by side at their intended on-screen heights.
             float frameSize = Mathf.Max(1, type.artFrameSize);
             bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / frameSize);
+        }
+
+        // Sized off the drawn sprite rather than bodyPx, so arcs cover the figure the
+        // player can see instead of the collider they cannot.
+        if (type.electrified)
+        {
+            float drawn = (e.art != null ? type.artDisplayPx : type.bodyPx) / ppu;
+            ElectricFx.Attach(go, drawn, drawn * 0.30f, ppu, new Color(0.75f, 1f, 1f));
         }
 
         e.nextVolleyAt = Time.time + type.specialCooldown;
@@ -365,23 +374,27 @@ public class Enemy : Damageable
                 Deploy();
                 break;
 
-            case SpecialAction.Roar:
-                Roar();
+            case SpecialAction.Knockback:
+                Shove();
                 break;
         }
     }
 
     /// <summary>
-    /// The Abomination's answer to being kited. Everything else in the roster can be
-    /// outrun, which at size 5 makes the boss a stationary target; this takes the
-    /// spacing away and hands it back on the boss's terms.
+    /// The answer to being kited. Everything else in the roster can be outrun, which at
+    /// size 5 makes a heavy a stationary target you circle; this takes the spacing away
+    /// and points you at whatever is behind you.
+    ///
+    /// One action, two feels, both from the type's own numbers: the Abomination's roar
+    /// is a wide ring that deals nothing and throws you a long way, a mech's punch is a
+    /// short reach that hurts and shoves you a shorter distance.
     ///
     /// The ring is drawn whether or not it connects, so the radius is something the
     /// player can learn rather than guess at.
     /// </summary>
-    void Roar()
+    void Shove()
     {
-        AudioEvents.Play(Sfx.BossRoar, transform.position, owner: gameObject);
+        AudioEvents.Play(type.specialSound, transform.position, owner: gameObject);
         HitFx.Burst(transform.position, new Color(1f, 0.55f, 0.25f),
                     type.specialRange, tuning.pixelsPerUnit, 0.5f);
 
@@ -393,9 +406,13 @@ public class Enemy : Damageable
         Vector2 d = (Vector2)progress.transform.position - (Vector2)transform.position;
         if (new Vector2(d.x, d.y / tuning.isoSquash).magnitude > type.specialRange) return;
 
+        if (type.specialDamage > 0f) progress.TakeDamage(type.specialDamage);
+
         var controller = progress.GetComponent<PlayerController>();
-        if (controller != null)
-            controller.Knockback(transform.position, tuning.knockbackDistance, tuning.knockbackSeconds);
+        if (controller == null) return;
+
+        float distance = type.specialKnockback > 0f ? type.specialKnockback : tuning.knockbackDistance;
+        controller.Knockback(transform.position, distance, tuning.knockbackSeconds);
     }
 
     void Deploy()
