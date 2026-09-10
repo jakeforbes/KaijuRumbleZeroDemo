@@ -35,6 +35,20 @@ public class BuildingType
              "happens to be nearest.")]
     public int upgradeDrops;
 
+    [Header("Reactor pulse")]
+    [Tooltip("Damage dealt to every enemy in radius when this is destroyed. 0 for " +
+             "ordinary buildings. Hits enemies only — never other buildings, never " +
+             "the player, so a reactor is a weapon rather than a hazard.")]
+    public float pulseDamage;
+
+    [Tooltip("Reach of the pulse, measured on the flat ground plane. Sized to cover " +
+             "the whole screen even at maximum zoom-out.")]
+    public float pulseRadius = 24f;
+
+    [Tooltip("Reactors are placed deliberately and spaced apart rather than rolled " +
+             "from the weight table, so two can never be on screen together.")]
+    public bool isReactor;
+
     [Tooltip("Relative chance of being picked when the city is generated.")]
     public float weight = 30f;
 

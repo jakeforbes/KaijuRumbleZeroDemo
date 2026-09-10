@@ -315,7 +315,34 @@ public class Tuning : ScriptableObject
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 5f,
                            colour = new Color(0.24f, 0.72f, 0.68f) },
+
+        // Reactors. Twice the health of the ordinary building at their footprint, and
+        // on death a pulse that only hurts enemies. Placed deliberately and spaced so
+        // two are never on screen together — weight is unused for these.
+        //
+        // Small pulse at 20 clears Grunts (12 hp) outright and cannot finish anything
+        // else: a Tank takes 14 through 6 armour, a Commander 20 of 120.
+        new BuildingType { name = "Reactor Small", sizeClass = 0, tilesX = 1, tilesY = 1,
+                           minHeightPx = 170, maxHeightPx = 220, hp = 60f,
+                           foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
+                           pulseDamage = 20f, pulseRadius = 24f,
+                           colour = new Color(0.92f, 0.62f, 0.20f) },
+
+        // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
+        // Commander all fall — while a Mech survives on 140 hp behind 12 armour.
+        new BuildingType { name = "Reactor Large", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 300, maxHeightPx = 400, hp = 118f,
+                           foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
+                           pulseDamage = 130f, pulseRadius = 32f,
+                           colour = new Color(0.96f, 0.45f, 0.18f) },
     };
+
+    [Tooltip("How many reactors to scatter through the arena.")]
+    public int reactorCount = 4;
+
+    [Tooltip("Minimum distance between reactors in world units. 26 is wider than the " +
+             "screen diagonal at maximum zoom-out, so two can never be visible at once.")]
+    public float reactorMinSpacing = 26f;
 
     [Tooltip("Damage multiplier by (your size - the building's class), from -4 to +4. " +
              "The middle entry is your own class and is always 1. Left of it is the wall: " +
