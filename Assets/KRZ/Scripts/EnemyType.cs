@@ -1,5 +1,15 @@
 using UnityEngine;
 
+/// <summary>How an enemy moves relative to the kaiju.</summary>
+public enum MovementMode
+{
+    /// <summary>Walks at the player and stops at its attack range.</summary>
+    Chase,
+
+    /// <summary>Drifts chaotically and bolts when the player closes in.</summary>
+    Flee,
+}
+
 /// <summary>Periodic behaviours an enemy can have on top of its basic attack.</summary>
 public enum SpecialAction
 {
@@ -55,6 +65,17 @@ public class EnemyType
     [Tooltip("Whether it attacks at all. A Dropship keeps its distance and deploys " +
              "instead of ever striking.")]
     public bool attacks = true;
+
+    [Header("Movement")]
+    public MovementMode movement = MovementMode.Chase;
+
+    [Tooltip("Flee only: how fast the drifting heading wanders, in radians per second. " +
+             "This is what makes it read as skittish rather than as a straight retreat.")]
+    public float wanderRate = 3f;
+
+    [Tooltip("Flee only: distance at which it starts running rather than milling about. " +
+             "Inside this it commits harder the closer the kaiju gets.")]
+    public float fleeRadius = 9f;
 
     [Header("Special action")]
     [Tooltip("A periodic behaviour that plants the enemy, telegraphs, then fires. One " +

@@ -28,6 +28,7 @@ public class Enemy : Damageable
     bool dying;
     float destroyAt;
     HealthBar bar;
+    float wanderAngle;
 
     public EnemyArt art;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
@@ -92,6 +93,7 @@ public class Enemy : Damageable
         }
 
         e.nextVolleyAt = Time.time + type.specialCooldown;
+        e.wanderAngle = Random.value * Mathf.PI * 2f;
 
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
@@ -133,6 +135,14 @@ public class Enemy : Damageable
         // Mech that keeps walking while it winds up.
         if (type.special != SpecialAction.None && HandleSpecial(progress, flat)) return;
 
+        if (type.movement == MovementMode.Flee)
+        {
+            Flee(toPlayer, flat);
+            if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
+            Recolour();
+            return;
+        }
+
         // Ranges are measured from the kaiju's edge, not its centre. Measuring to the
         // centre meant an enemy had to bulldoze its way through the player's footprint
         // before it would stop pressing — which is what shoved the player around, and
@@ -172,6 +182,27 @@ public class Enemy : Damageable
 
         if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
         Recolour();
+    }
+
+    /// <summary>
+    /// Drifts on a slowly wandering heading, and commits to running directly away the
+    /// closer the kaiju gets. Blending the two rather than switching between them is
+    /// what makes it read as a skittish animal instead of a unit retreating in a line.
+    /// </summary>
+    void Flee(Vector2 toPlayer, float flat)
+    {
+        wanderAngle += Random.Range(-1f, 1f) * type.wanderRate * Time.deltaTime;
+        var drift = new Vector2(Mathf.Cos(wanderAngle), Mathf.Sin(wanderAngle));
+
+        Vector2 away = flat > 0.01f
+            ? -new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized
+            : drift;
+
+        // Panic rises from nothing at the edge of its notice to full at contact.
+        float panic = Mathf.Clamp01(1f - flat / Mathf.Max(0.01f, type.fleeRadius));
+        var dir = Vector2.Lerp(drift, away, panic).normalized;
+
+        body.linearVelocity = new Vector2(dir.x, dir.y * tuning.isoSquash) * type.moveSpeed;
     }
 
     /// <summary>Whether the kaiju has outgrown this enemy's class.</summary>

@@ -94,7 +94,8 @@ public class DebugHud : MonoBehaviour
             if (kb.f11Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
-            if (kb.f8Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Dropship");
+            if (kb.f8Key.wasPressedThisFrame)
+                GameBootstrap.Instance.SpawnOne(heavy ? "Scavenger" : "Dropship");
         }
 
         // Timeline scrub. Testing the boss should not require playing three minutes.
@@ -138,7 +139,7 @@ public class DebugHud : MonoBehaviour
             $"{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
             $"run  {RunClock()}   wave  {(WaveDirector.Instance != null ? WaveDirector.Instance.CurrentLabel : "-")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
-            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F8</b> dropship   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>. ,</b> skip time   <b>[ ]</b> speed" +
+            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F8</b> dropship (+shift scav)   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>. ,</b> skip time   <b>[ ]</b> speed" +
             $"\n<b>Space / E / pad A</b> blast";
 
         var size = style.CalcSize(new GUIContent(text));

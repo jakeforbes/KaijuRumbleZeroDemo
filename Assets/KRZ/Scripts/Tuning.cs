@@ -15,7 +15,7 @@ public class Tuning : ScriptableObject
     public SoundPlayer foodSounds;
 
     [Header("Movement")]
-    public float moveSpeed = 7f;
+    public float moveSpeed = 3.5f;
     public float acceleration = 70f;
     public float deceleration = 90f;
 
@@ -106,6 +106,17 @@ public class Tuning : ScriptableObject
                         foodDrops = 3, foodScatter = 1.6f,
                         bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f) },
 
+        // Scavenger. Grunt-sized, three times the health, fast and skittish, and it
+        // never fights back. It is a chase: catching one pays out a huge scattered
+        // burst of food, so it is the one enemy you go out of your way to reach
+        // rather than one you deal with because it reached you.
+        new EnemyType { name = "Scavenger", sizeClass = 0, hp = 36f, armour = 0f,
+                        contactDamage = 0f, attacks = false,
+                        movement = MovementMode.Flee, wanderRate = 3.2f, fleeRadius = 10f,
+                        moveSpeed = 3.2f, attackRange = 0f,
+                        foodDrops = 26, foodScatter = 9f,
+                        bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
+
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
                         contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
@@ -177,6 +188,11 @@ public class Tuning : ScriptableObject
                         commanderEvery = 3,
                         veteranType = "Trooper", veteranFromFire = 2,
                         veteranStartFraction = 0.3f, veteranRampPerFire = 0.07f },
+
+        // Scavengers turn up throughout. Two at a time so one getting away still
+        // leaves a chase worth committing to.
+        new WaveEntry { label = "scavengers", startTime = 35f, endTime = 155f, interval = 22f,
+                        enemyType = "Scavenger", count = 2, shape = SpawnShape.Ring },
 
         // First Dropship: a grunt source you can switch off by killing it.
         new WaveEntry { label = "dropship", startTime = 45f,
