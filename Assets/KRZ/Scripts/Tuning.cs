@@ -15,7 +15,7 @@ public class Tuning : ScriptableObject
     public SoundPlayer foodSounds;
 
     [Header("Movement")]
-    public float moveSpeed = 2.6f;
+    public float moveSpeed = 2.1f;
     public float acceleration = 70f;
     public float deceleration = 90f;
 
@@ -134,7 +134,7 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Scavenger", sizeClass = 0, hp = 36f, armour = 0f,
                         contactDamage = 0f, attacks = false,
                         movement = MovementMode.Flee, wanderRate = 3.2f, fleeRadius = 10f,
-                        moveSpeed = 2.4f, attackRange = 0f,
+                        moveSpeed = 1.85f, attackRange = 0f,
                         foodDrops = 26, foodScatter = 9f,
                         bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
 
@@ -144,7 +144,7 @@ public class Tuning : ScriptableObject
                         bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
-                        contactDamage = 26f, moveSpeed = 1.95f, attackRange = 1.6f,
+                        contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
@@ -318,10 +318,6 @@ public class Tuning : ScriptableObject
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
 
-    [Tooltip("Ceiling on the cone once Claws has widened it. 180 is a half circle — " +
-             "everything in front of the kaiju.")]
-    [Range(30f, 360f)] public float swipeArcMax = 180f;
-
     [Tooltip("Gap between the hits of a multi-hit swipe. Short enough to read as one " +
              "flurry, long enough that each hit is visible.")]
     public float swipeBurstInterval = 0.13f;
@@ -381,10 +377,13 @@ public class Tuning : ScriptableObject
                           perStack = 1f, extraHitsPerStack = 1, maxStacks = 4,
                           weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
 
-        // Claws changes the shape: longer and wider, up to a 180 degree half circle.
-        new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
-                          effect = "Swipe reaches 25% further and 12 degrees wider",
-                          perStack = 1.25f, arcPerStack = 12.5f, maxStacks = 4,
+        // Prism splits the Blast: 1 beam, then 2 opposed, then a cross, then an
+        // eight-point star. It replaced a swipe reach-and-cone upgrade, which was
+        // almost impossible to read in play — a wider cone looks like nothing, while
+        // suddenly firing behind yourself is unmistakable.
+        new UpgradeType { id = UpgradeId.Prism,   displayName = "Prism",
+                          effect = "Blast splits: behind you, then a cross, then a star",
+                          perStack = 1f, maxStacks = 3,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
         new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",

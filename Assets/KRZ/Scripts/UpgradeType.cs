@@ -2,8 +2,8 @@ using UnityEngine;
 
 public enum UpgradeId
 {
-    Brawler,   // faster swipe
-    Claws,     // longer swipe
+    Brawler,   // extra swipe strikes
+    Prism,     // extra Blast beams, radiating outward
     Fleet,     // faster movement
     Stomp,     // adds an AoE around the kaiju
     Beam,      // stronger, longer special
@@ -31,9 +31,6 @@ public class UpgradeType
     [Tooltip("Extra swipes added to each activation, per stack. One stack turns " +
              "X...X...X into XX...XX...XX rather than making X bigger.")]
     public int extraHitsPerStack;
-
-    [Tooltip("Degrees added to the swipe cone per stack, capped by swipeArcMax.")]
-    public float arcPerStack;
 
     public int maxStacks = 5;
 

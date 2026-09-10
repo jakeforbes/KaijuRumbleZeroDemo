@@ -45,7 +45,7 @@ public class PlayerAttack : MonoBehaviour
             nextHitAt = Time.time + tuning.swipeBurstInterval;
         }
 
-        // Remaining hits of a Brawler burst. Claws-style multi-hit changes the rhythm
+        // Remaining hits of a Brawler burst. Multi-hit changes the rhythm
         // rather than the numbers: X...X...X becomes XX...XX...XX. These land damage
         // without restarting the animation, which at 0.13s apart would retrigger it
         // faster than it could play.
@@ -73,12 +73,12 @@ public class PlayerAttack : MonoBehaviour
 
     void GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc)
     {
-        var upgrades = PlayerUpgrades.Instance;
-        range = tuning.swipeRange * player.Scale * (upgrades != null ? upgrades.SwipeRangeMul : 1f);
-
-        float arc = Mathf.Min(tuning.swipeArcMax,
-                              tuning.swipeArc + (upgrades != null ? upgrades.SwipeArcBonus : 0f));
-        cosHalfArc = Mathf.Cos(arc * 0.5f * Mathf.Deg2Rad);
+        // Reach and cone scale with the kaiju alone now. No upgrade widens them:
+        // a bigger cone is nearly impossible to read in play, which is why that
+        // upgrade became Prism and moved onto the Blast, where extra beams are
+        // unmistakable.
+        range = tuning.swipeRange * player.Scale;
+        cosHalfArc = Mathf.Cos(tuning.swipeArc * 0.5f * Mathf.Deg2Rad);
 
         origin = transform.position;
         Vector2 aim = player.AimDir;
@@ -109,10 +109,8 @@ public class PlayerAttack : MonoBehaviour
 
         GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc);
 
-        var upgrades = PlayerUpgrades.Instance;
-        float arc = Mathf.Min(tuning.swipeArcMax,
-                              tuning.swipeArc + (upgrades != null ? upgrades.SwipeArcBonus : 0f));
-        SwipeFx.Show(tuning, transform.position, player.AimDir, range, arc, tuning.pixelsPerUnit);
+        SwipeFx.Show(tuning, transform.position, player.AimDir, range, tuning.swipeArc,
+                     tuning.pixelsPerUnit);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
         bool hitEnemy = false;

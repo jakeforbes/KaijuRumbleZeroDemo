@@ -82,15 +82,39 @@ public class PlayerSpecial : MonoBehaviour
 
         AudioEvents.Play(Sfx.Blast, origin);
         if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Blast);
+
         // Centred on the body rather than fired from the head. Hit detection still runs
         // on the ground plane where every footprint lives, so a beam as thick as most
         // of the kaiju visually covers the strip it damages instead of floating above it.
         Vector3 muzzle = (Vector3)origin + Vector3.up * (tuning.blastOriginFraction * bodyHeight);
-
-        HitFx.Line(muzzle, muzzle + (Vector3)(aim * range), new Color(0.55f, 0.9f, 1f),
-                   tuning.pixelsPerUnit, 0.22f, width);
         progress.ShakeExternal(tuning.hitShake * 1.4f);
 
+        // Prism spreads the Blast evenly around the kaiju: 1 beam, then 2 opposed,
+        // then a cross, then an eight-point star. Each beam is a full-strength copy —
+        // the upgrade is about covering angles you would otherwise have to turn to face.
+        int beams = upgrades.BlastBeams;
+        for (int b = 0; b < beams; b++)
+        {
+            float turn = b * Mathf.PI * 2f / beams;
+
+            // Rotate on the flat ground plane, then squash back, so the star is even
+            // on the ground rather than an oval in screen space.
+            var flatDir = new Vector2(
+                aimFlat.x * Mathf.Cos(turn) - aimFlat.y * Mathf.Sin(turn),
+                aimFlat.x * Mathf.Sin(turn) + aimFlat.y * Mathf.Cos(turn));
+
+            var screenDir = new Vector2(flatDir.x, flatDir.y * tuning.isoSquash).normalized;
+
+            HitFx.Line(muzzle, muzzle + (Vector3)(screenDir * range), new Color(0.55f, 0.9f, 1f),
+                       tuning.pixelsPerUnit, 0.22f, width);
+
+            FireBeam(origin, flatDir, range, halfWidth, damage);
+        }
+    }
+
+    /// <summary>Damages everything in one beam's band. Called once per Prism beam.</summary>
+    void FireBeam(Vector2 origin, Vector2 aimFlat, float range, float halfWidth, float damage)
+    {
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
         for (int i = 0; i < count; i++)
         {

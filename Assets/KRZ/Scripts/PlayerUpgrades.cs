@@ -6,7 +6,7 @@ using UnityEngine;
 ///
 /// Everything compounds multiplicatively on top of the size-scaled base, so an
 /// upgrade is worth the same proportion at size 5 as at size 1. Two of the six —
-/// Stomp and Claws — change how you play rather than only how hard you hit, which
+/// Stomp and Prism — change how you play rather than only how hard you hit, which
 /// is what stops the set reading as six flavours of the same number.
 /// </summary>
 public class PlayerUpgrades : MonoBehaviour
@@ -30,7 +30,6 @@ public class PlayerUpgrades : MonoBehaviour
     public bool HasStomp => Count(UpgradeId.Stomp) > 0;
 
     public float SwipeCooldownMul => Mul(UpgradeId.Brawler);
-    public float SwipeRangeMul => Mul(UpgradeId.Claws);
 
     /// <summary>Extra swipes per activation. One Brawler makes each attack a double tap.</summary>
     public int SwipeExtraHits
@@ -42,15 +41,13 @@ public class PlayerUpgrades : MonoBehaviour
         }
     }
 
-    /// <summary>Degrees Claws adds to the swipe cone. Capped by the caller.</summary>
-    public float SwipeArcBonus
-    {
-        get
-        {
-            var type = Find(UpgradeId.Claws);
-            return type == null ? 0f : Count(UpgradeId.Claws) * type.arcPerStack;
-        }
-    }
+    /// <summary>
+    /// Beams the Blast fires, spaced evenly around the kaiju: 1, then 2, 4, 8.
+    /// Doubling per stack is what makes each pickup read instantly — forward only,
+    /// then front and back, then a cross, then a star. A percentage on an existing
+    /// beam would have been invisible by comparison.
+    /// </summary>
+    public int BlastBeams => 1 << Mathf.Clamp(Count(UpgradeId.Prism), 0, 3);
     public float MoveSpeedMul => Mul(UpgradeId.Fleet);
     public float BlastCooldownMul => Mul(UpgradeId.Furnace);
     public float BlastPowerMul => Mul(UpgradeId.Beam);
