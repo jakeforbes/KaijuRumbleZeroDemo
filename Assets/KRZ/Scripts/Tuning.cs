@@ -157,7 +157,15 @@ public class Tuning : ScriptableObject
              "without competing with it: dark enough that the navy buildings read as " +
              "masses on top of it, light enough that the warm enemy tints, the gold " +
              "elite and the cyan dropship all separate from it cleanly.")]
-    public Color groundColour = new Color(0.29f, 0.30f, 0.335f);
+    // Sampled off the reference crop: the centre 7x7 averages #647299, or
+    // 0.394 / 0.446 / 0.602.
+    //
+    // Set about 2% above that on purpose. The concrete tile multiplies this colour,
+    // and while it is authored around a mean of 1.0, its bright half is clipped on
+    // the way into an RGBA32 texture — measured, the stored tile averages 0.98. So
+    // the ground renders a couple of percent darker than whatever is set here, and
+    // this is that couple of percent handed back.
+    public Color groundColour = new Color(0.402f, 0.455f, 0.614f);
 
     [Tooltip("Tile size in pixels for the concrete grain. At 128 PPU, 256 repeats " +
              "every two world units.")]
