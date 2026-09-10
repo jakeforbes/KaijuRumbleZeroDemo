@@ -17,11 +17,35 @@ Greybox art is generated at runtime too — no art assets are needed to run it.
 
 ## Tuning
 
-Every gameplay number lives on one asset: `Assets/KRZ/Resources/Tuning.asset`
-(or menu **KRZ → Select Tuning Asset**). Select it and edit in the Inspector,
-including while the game is running — changes take effect immediately and persist.
+**`Assets/KRZ/Scripts/Tuning.cs` is the source of truth for every gameplay number.**
+Change values there.
 
-The bootstrap never writes to it, so rebuilding the arena never costs you a tweak.
+`Assets/KRZ/Resources/Tuning.asset` deliberately holds **only the four sound-bank
+references**. It must stay that way.
+
+### Please do not save values into Tuning.asset
+
+Unity writes the whole asset out the moment anything dirties it — including just
+having it selected in the Inspector while something else changes. A saved asset
+serializes *every* field, and a serialized value silently wins over the C# field
+initialiser. From then on, edits to `Tuning.cs` do nothing.
+
+This has already cost the project real work twice:
+
+- The asset pinned `moveSpeed: 7` for most of a day. Three separate rounds of
+  slowing the player down had no effect in play, because the asset kept overriding
+  them. It read as "the tuning isn't working."
+- A later save serialized the full enemy, building and upgrade arrays. Merging it
+  would have removed two enemy types and two upgrades and reverted the boss, with
+  no error and nothing in the console — it would simply have looked like the
+  features were broken.
+
+Nothing warns you when this happens. If you need a value changed and don't want to
+edit C#, ask — it is a one-line change.
+
+**Live tuning while playing** still works: select the asset, edit in the Inspector,
+watch the change immediately. Just don't let the edit get saved to disk — treat it
+as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 
 ## Controls
 
@@ -39,13 +63,23 @@ The bootstrap never writes to it, so rebuilding the arena never costs you a twea
 | `F4` | Spawn a swarm of Grunts (`Shift+F4` for Tanks) |
 | `F5` | Kill all enemies |
 | `F6` | Toggle god mode |
+| `F7` | Grant a random power-up |
+| `F8` | Spawn a Dropship (`Shift+F8` for a Scavenger) |
+| `F9` | Spawn the Abomination |
 | `F10` | Restart the run |
+| `F11` | Spawn whoever currently carries power-ups — Commander below size 3, Elite Tank at or above it (`Shift+F11` Mech, `Ctrl+F11` Bruiser) |
 | `F12` | Draw collision footprints |
+| `,` `.` | Scrub the wave timeline back 15s / forward 30s |
 | `[` `]` | Slow down / speed up time |
 | `\` | Reset time scale |
 
 Debug output and cheats are switched off with `showDebugHud` and `enableCheatKeys`
-on the Tuning asset.
+in `Tuning.cs`.
+
+## Scenes
+
+`SampleScene` is the game. `Gym` lays every building type out in a labelled row with
+no waves running, for checking art, colliders and damage states in isolation.
 
 ## Layout
 
@@ -53,7 +87,7 @@ on the Tuning asset.
 Assets/KRZ/
   Scripts/      all gameplay
   Editor/       creates the Tuning asset on first compile
-  Resources/    Tuning.asset
+  Resources/    Tuning.asset (sound refs only), art packages
 Docs/           art spec and build plan (open the .html files in a browser)
 ```
 

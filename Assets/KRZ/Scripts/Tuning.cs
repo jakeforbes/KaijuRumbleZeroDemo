@@ -1,9 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// Every tunable number in the prototype. Lives as a single asset at
-/// Assets/KRZ/Resources/Tuning.asset so it can be edited in the Inspector
-/// while the game is running. The arena builder never overwrites it.
+/// Every tunable number in the prototype, and the source of truth for all of them.
+/// Change values here.
+///
+/// Tuning.asset in Resources deliberately holds ONLY the four sound-bank references.
+/// Do not let Unity save values into it. A saved asset serializes every field, and a
+/// serialized value silently beats the initialiser below — after that, editing this
+/// file does nothing, with no warning and nothing in the console.
+///
+/// That has already happened twice: the asset pinned moveSpeed at 7 through three
+/// rounds of trying to slow the player down, and a later save would have removed two
+/// enemy types and two upgrades on merge. Both read as "the feature is broken."
+///
+/// Editing the asset in the Inspector mid-play is still the right way to find a
+/// number. Just move the number here afterwards rather than saving the asset.
 /// </summary>
 [CreateAssetMenu(menuName = "KRZ/Tuning", fileName = "Tuning")]
 public class Tuning : ScriptableObject
