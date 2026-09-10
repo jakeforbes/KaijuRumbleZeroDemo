@@ -16,3 +16,1065 @@ MonoBehaviour:
   enemySounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4202, type: 3}
   buildingSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4203, type: 3}
   foodSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4204, type: 3}
+  moveSpeed: 2.1
+  acceleration: 70
+  deceleration: 90
+  isoSquash: 0.5
+  bossIntroPanSeconds: 1.25
+  bossIntroHoldSeconds: 2
+  bossIntroReturnSeconds: 1.25
+  pixelsPerUnit: 128
+  baseOrthoSize: 4.21875
+  followLag: 0.34
+  maxPlayerOffset: 0.22
+  zoomExponent: 0.5
+  blocksX: 8
+  blocksY: 8
+  blockSpacingX: 7
+  blockSpacingY: 3.5
+  randomSeed: 1337
+  foodPerTier:
+  - 80
+  - 320
+  - 1100
+  - 3200
+  tierScale:
+  - 1.5
+  - 2.625
+  - 3.75
+  - 4.875
+  - 6
+  tierMaxHp:
+  - 100
+  - 150
+  - 205
+  - 265
+  - 330
+  damageResistBySize:
+  - 0
+  - 2
+  - 4
+  - 7
+  - 10
+  recoverySeconds: 14
+  recoverySpawnInterval: 2.5
+  withinTierGrowth: 0.7
+  damagePerTier: 1.25
+  speedPerTier: 1.06
+  growthLerpSpeed: 7
+  tierUpShake: 0.5
+  enemyTypes:
+  - sounds: {fileID: 0}
+    name: Grunt
+    isBoss: 0
+    sizeClass: 0
+    hp: 12
+    armour: 0
+    contactDamage: 6
+    moveSpeed: 0.96
+    attackRange: 0.9
+    ranged: 0
+    attackCooldown: 1.1
+    attackWindup: 0.35
+    foodDrops: 2
+    foodScatter: 1.2
+    dropsUpgrade: 0
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.4
+    bodyPx: 64
+    artFolder: FlyingTank
+    artPrefix: FlyingTank
+    artDisplayPx: 84
+    artDirectionStyle: 2
+    artPathFormat: '{root}/{dir}/{prefix}_{dir}_{clip}_{frame}'
+    artClipNames:
+    - Idle
+    - Move
+    - Attack
+    - Hit
+    - Destruction
+    artMirrored: 0
+    artFrameSize: 192
+    artTint: {r: 1, g: 0.72, b: 0.62, a: 1}
+    artFrameDigits: 2
+    artFirstFrame: 0
+    idleFrames: 2
+    walkFrames: 6
+    attackFrames: 4
+    hitFrames: 2
+    deathFrames: 4
+    colour: {r: 0.88, g: 0.42, b: 0.34, a: 1}
+  - sounds: {fileID: 0}
+    name: Trooper
+    isBoss: 0
+    sizeClass: 0
+    hp: 24
+    armour: 0
+    contactDamage: 10
+    moveSpeed: 0.96
+    attackRange: 3
+    ranged: 1
+    attackCooldown: 1.6
+    attackWindup: 0.45
+    foodDrops: 3
+    foodScatter: 1.6
+    dropsUpgrade: 0
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.4
+    bodyPx: 68
+    artFolder: FlyingTank
+    artPrefix: FlyingTank
+    artDisplayPx: 100
+    artDirectionStyle: 2
+    artPathFormat: '{root}/{dir}/{prefix}_{dir}_{clip}_{frame}'
+    artClipNames:
+    - Idle
+    - Move
+    - Attack
+    - Hit
+    - Destruction
+    artMirrored: 0
+    artFrameSize: 192
+    artTint: {r: 1, g: 0.52, b: 0.6, a: 1}
+    artFrameDigits: 2
+    artFirstFrame: 0
+    idleFrames: 2
+    walkFrames: 6
+    attackFrames: 4
+    hitFrames: 2
+    deathFrames: 4
+    colour: {r: 0.78, g: 0.3, b: 0.42, a: 1}
+  - sounds: {fileID: 0}
+    name: Scavenger
+    isBoss: 0
+    sizeClass: 0
+    hp: 36
+    armour: 0
+    contactDamage: 0
+    moveSpeed: 1.85
+    attackRange: 0
+    ranged: 0
+    attackCooldown: 1.1
+    attackWindup: 0.35
+    foodDrops: 26
+    foodScatter: 9
+    dropsUpgrade: 0
+    attacks: 0
+    movement: 1
+    wanderRate: 3.2
+    fleeRadius: 10
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.8
+    bodyPx: 64
+    artFolder: 
+    artPrefix: 
+    artDisplayPx: 192
+    artDirectionStyle: 1
+    artPathFormat: '{root}/{clip}/{prefix}_{clip}_{dir}_{frame}'
+    artClipNames:
+    - idle
+    - walk
+    - attack
+    - hit
+    - destruction
+    artMirrored: 1
+    artFrameSize: 512
+    artTint: {r: 1, g: 1, b: 1, a: 1}
+    artFrameDigits: 4
+    artFirstFrame: 1
+    idleFrames: 4
+    walkFrames: 8
+    attackFrames: 6
+    hitFrames: 3
+    deathFrames: 5
+    colour: {r: 0.55, g: 0.9, b: 0.4, a: 1}
+  - sounds: {fileID: 0}
+    name: Tank
+    isBoss: 0
+    sizeClass: 1
+    hp: 60
+    armour: 6
+    contactDamage: 18
+    moveSpeed: 1.35
+    attackRange: 4.5
+    ranged: 1
+    attackCooldown: 2.2
+    attackWindup: 0.35
+    foodDrops: 5
+    foodScatter: 2
+    dropsUpgrade: 0
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.75
+    bodyPx: 128
+    artFolder: GroundTank
+    artPrefix: GroundTank
+    artDisplayPx: 256
+    artDirectionStyle: 2
+    artPathFormat: '{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}'
+    artClipNames:
+    - Idle
+    - Drive
+    - AttackBlast
+    - Hit
+    - Destruction
+    artMirrored: 0
+    artFrameSize: 512
+    artTint: {r: 1, g: 1, b: 1, a: 1}
+    artFrameDigits: 2
+    artFirstFrame: 0
+    idleFrames: 4
+    walkFrames: 6
+    attackFrames: 4
+    hitFrames: 3
+    deathFrames: 4
+    colour: {r: 0.8, g: 0.6, b: 0.25, a: 1}
+  - sounds: {fileID: 0}
+    name: Mech
+    isBoss: 0
+    sizeClass: 2
+    hp: 140
+    armour: 12
+    contactDamage: 26
+    moveSpeed: 1.7
+    attackRange: 1.6
+    ranged: 0
+    attackCooldown: 1.6
+    attackWindup: 0.35
+    foodDrops: 9
+    foodScatter: 3
+    dropsUpgrade: 0
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 1
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.34
+    bodyPx: 384
+    artFolder: Mech
+    artPrefix: mech
+    artDisplayPx: 384
+    artDirectionStyle: 1
+    artPathFormat: '{root}/{clip}/{prefix}_{clip}_{dir}_{frame}'
+    artClipNames:
+    - idle
+    - walk
+    - attack
+    - hit
+    - destruction
+    artMirrored: 1
+    artFrameSize: 512
+    artTint: {r: 1, g: 1, b: 1, a: 1}
+    artFrameDigits: 4
+    artFirstFrame: 1
+    idleFrames: 4
+    walkFrames: 8
+    attackFrames: 6
+    hitFrames: 3
+    deathFrames: 5
+    colour: {r: 0.72, g: 0.35, b: 0.55, a: 1}
+  - sounds: {fileID: 0}
+    name: Dropship
+    isBoss: 0
+    sizeClass: 1
+    hp: 85
+    armour: 2
+    contactDamage: 0
+    moveSpeed: 1.8
+    attackRange: 6
+    ranged: 0
+    attackCooldown: 1.1
+    attackWindup: 0.35
+    foodDrops: 7
+    foodScatter: 2.5
+    dropsUpgrade: 0
+    attacks: 0
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 2
+    specialCooldown: 6
+    specialWindup: 1.2
+    specialRange: 15
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.34
+    bodyPx: 112
+    artFolder: FlyingTank
+    artPrefix: FlyingTank
+    artDisplayPx: 210
+    artDirectionStyle: 2
+    artPathFormat: '{root}/{dir}/{prefix}_{dir}_{clip}_{frame}'
+    artClipNames:
+    - Idle
+    - Move
+    - Attack
+    - Hit
+    - Destruction
+    artMirrored: 0
+    artFrameSize: 192
+    artTint: {r: 0.62, g: 0.88, b: 1, a: 1}
+    artFrameDigits: 2
+    artFirstFrame: 0
+    idleFrames: 2
+    walkFrames: 6
+    attackFrames: 4
+    hitFrames: 2
+    deathFrames: 4
+    colour: {r: 0.45, g: 0.75, b: 0.85, a: 1}
+  - sounds: {fileID: 0}
+    name: Commander
+    isBoss: 0
+    sizeClass: 1
+    hp: 120
+    armour: 0
+    contactDamage: 12
+    moveSpeed: 0.96
+    attackRange: 4.5
+    ranged: 1
+    attackCooldown: 1.8
+    attackWindup: 0.5
+    foodDrops: 6
+    foodScatter: 2.5
+    dropsUpgrade: 1
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.4
+    bodyPx: 64
+    artFolder: FlyingTank
+    artPrefix: FlyingTank
+    artDisplayPx: 104
+    artDirectionStyle: 2
+    artPathFormat: '{root}/{dir}/{prefix}_{dir}_{clip}_{frame}'
+    artClipNames:
+    - Idle
+    - Move
+    - Attack
+    - Hit
+    - Destruction
+    artMirrored: 0
+    artFrameSize: 192
+    artTint: {r: 0.78, g: 0.55, b: 1, a: 1}
+    artFrameDigits: 2
+    artFirstFrame: 0
+    idleFrames: 2
+    walkFrames: 6
+    attackFrames: 4
+    hitFrames: 2
+    deathFrames: 4
+    colour: {r: 0.65, g: 0.35, b: 0.95, a: 1}
+  - sounds: {fileID: 0}
+    name: Abomination
+    isBoss: 0
+    sizeClass: 4
+    hp: 1200
+    armour: 12
+    contactDamage: 45
+    moveSpeed: 1.65
+    attackRange: 3
+    ranged: 1
+    attackCooldown: 2.5
+    attackWindup: 0.8
+    foodDrops: 0
+    foodScatter: 4
+    dropsUpgrade: 0
+    attacks: 1
+    movement: 0
+    wanderRate: 3
+    fleeRadius: 9
+    special: 0
+    specialCooldown: 5
+    specialWindup: 1
+    specialRange: 18
+    volleyCount: 8
+    missileDamage: 12
+    missileSpeed: 11
+    missileTurn: 40
+    missileLife: 4
+    deployType: Grunt
+    deployCount: 4
+    deploySpread: 2.5
+    deployMaxAlive: 24
+    footprintFraction: 0.8
+    bodyPx: 560
+    artFolder: 
+    artPrefix: 
+    artDisplayPx: 192
+    artDirectionStyle: 1
+    artPathFormat: '{root}/{clip}/{prefix}_{clip}_{dir}_{frame}'
+    artClipNames:
+    - idle
+    - walk
+    - attack
+    - hit
+    - destruction
+    artMirrored: 1
+    artFrameSize: 512
+    artTint: {r: 1, g: 1, b: 1, a: 1}
+    artFrameDigits: 4
+    artFirstFrame: 1
+    idleFrames: 4
+    walkFrames: 8
+    attackFrames: 6
+    hitFrames: 3
+    deathFrames: 5
+    colour: {r: 0.45, g: 0.85, b: 0.4, a: 1}
+  commanderPerMin: 25
+  commanderPerMax: 50
+  freeUpgradeCount: 4
+  freeUpgradeRadius: 18
+  maxEnemiesAlive: 60
+  waves:
+  - label: first contact
+    startTime: 5
+    endTime: 9
+    interval: 2
+    enemyType: Grunt
+    count: 3
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 5
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: probe
+    startTime: 15
+    endTime: 19
+    interval: 2
+    enemyType: Grunt
+    count: 4
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 15
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: infantry
+    startTime: 25
+    endTime: 155
+    interval: 10
+    enemyType: Grunt
+    count: 9
+    shape: 0
+    commanderEvery: 3
+    veteranType: Trooper
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.07
+    nextFireAt: 25
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: scavengers
+    startTime: 35
+    endTime: 155
+    interval: 22
+    enemyType: Scavenger
+    count: 2
+    shape: 1
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 35
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: dropship
+    startTime: 45
+    endTime: 0
+    interval: 0
+    enemyType: Dropship
+    count: 1
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 45
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: armour
+    startTime: 60
+    endTime: 0
+    interval: 0
+    enemyType: Tank
+    count: 3
+    shape: 1
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 60
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: armour
+    startTime: 65
+    endTime: 155
+    interval: 25
+    enemyType: Tank
+    count: 2
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 65
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: dropships
+    startTime: 80
+    endTime: 0
+    interval: 0
+    enemyType: Dropship
+    count: 1
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 80
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: mechs
+    startTime: 90
+    endTime: 155
+    interval: 35
+    enemyType: Mech
+    count: 1
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 90
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: push
+    startTime: 120
+    endTime: 0
+    interval: 0
+    enemyType: Grunt
+    count: 12
+    shape: 2
+    commanderEvery: 1
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 120
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: push
+    startTime: 130
+    endTime: 0
+    interval: 0
+    enemyType: Dropship
+    count: 2
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 130
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: push
+    startTime: 145
+    endTime: 0
+    interval: 0
+    enemyType: Mech
+    count: 2
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 145
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  - label: BOSS
+    startTime: 160
+    endTime: 0
+    interval: 0
+    enemyType: Abomination
+    count: 1
+    shape: 0
+    commanderEvery: 0
+    veteranType: 
+    veteranFromFire: 2
+    veteranStartFraction: 0.3
+    veteranRampPerFire: 0.1
+    nextFireAt: 160
+    fired: 0
+    fireIndex: 0
+    lastAngle: -99
+  hitInvulnerability: 0.5
+  shrinkInvulnerability: 1.5
+  shockwaveRadius: 5
+  shockwaveForce: 16
+  squishRange: 0.85
+  squishFirstTier: 2
+  squishTiersPerClass: 2
+  missileHitRadius: 0.9
+  hitShake: 0.18
+  showDamageNumbers: 1
+  buildingFootprint: 1
+  playerFootprintFraction: {x: 0.3, y: 0.15}
+  playerMass: 25
+  swipeDamage: 13
+  swipeCooldown: 1.3
+  swipeRange: 1.3
+  swipeArc: 130
+  swipeBurstInterval: 0.13
+  swipeContactDelay: 0.2
+  showSwipeArc: 1
+  blastDamage: 45
+  blastCooldown: 6
+  blastRange: 14
+  blastWidthFraction: 0.8
+  blastOriginFraction: 0.5
+  stompDamage: 22.5
+  stompCooldown: 4
+  stompRadius: 3
+  stompRadiusExponent: 0.5
+  stompBuildingMultiplier: 0.35
+  upgrades:
+  - id: 0
+    displayName: Brawler
+    effect: One extra strike per attack
+    perStack: 1
+    extraHitsPerStack: 1
+    maxStacks: 4
+    weight: 1
+    colour: {r: 1, g: 0.55, b: 0.35, a: 1}
+  - id: 1
+    displayName: Prism
+    effect: 'Blast splits: behind you, then a cross, then a star'
+    perStack: 1
+    extraHitsPerStack: 0
+    maxStacks: 3
+    weight: 1
+    colour: {r: 0.95, g: 0.85, b: 0.45, a: 1}
+  - id: 2
+    displayName: Fleet
+    effect: Move 12% faster
+    perStack: 1.12
+    extraHitsPerStack: 0
+    maxStacks: 5
+    weight: 1
+    colour: {r: 0.5, g: 0.9, b: 0.75, a: 1}
+  - id: 3
+    displayName: Stomp
+    effect: Shockwave around you every few seconds
+    perStack: 1.4
+    extraHitsPerStack: 0
+    maxStacks: 4
+    weight: 0.9
+    colour: {r: 1, g: 0.8, b: 0.35, a: 1}
+  - id: 4
+    displayName: Beam
+    effect: Blast hits 30% harder and further
+    perStack: 1.3
+    extraHitsPerStack: 0
+    maxStacks: 4
+    weight: 0.9
+    colour: {r: 0.5, g: 0.85, b: 1, a: 1}
+  - id: 5
+    displayName: Furnace
+    effect: Blast recharges 18% faster
+    perStack: 0.82
+    extraHitsPerStack: 0
+    maxStacks: 4
+    weight: 0.9
+    colour: {r: 0.75, g: 0.6, b: 1, a: 1}
+  upgradeDropChance: 0
+  upgradePickupRange: 1.2
+  buildingTypes:
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Shack
+    sizeClass: 0
+    tilesX: 1
+    tilesY: 1
+    minHeightPx: 120
+    maxHeightPx: 180
+    hp: 30
+    foodDrops: 6
+    foodScatter: 2.5
+    upgradeDrops: 0
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 30
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.26, g: 0.29, b: 0.38, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Row
+    sizeClass: 1
+    tilesX: 2
+    tilesY: 1
+    minHeightPx: 150
+    maxHeightPx: 230
+    hp: 38
+    foodDrops: 9
+    foodScatter: 3.2
+    upgradeDrops: 0
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 25
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.22, g: 0.31, b: 0.39, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Wide Low
+    sizeClass: 2
+    tilesX: 2
+    tilesY: 2
+    minHeightPx: 190
+    maxHeightPx: 260
+    hp: 47
+    foodDrops: 14
+    foodScatter: 4.2
+    upgradeDrops: 0
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 20
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.29, g: 0.27, b: 0.37, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Block
+    sizeClass: 3
+    tilesX: 2
+    tilesY: 2
+    minHeightPx: 380
+    maxHeightPx: 520
+    hp: 59
+    foodDrops: 22
+    foodScatter: 5.2
+    upgradeDrops: 0
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 15
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.31, g: 0.3, b: 0.35, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Tower
+    sizeClass: 4
+    tilesX: 1
+    tilesY: 3
+    minHeightPx: 620
+    maxHeightPx: 820
+    hp: 73
+    foodDrops: 34
+    foodScatter: 7
+    upgradeDrops: 0
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 10
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.25, g: 0.26, b: 0.42, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Lab Small
+    sizeClass: 1
+    tilesX: 1
+    tilesY: 2
+    minHeightPx: 200
+    maxHeightPx: 250
+    hp: 38
+    foodDrops: 8
+    foodScatter: 3
+    upgradeDrops: 1
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 14
+    artSprite: 
+    damagedTint: 0.55
+    colour: {r: 0.2, g: 0.62, b: 0.6, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 30
+    debrisSize: {x: 1, y: 1.5}
+    debrisForce: {x: 2.5, y: 5}
+    debrisSpread: 62
+    debrisGravity: 7
+    name: Lab Large
+    sizeClass: 3
+    tilesX: 2
+    tilesY: 2
+    minHeightPx: 260
+    maxHeightPx: 330
+    hp: 59
+    foodDrops: 18
+    foodScatter: 4.5
+    upgradeDrops: 2
+    pulseDamage: 0
+    pulseRadius: 24
+    isReactor: 0
+    unique: 0
+    weight: 10
+    artSprite: Buildings/laboratory
+    damagedTint: 0.55
+    colour: {r: 0.24, g: 0.72, b: 0.68, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Reactor Small
+    sizeClass: 0
+    tilesX: 1
+    tilesY: 1
+    minHeightPx: 170
+    maxHeightPx: 220
+    hp: 60
+    foodDrops: 8
+    foodScatter: 3
+    upgradeDrops: 0
+    pulseDamage: 20
+    pulseRadius: 24
+    isReactor: 1
+    unique: 0
+    weight: 0
+    artSprite: Buildings/reactor_1x1
+    damagedTint: 0.55
+    colour: {r: 0.92, g: 0.62, b: 0.2, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Reactor Large
+    sizeClass: 3
+    tilesX: 2
+    tilesY: 2
+    minHeightPx: 300
+    maxHeightPx: 400
+    hp: 118
+    foodDrops: 20
+    foodScatter: 5
+    upgradeDrops: 0
+    pulseDamage: 130
+    pulseRadius: 32
+    isReactor: 1
+    unique: 0
+    weight: 0
+    artSprite: Buildings/reactor_2x2
+    damagedTint: 0.55
+    colour: {r: 0.96, g: 0.45, b: 0.18, a: 1}
+  - debrisEnabled: 1
+    debrisCount: 15
+    debrisSize: {x: 1.4, y: 2.6}
+    debrisForce: {x: 1.5, y: 3.3}
+    debrisSpread: 25
+    debrisGravity: 7
+    name: Reactor Core
+    sizeClass: 4
+    tilesX: 3
+    tilesY: 3
+    minHeightPx: 520
+    maxHeightPx: 660
+    hp: 700
+    foodDrops: 40
+    foodScatter: 9
+    upgradeDrops: 0
+    pulseDamage: 300
+    pulseRadius: 40
+    isReactor: 1
+    unique: 1
+    weight: 0
+    artSprite: Buildings/reactor_3x3
+    damagedTint: 0.55
+    colour: {r: 1, g: 0.3, b: 0.22, a: 1}
+  reactorCount: 4
+  reactorMinSpacing: 26
+  damageVsBuildingByDelta:
+  - 0.025
+  - 0.05
+  - 0.125
+  - 0.33
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  showEnemyHealthBars: 1
+  showBuildingHealthBars: 1
+  foodValueSmall: 1
+  foodValueMedium: 5
+  foodValueLarge: 20
+  foodInfluenceRadius: 6.5
+  foodRadiusExponent: 0.5
+  foodPullFalloff: 4
+  foodMagnetMaxSpeed: 20
+  foodMagnetAccel: 30
+  foodHopTime: 0.7
+  foodArmDelay: 0.7
+  occluderFadeEnabled: 1
+  occluderAlpha: 0.4
+  occluderFadeTime: 0.12
+  showDebugHud: 1
+  enableCheatKeys: 1
+  showColliders: 0
