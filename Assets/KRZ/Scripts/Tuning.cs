@@ -533,7 +533,10 @@ public class Tuning : ScriptableObject
         // The roar deals no damage on purpose. Losing your position and your footing
         // in the middle of the only fight that matters is the punishment, and the
         // building you land in takes the hit instead.
-        new EnemyType { name = "Abomination", sizeClass = 4, hp = 2400f, armour = 12f,
+        // 4800: doubled again. A size-5 kaiju with a few Beam and Brawler stacks
+        // chews through a boss faster than the numbers suggest, because every one of
+        // them multiplies against the tier damage bonus rather than adding to it.
+        new EnemyType { name = "Abomination", sizeClass = 4, hp = 4800f, armour = 12f,
                         contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
                         special = SpecialAction.Knockback,
@@ -659,6 +662,24 @@ public class Tuning : ScriptableObject
 
         new WaveEntry { label = "push", startTime = 145f,
                         enemyType = "Mech", count = 4, shape = SpawnShape.Clump },
+
+        // The forty-five seconds before the boss. The one-shot pushes above left
+        // gaps between them, and a gap this late reads as the run having finished
+        // early rather than as a breath — the boss should arrive on top of the
+        // heaviest fighting of the run, not into a quiet street.
+        //
+        // Heavies only, on short intervals. Every armour beat is led by a carrier
+        // here rather than every second one, so the power-ups keep coming at exactly
+        // the point you need something to spend them on.
+        new WaveEntry { label = "the gathering", startTime = 115f, endTime = 158f, interval = 10f,
+                        enemyType = "Tank", count = 4, shape = SpawnShape.Clump,
+                        commanderEvery = 1 },
+
+        new WaveEntry { label = "the gathering", startTime = 118f, endTime = 158f, interval = 14f,
+                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
+
+        new WaveEntry { label = "the gathering", startTime = 122f, endTime = 158f, interval = 18f,
+                        enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
 
         // Bruisers arrive after the Mech has taught you to keep moving, and ask the
         // opposite: something that wants to be close, that you have to read rather
