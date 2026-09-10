@@ -56,6 +56,15 @@ public class BuildingType
     [Tooltip("Relative chance of being picked when the city is generated.")]
     public float weight = 30f;
 
+    [Tooltip("Resources path to a pristine still, e.g. \"Buildings/laboratory\". Blank " +
+             "leaves this type on greybox. The art is authored at 256x128 per tile, " +
+             "which is exactly this project's scale, so it needs no scaling.")]
+    public string artSprite = "";
+
+    [Tooltip("How much the sprite darkens when damaged. The delivered art is pristine " +
+             "only, so the middle state is a tint rather than a second render.")]
+    [Range(0f, 1f)] public float damagedTint = 0.55f;
+
     public Color colour = new Color(0.24f, 0.28f, 0.40f);
 
     public bool AllowsFlip => tilesX != tilesY;

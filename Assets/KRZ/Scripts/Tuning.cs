@@ -491,6 +491,7 @@ public class Tuning : ScriptableObject
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
+                           artSprite = "Buildings/laboratory",
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and
@@ -503,6 +504,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 170, maxHeightPx = 220, hp = 60f,
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
+                           artSprite = "Buildings/reactor_1x1",
                            colour = new Color(0.92f, 0.62f, 0.20f) },
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
@@ -511,6 +513,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 300, maxHeightPx = 400, hp = 118f,
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
+                           artSprite = "Buildings/reactor_2x2",
                            colour = new Color(0.96f, 0.45f, 0.18f) },
 
         // The Core. One per run, and the only building that is genuinely a size-5 job.
@@ -526,6 +529,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 40, foodScatter = 9f,
                            weight = 0f, isReactor = true, unique = true,
                            pulseDamage = 300f, pulseRadius = 40f,
+                           artSprite = "Buildings/reactor_3x3",
                            colour = new Color(1f, 0.30f, 0.22f) },
     };
 
