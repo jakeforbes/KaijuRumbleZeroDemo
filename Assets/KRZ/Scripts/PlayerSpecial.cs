@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 /// Blast damages everything in a line, which is why it answers armour: the swipe
 /// chips, the Blast lands one number big enough to matter.
 /// </summary>
-[SoundActions(Sfx.Blast)]
+[SoundActions(Sfx.Blast, Sfx.Swarm)]
 public class PlayerSpecial : MonoBehaviour
 {
     public Tuning tuning;
@@ -21,6 +21,7 @@ public class PlayerSpecial : MonoBehaviour
     readonly List<Collider2D> hits = new();
     ContactFilter2D filter;
     float nextStompAt;
+    float nextSwarmAt;
 
     void Awake()
     {
@@ -45,6 +46,24 @@ public class PlayerSpecial : MonoBehaviour
             nextStompAt = Time.time + tuning.stompCooldown;
             Stomp(progress);
         }
+
+        if (upgrades.HasSwarm && Time.time >= nextSwarmAt)
+        {
+            nextSwarmAt = Time.time + tuning.swarmInterval;
+            Swarm(progress);
+        }
+    }
+
+    /// <summary>
+    /// Light homing damage on a long timer, so it reads as something the kaiju does
+    /// rather than something the player aims. Deliberately about a size-1 swipe per
+    /// particle: the upgrade's worth is that it fires while you are busy elsewhere,
+    /// not that any one hit is big.
+    /// </summary>
+    void Swarm(PlayerProgress progress)
+    {
+        float damage = tuning.swarmDamage * upgrades.SwarmPowerMul * progress.DamageMultiplier;
+        SwarmBolt.Discharge(tuning, transform, upgrades.SwarmBolts, damage, tuning.pixelsPerUnit);
     }
 
     static bool Pressed()

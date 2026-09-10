@@ -41,7 +41,8 @@ public enum Sfx
     BuildingStageChanged,
     BossRoar,
     MechPunch,
-    KaijuImpact
+    KaijuImpact,
+    Swarm
 }
 
 public static class AudioEvents

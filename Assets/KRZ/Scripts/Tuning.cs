@@ -395,6 +395,58 @@ public class Tuning : ScriptableObject
     public float shockwaveRadius = 5f;
     public float shockwaveForce = 16f;
 
+    [Header("Swarm — upgrade")]
+    [Tooltip("Seconds between discharges. Long on purpose: this is meant to go off " +
+             "while you are busy with something else, so it has to be an event.")]
+    public float swarmInterval = 5f;
+
+    [Tooltip("Damage per particle, before size scaling. Set to match a size-1 swipe — " +
+             "the upgrade's worth is that it fires unattended, not that a hit is big.")]
+    public float swarmDamage = 13f;
+
+    [Tooltip("How far it looks for targets, on the flat ground plane. Roughly the " +
+             "screen at the zoom of the first few sizes.")]
+    public float swarmRange = 11f;
+
+    [Tooltip("Seconds the particles circle the kaiju before discharging. This is the " +
+             "whole readability of the ability — without it they simply appear.")]
+    public float swarmFormSeconds = 0.55f;
+
+    public float swarmSpeed = 9f;
+
+    [Tooltip("How hard a particle can turn. High enough to actually catch a Scavenger.")]
+    public float swarmTurn = 55f;
+
+    [Tooltip("Seconds after launch before a particle gives up.")]
+    public float swarmLife = 3.5f;
+
+    [Tooltip("How close counts as a hit, on the flat plane.")]
+    public float swarmHitRadius = 0.5f;
+
+    [Header("Toxin — upgrade")]
+    [Tooltip("Damage per tick, before size scaling. Very small on purpose: this is " +
+             "attrition on anything that follows you, not a weapon you point.")]
+    public float toxinDamage = 1.6f;
+
+    [Tooltip("Seconds between damage checks. Charged once per tick however many " +
+             "overlapping puffs an enemy is standing in.")]
+    public float toxinTickInterval = 0.5f;
+
+    [Tooltip("Seconds a puff lingers after being dropped. This is the length of the wake.")]
+    public float toxinCloudLife = 2f;
+
+    [Tooltip("Cloud radius at size 1, in world units.")]
+    public float toxinRadius = 2.2f;
+
+    [Tooltip("Radius scales by (player scale ^ this). 0.5 is square root. At 1.0 the " +
+             "area quadruples by size 5, which is the trap the camera zoom, the food " +
+             "magnet and the stomp all fell into first.")]
+    [Range(0f, 1f)] public float toxinRadiusExponent = 0.5f;
+
+    [Tooltip("Seconds between dropped puffs. Shorter makes a smoother trail and more " +
+             "objects; this is the framerate knob if the wake ever costs anything.")]
+    public float toxinEmitInterval = 0.22f;
+
     [Header("Boss roar knockback")]
     [Tooltip("How far the roar throws the kaiju, in world units, if nothing is in the " +
              "way. Roughly half the screen at the zoom you are at by the time the boss " +
@@ -546,6 +598,23 @@ public class Tuning : ScriptableObject
         new UpgradeType { id = UpgradeId.Beam,    displayName = "Beam",
                           effect = "Blast hits 30% harder and further", perStack = 1.3f,
                           maxStacks = 4, weight = 0.9f, colour = new Color(0.5f, 0.85f, 1f) },
+
+        // Swarm and Toxin are both unattended damage, and deliberately opposite in
+        // shape: Swarm is a punctuation mark every five seconds that reaches across
+        // the screen, Toxin is a constant that only touches what is already on you.
+        //
+        // Both grant an ability rather than modify one, so like Stomp the first stack
+        // is worth its base numbers and only later stacks multiply.
+        new UpgradeType { id = UpgradeId.Swarm,   displayName = "Swarm",
+                          effect = "Homing particles discharge every few seconds",
+                          perStack = 1.25f, maxStacks = 4,
+                          baseProjectiles = 3, extraProjectilesPerStack = 1,
+                          weight = 0.9f, colour = new Color(0.6f, 1f, 0.85f) },
+
+        new UpgradeType { id = UpgradeId.Toxin,   displayName = "Toxin",
+                          effect = "A poison cloud around you and in your wake",
+                          perStack = 1.5f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.55f, 0.9f, 0.35f) },
 
         new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
                           effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,

@@ -58,6 +58,8 @@ public class GameBootstrap : MonoBehaviour
         Enemy.Reset();
         HitFx.Reset();
         Missile.Reset();
+        SwarmBolt.Reset();
+        ToxicField.Reset();
         UpgradePickup.Reset();
         Popups.Clear();
         ClearScene();
@@ -433,6 +435,11 @@ public class GameBootstrap : MonoBehaviour
 
         var special = go.AddComponent<PlayerSpecial>();
         special.tuning = tuning;
+
+        // Always present, and inert until the Toxin upgrade is held. Cheaper than
+        // adding a component mid-run, and it keeps the pickup instant.
+        var toxin = go.AddComponent<ToxicField>();
+        toxin.tuning = tuning;
 
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;
