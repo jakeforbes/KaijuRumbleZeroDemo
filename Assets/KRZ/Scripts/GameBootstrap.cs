@@ -586,34 +586,82 @@ public class GameBootstrap : MonoBehaviour
         return FindType(tuning.upgradeCarrierType);
     }
 
+    /// <summary>
+    /// Somewhere just off screen for the boss to walk on from.
+    ///
+    /// This used to take the farthest clear point on the whole map perimeter, for the
+    /// sake of the camera reveal. That was fine on an eight by eight city. On a
+    /// sixteen by sixteen one it puts a 1.65 speed boss up to seventy units away and
+    /// asks it to cross a city twice as dense as it used to be on greedy local
+    /// avoidance — so it either arrives after the run is over or never arrives at all.
+    ///
+    /// Now it starts just outside the view and works outward, exactly like every other
+    /// wave. The reveal still reads, because the camera pans to it either way.
+    /// </summary>
     public bool TryFindBossSpawn(EnemyType type, out Vector3 position)
     {
         position = default;
+        if (player == null) return false;
+
         float clearance = Mathf.Max(0.6f, type.bodyPx * 0.5f / tuning.pixelsPerUnit);
-        float inset = clearance + 0.5f;
-        var edge = Rect.MinMaxRect(playfieldBounds.xMin + inset, playfieldBounds.yMin + inset,
-            playfieldBounds.xMax - inset, playfieldBounds.yMax - inset);
-        if (edge.width <= 0 || edge.height <= 0 || player == null) return false;
-        // Search the perimeter rather than falling back to a ring around the player.
-        // The farthest clear candidate leaves room for the approach and camera reveal.
-        float best = -1;
+        var cam = Camera.main;
+        float offScreen = cam != null ? cam.orthographicSize * cam.aspect + clearance + 2f : 18f;
+
+        var land = Rect.MinMaxRect(landBounds.xMin + clearance, landBounds.yMin + clearance,
+                                   landBounds.xMax - clearance, landBounds.yMax - clearance);
+        if (land.width <= 0f || land.height <= 0f) return false;
+
+        // Full clearance is a circle five and a half units across for the Abomination,
+        // and blocks are three and a half apart on the short axis — insisting on that
+        // inside the city would never find anything. A boss slightly overlapping a
+        // rooftop on the frame it appears is not a problem; one that cannot spawn is.
+        float needed = clearance * 0.6f;
+
+        float startAngle = Random.value * Mathf.PI * 2f;
+        for (int ring = 0; ring < 8; ring++)
+        {
+            float r = offScreen + ring * clearance;
+            for (int i = 0; i < 16; i++)
+            {
+                float a = startAngle + i / 16f * Mathf.PI * 2f;
+                var at = player.transform.position
+                       + new Vector3(Mathf.Cos(a) * r, Mathf.Sin(a) * r * tuning.isoSquash, 0f);
+
+                if (!land.Contains(at)) continue;
+                if (Physics2D.OverlapCircle(at, needed) != null) continue;
+
+                position = at;
+                return true;
+            }
+        }
+
+        // Nothing near enough was clear, so fall back to the closest open shoreline.
+        // Closest, not farthest: a long walk is the failure this method exists to avoid.
+        float best = float.MaxValue;
+        bool found = false;
         for (int side = 0; side < 4; side++)
             for (int sample = 0; sample <= 32; sample++)
             {
                 float t = sample / 32f;
-                Vector2 at = side == 0 ? new Vector2(Mathf.Lerp(edge.xMin, edge.xMax, t), edge.yMin)
-                    : side == 1 ? new Vector2(edge.xMax, Mathf.Lerp(edge.yMin, edge.yMax, t))
-                    : side == 2 ? new Vector2(Mathf.Lerp(edge.xMin, edge.xMax, t), edge.yMax)
-                    : new Vector2(edge.xMin, Mathf.Lerp(edge.yMin, edge.yMax, t));
-                if (Physics2D.OverlapCircle(at, clearance) != null) continue;
+                Vector2 at = side == 0 ? new Vector2(Mathf.Lerp(land.xMin, land.xMax, t), land.yMin)
+                    : side == 1 ? new Vector2(land.xMax, Mathf.Lerp(land.yMin, land.yMax, t))
+                    : side == 2 ? new Vector2(Mathf.Lerp(land.xMin, land.xMax, t), land.yMax)
+                    : new Vector2(land.xMin, Mathf.Lerp(land.yMin, land.yMax, t));
+
+                if (Physics2D.OverlapCircle(at, needed) != null) continue;
+
                 var delta = at - (Vector2)player.transform.position;
                 delta.y /= Mathf.Max(0.01f, tuning.isoSquash);
                 float score = delta.sqrMagnitude;
-                if (score <= best) continue;
+                if (score >= best) continue;
+
                 best = score;
                 position = at;
+                found = true;
             }
-        return best >= 0;
+
+        if (!found) Debug.LogWarning("KRZ: no clear boss spawn anywhere on land.");
+        return found;
     }
 
     /// <summary>Cheat spawn: one named enemy, for testing a type without waiting on the ratio.</summary>

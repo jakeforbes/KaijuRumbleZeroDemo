@@ -99,9 +99,22 @@ public class WaveDirector : MonoBehaviour
         Clock += seconds;
         foreach (var w in tuning.waves)
         {
-            if (!w.IsSustained && Clock >= w.startTime) w.fired = true;
+            // One-shot beats that were skipped over are written off rather than all
+            // firing at once — except a boss, which still fires the moment the clock
+            // passes it. Scrubbing forward is how anyone tests the late game, and
+            // marking the boss spent on the way past meant the one thing you scrubbed
+            // forward to see was the one thing that could never happen.
+            if (!w.IsSustained && Clock >= w.startTime && !IsBossWave(w)) w.fired = true;
             if (w.nextFireAt < Clock) w.nextFireAt = Clock;
         }
+    }
+
+    static bool IsBossWave(WaveEntry wave)
+    {
+        var type = GameBootstrap.Instance != null
+            ? GameBootstrap.Instance.FindType(wave.enemyType)
+            : null;
+        return type != null && (type.isBoss || type.name == "Abomination");
     }
 
     void Spawn(WaveEntry wave)
