@@ -49,23 +49,50 @@ public class PlayerUpgrades : MonoBehaviour
     /// beam would have been invisible by comparison.
     /// </summary>
     public int BlastBeams => 1 << Mathf.Clamp(Count(UpgradeId.Prism), 0, 3);
-    public float MoveSpeedMul => Mul(UpgradeId.Fleet);
+    public float MoveSpeedMul => Mul(UpgradeId.Speed);
     public float BlastCooldownMul => Mul(UpgradeId.Furnace);
     public float BlastPowerMul => Mul(UpgradeId.Beam);
+    public bool HasSwarm => Count(UpgradeId.Swarm) > 0;
+    public bool HasToxin => Count(UpgradeId.Toxin) > 0;
+
+    /// <summary>
+    /// Particles per discharge: the base count on the first stack, one more for each
+    /// after it. The count is the readable half of the upgrade — you can see three
+    /// become four — while the damage multiplier is the half that keeps it relevant.
+    /// </summary>
+    public int SwarmBolts
+    {
+        get
+        {
+            int n = Count(UpgradeId.Swarm);
+            if (n <= 0) return 0;
+            var type = Find(UpgradeId.Swarm);
+            if (type == null) return 0;
+            return Mathf.Max(1, type.baseProjectiles + (n - 1) * type.extraProjectilesPerStack);
+        }
+    }
+
+    public float SwarmPowerMul => GrantedPowerMul(UpgradeId.Swarm);
+    public float ToxinPowerMul => GrantedPowerMul(UpgradeId.Toxin);
+
     /// <summary>
     /// Stomp is the one upgrade that creates an ability rather than modifying one,
     /// so its first stack grants it at base power and only later stacks multiply.
     /// Otherwise picking it up once already lands a boosted hit.
     /// </summary>
-    public float StompPowerMul
+    public float StompPowerMul => GrantedPowerMul(UpgradeId.Stomp);
+
+    /// <summary>
+    /// For upgrades that grant an ability rather than modify one. Returns 0 when the
+    /// ability is not held at all, so callers can use it as both the switch and the
+    /// scale, and the first stack is worth exactly its base numbers.
+    /// </summary>
+    float GrantedPowerMul(UpgradeId id)
     {
-        get
-        {
-            int n = Count(UpgradeId.Stomp);
-            if (n <= 0) return 0f;
-            var type = Find(UpgradeId.Stomp);
-            return type == null ? 1f : Mathf.Pow(type.perStack, n - 1);
-        }
+        int n = Count(id);
+        if (n <= 0) return 0f;
+        var type = Find(id);
+        return type == null ? 1f : Mathf.Pow(type.perStack, n - 1);
     }
 
     /// <summary>perStack compounded by how many are held, so stacking is smooth.</summary>

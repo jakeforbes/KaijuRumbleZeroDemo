@@ -178,6 +178,33 @@ public class Tuning : ScriptableObject
                         hitFrames = 3, deathFrames = 4,
                         artDisplayPx = 256, footprintFraction = 0.75f },
 
+        // Elite Tank. Takes the Commander's job — the enemy worth stopping for —
+        // from size 3 onward, because by then a Commander dies in passing and a prize
+        // you collect without deciding to is not a prize.
+        //
+        // Class 2, so unlike the Commander it never becomes squishable. The power-up
+        // dispenser should stay something you have to actually kill for the whole run,
+        // rather than turning into something you absorb by walking through it.
+        //
+        // Electrified and gold so it is findable in a swarm. Everything about this
+        // unit is "the one to shoot"; if it does not read at a glance it has failed
+        // whatever its stats say.
+        new EnemyType { name = "Elite Tank", sizeClass = 2, hp = 200f, armour = 14f,
+                        contactDamage = 26f, moveSpeed = 1.5f, attackRange = 4.5f, ranged = true,
+                        attackCooldown = 2f, attackWindup = 0.5f,
+                        dropsUpgrade = true, foodDrops = 16, foodScatter = 3.5f,
+                        bodyPx = 150, electrified = true,
+                        colour = new Color(1f, 0.82f, 0.30f),
+                        artFolder = "GroundTank", artPrefix = "GroundTank",
+                        artPathFormat = "{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Drive", "AttackBlast", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 3, deathFrames = 4,
+                        artDisplayPx = 310, footprintFraction = 0.75f,
+                        artTint = new Color(1f, 0.84f, 0.42f) },
+
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
@@ -185,6 +212,30 @@ public class Tuning : ScriptableObject
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
                         artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
+
+        // Bruiser. The same chassis a fifth larger, with the missiles taken away and a
+        // punch put in — the one thing in the roster that closes on you deliberately
+        // and wants to be in your face.
+        //
+        // Everything about it is the long telegraph. 1.5 seconds planted, a punch reach
+        // barely longer than its own arm, and nine seconds before it can do it again.
+        // Read it and you walk out of the ring for free; miss it and you lose a third
+        // of your health and your position at once. That trade is the whole unit.
+        //
+        // Heavier than the player until size 4, so it shoulders you around rather than
+        // being brushed aside like the rest of the roster.
+        new EnemyType { name = "Bruiser", sizeClass = 2, hp = 190f, armour = 14f,
+                        contactDamage = 30f, moveSpeed = 1.55f, attackRange = 1.8f,
+                        attackCooldown = 1.8f, attackWindup = 0.5f,
+                        foodDrops = 14, foodScatter = 3.5f,
+                        special = SpecialAction.Knockback,
+                        specialCooldown = 9f, specialWindup = 1.5f, specialRange = 4.5f,
+                        specialDamage = 85f, specialKnockback = 7f,
+                        specialSound = Sfx.MechPunch,
+                        bodyPx = 470, mass = 420f, colour = new Color(0.95f, 0.50f, 0.28f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 470,
+                        footprintFraction = 0.34f, artFrameDigits = 4, artFirstFrame = 1,
+                        artTint = new Color(1f, 0.62f, 0.42f) },
 
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
         // so it replaces the cut Barracks with something mobile and killable. Ignoring
@@ -229,16 +280,64 @@ public class Tuning : ScriptableObject
         // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
         // one thing in the game you can never walk over. Armour is set so the swipe
         // still contributes but the Blast is what actually fells it.
-        new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
+        // The boss, and the run's end condition. 2400 health is deliberately more
+        // than the swipe alone can chew through in the time you have: it is the one
+        // fight that asks you to have built something.
+        //
+        // The roar exists because everything else in the roster can be outrun, which
+        // at size 5 turns a boss into a stationary target you circle. The knockback
+        // takes your spacing away and hands it back on the boss's terms — and points
+        // you at whatever building is behind you.
+        // Built from the player's own size-5 frames, recoloured and a fifth larger.
+        // A boss that is unmistakably your own kind, bigger, is a cheaper and clearer
+        // read than any amount of new art would have been — and the size difference
+        // does the talking the moment it walks on.
+        //
+        // artDisplayPx 922 is not arbitrary: a 512 frame at 128 PPU is 4 world units,
+        // so 922/512 of that is 7.2 — exactly 20% over the player's 6 at size 5.
+        //
+        // Mass 900 matches a size-5 kaiju's own, so the two of them shove rather than
+        // one bulldozing the other. Everything else in the roster is meant to be
+        // brushed aside; this is the one thing that is not.
+        //
+        // The roar deals no damage on purpose. Losing your position and your footing
+        // in the middle of the only fight that matters is the punishment, and the
+        // building you land in takes the hit instead.
+        new EnemyType { name = "Abomination", sizeClass = 4, hp = 2400f, armour = 12f,
                         contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
+                        special = SpecialAction.Knockback,
+                        specialCooldown = 7f, specialWindup = 1.1f, specialRange = 9f,
+                        specialSound = Sfx.BossRoar,
                         foodDrops = 0, foodScatter = 4f,
-                        bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
+                        bodyPx = 700, mass = 900f, electrified = true,
+                        colour = new Color(0.45f, 0.85f, 0.40f),
+                        artFolder = "Uries/Level_5", artPrefix = "uries_l5",
+                        artPathFormat = "{root}/{clip}/{dir}/{prefix}_{clip}_{dir}_{frame}",
+                        artClipNames = new[] { "idle", "walk", "swipe", "hit", "hit" },
+                        artDirectionStyle = DirectionStyle.LongLower, artMirrored = true,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 8, attackFrames = 6,
+                        hitFrames = 3, deathFrames = 3,
+                        artDisplayPx = 922, footprintFraction = 0.45f,
+                        artTint = new Color(0.45f, 1f, 0.55f) },
     };
 
     [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
     public int commanderPerMin = 25;
     public int commanderPerMax = 50;
+
+    [Header("Who carries the power-ups")]
+    [Tooltip("The enemy that leads a squad and leaves an upgrade, early on.")]
+    public string upgradeCarrierType = "Commander";
+
+    [Tooltip("Takes that job over once the player is big enough. A Commander stops " +
+             "being a decision worth making the moment you can kill one in passing, " +
+             "so the prize moves to something that still costs you a stop.")]
+    public string eliteCarrierType = "Elite Tank";
+
+    [Tooltip("Tier index at which the elite takes over, 0-based. 2 is size 3.")]
+    public int eliteCarrierFromTier = 2;
 
     [Header("The run")]
     [Tooltip("Free power-ups placed around the map at the start, evenly spaced.")]
@@ -308,6 +407,17 @@ public class Tuning : ScriptableObject
         new WaveEntry { label = "push", startTime = 145f,
                         enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
 
+        // Bruisers arrive after the Mech has taught you to keep moving, and ask the
+        // opposite: something that wants to be close, that you have to read rather
+        // than outrun. Two of them, so the second lands while the first is winding up
+        // — and Ahead puts one in your path rather than behind you, which is the only
+        // placement a punch this slow can survive.
+        new WaveEntry { label = "bruisers", startTime = 105f, endTime = 155f, interval = 40f,
+                        enemyType = "Bruiser", count = 1, shape = SpawnShape.Ahead },
+
+        new WaveEntry { label = "push", startTime = 150f,
+                        enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
+
         // The finale.
         new WaveEntry { label = "BOSS", startTime = 160f,
                         enemyType = "Abomination", count = 1, shape = SpawnShape.Clump },
@@ -323,6 +433,75 @@ public class Tuning : ScriptableObject
     [Tooltip("How far the shrink shockwave reaches, scaled by your size.")]
     public float shockwaveRadius = 5f;
     public float shockwaveForce = 16f;
+
+    [Header("Swarm — upgrade")]
+    [Tooltip("Seconds between discharges. Long on purpose: this is meant to go off " +
+             "while you are busy with something else, so it has to be an event.")]
+    public float swarmInterval = 5f;
+
+    [Tooltip("Damage per particle, before size scaling. Set to match a size-1 swipe — " +
+             "the upgrade's worth is that it fires unattended, not that a hit is big.")]
+    public float swarmDamage = 13f;
+
+    [Tooltip("How far it looks for targets, on the flat ground plane. Roughly the " +
+             "screen at the zoom of the first few sizes.")]
+    public float swarmRange = 11f;
+
+    [Tooltip("Seconds the particles circle the kaiju before discharging. This is the " +
+             "whole readability of the ability — without it they simply appear.")]
+    public float swarmFormSeconds = 0.55f;
+
+    public float swarmSpeed = 9f;
+
+    [Tooltip("How hard a particle can turn. High enough to actually catch a Scavenger.")]
+    public float swarmTurn = 55f;
+
+    [Tooltip("Seconds after launch before a particle gives up.")]
+    public float swarmLife = 3.5f;
+
+    [Tooltip("How close counts as a hit, on the flat plane.")]
+    public float swarmHitRadius = 0.5f;
+
+    [Header("Toxin — upgrade")]
+    [Tooltip("Damage per tick, before size scaling. Very small on purpose: this is " +
+             "attrition on anything that follows you, not a weapon you point.")]
+    public float toxinDamage = 1.6f;
+
+    [Tooltip("Seconds between damage checks. Charged once per tick however many " +
+             "overlapping puffs an enemy is standing in.")]
+    public float toxinTickInterval = 0.5f;
+
+    [Tooltip("Seconds a puff lingers after being dropped. This is the length of the wake.")]
+    public float toxinCloudLife = 2f;
+
+    [Tooltip("Cloud radius at size 1, in world units.")]
+    public float toxinRadius = 2.2f;
+
+    [Tooltip("Radius scales by (player scale ^ this). 0.5 is square root. At 1.0 the " +
+             "area quadruples by size 5, which is the trap the camera zoom, the food " +
+             "magnet and the stomp all fell into first.")]
+    [Range(0f, 1f)] public float toxinRadiusExponent = 0.5f;
+
+    [Tooltip("Seconds between dropped puffs. Shorter makes a smoother trail and more " +
+             "objects; this is the framerate knob if the wake ever costs anything.")]
+    public float toxinEmitInterval = 0.22f;
+
+    [Header("Boss roar knockback")]
+    [Tooltip("How far the roar throws the kaiju, in world units, if nothing is in the " +
+             "way. Roughly half the screen at the zoom you are at by the time the boss " +
+             "arrives. A building stops you early — which is the interesting outcome.")]
+    public float knockbackDistance = 12f;
+
+    [Tooltip("Seconds the throw lasts, decaying to a stop. Launch speed is derived " +
+             "from this and the distance, so shortening it makes the same throw more " +
+             "violent rather than shorter.")]
+    public float knockbackSeconds = 0.55f;
+
+    [Tooltip("Damage to a building the kaiju is thrown into. Runs through the normal " +
+             "size-versus-class table, so this is the number before that multiplier: " +
+             "at size 5 it flattens anything up to your own class and takes a real " +
+             "bite out of the Core.")]
+    public float knockbackImpactDamage = 120f;
 
     [Tooltip("How close an outgrown enemy has to be to die underfoot, scaled by size.")]
     public float squishRange = 0.85f;
@@ -385,15 +564,20 @@ public class Tuning : ScriptableObject
     public bool showSwipeArc = true;
 
     [Header("Blast — the manual special")]
-    [Tooltip("One big number rather than chip damage: this is the answer to armour.")]
-    public float blastDamage = 45f;
+    [Tooltip("One big number rather than chip damage: this is the answer to armour.\n\n" +
+             "This is per beam, and Prism can put eight of them out at once, on top of " +
+             "the tier damage multiplier and Beam's own stack. Read any change here as " +
+             "a change to all eight.")]
+    public float blastDamage = 30f;
     public float blastCooldown = 6f;
     public float blastRange = 14f;
 
     [Tooltip("Beam thickness as a fraction of the kaiju's height, so it grows with you. " +
              "Applies to the damage band as well as the drawing, so what you see is what " +
-             "it hits.")]
-    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.8f;
+             "it hits.\n\n" +
+             "Halved from 0.8 once Prism went to eight beams: at size 5 that was eight " +
+             "bands almost five units wide, which is most of the screen and no aim.")]
+    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.4f;
 
     [Tooltip("Height the beam is centred on, as a fraction of the kaiju's height. 0.5 " +
              "is mid-body. Firing from the head looked disconnected from a damage band " +
@@ -439,8 +623,11 @@ public class Tuning : ScriptableObject
                           perStack = 1f, maxStacks = 3,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
-        new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",
-                          effect = "Move 12% faster", perStack = 1.12f, maxStacks = 5,
+        // 12% per stack was under the threshold where a single pickup registers —
+        // it read as "maybe". 20% is felt on the pickup, and five of them roughly
+        // two and a half times your speed, which is a whole build rather than a trim.
+        new UpgradeType { id = UpgradeId.Speed,   displayName = "Speed",
+                          effect = "Move 20% faster", perStack = 1.2f, maxStacks = 5,
                           weight = 1f, colour = new Color(0.5f, 0.9f, 0.75f) },
 
         new UpgradeType { id = UpgradeId.Stomp,   displayName = "Stomp",
@@ -450,6 +637,23 @@ public class Tuning : ScriptableObject
         new UpgradeType { id = UpgradeId.Beam,    displayName = "Beam",
                           effect = "Blast hits 30% harder and further", perStack = 1.3f,
                           maxStacks = 4, weight = 0.9f, colour = new Color(0.5f, 0.85f, 1f) },
+
+        // Swarm and Toxin are both unattended damage, and deliberately opposite in
+        // shape: Swarm is a punctuation mark every five seconds that reaches across
+        // the screen, Toxin is a constant that only touches what is already on you.
+        //
+        // Both grant an ability rather than modify one, so like Stomp the first stack
+        // is worth its base numbers and only later stacks multiply.
+        new UpgradeType { id = UpgradeId.Swarm,   displayName = "Swarm",
+                          effect = "Homing particles discharge every few seconds",
+                          perStack = 1.25f, maxStacks = 4,
+                          baseProjectiles = 3, extraProjectilesPerStack = 1,
+                          weight = 0.9f, colour = new Color(0.6f, 1f, 0.85f) },
+
+        new UpgradeType { id = UpgradeId.Toxin,   displayName = "Toxin",
+                          effect = "A poison cloud around you and in your wake",
+                          perStack = 1.5f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.55f, 0.9f, 0.35f) },
 
         new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
                           effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,
@@ -468,29 +672,45 @@ public class Tuning : ScriptableObject
              "about three swipes; the delta table below does the rest.")]
     public BuildingType[] buildingTypes =
     {
+        // Art paths are wired ahead of the frames existing. A missing file loads as
+        // null and the type stays on greybox, so the next delivery is a file drop
+        // rather than another pass through here.
         new BuildingType { name = "Shack",    sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
+                           artSprite = "Buildings/civilian_1x1",
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
-        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 2, tilesY = 1,
+        // Declared 1x2 rather than 2x1 to match the orientation the art is authored
+        // in. The placer still flips half of them; a flipped one mirrors the sprite,
+        // which lands exactly on the swapped footprint in this projection.
+        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
                            foodDrops = 9,  foodScatter = 3.2f, weight = 25f,
+                           artSprite = "Buildings/civilian_1x2",
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
         new BuildingType { name = "Wide Low", sizeClass = 2, tilesX = 2, tilesY = 2,
                            minHeightPx = 190, maxHeightPx = 260, hp = 47f,
                            foodDrops = 14, foodScatter = 4.2f, weight = 20f,
+                           artSprite = "Buildings/civilian_2x2",
                            colour = new Color(0.29f, 0.27f, 0.37f) },
 
+        // Shares Wide Low's render, because the delivered set has one 2x2 civilian and
+        // this roster has two. In greybox they read apart by height; in art they will
+        // not. Either the artist adds a tall 2x2, or this moves to the 3x3 footprint
+        // and takes civilian_3x3 — which is currently the one delivered civilian with
+        // nothing pointing at it.
         new BuildingType { name = "Block",    sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 15f,
+                           artSprite = "Buildings/civilian_2x2",
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
         new BuildingType { name = "Tower",    sizeClass = 4, tilesX = 1, tilesY = 3,
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
                            foodDrops = 34, foodScatter = 7f,  weight = 10f,
+                           artSprite = "Buildings/civilian_1x3",
                            colour = new Color(0.25f, 0.26f, 0.42f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
@@ -499,12 +719,13 @@ public class Tuning : ScriptableObject
         new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
                            foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
+                           artSprite = "Buildings/laboratory_1x2",
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
-                           artSprite = "Buildings/laboratory",
+                           artSprite = "Buildings/laboratory_2x2",
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and

@@ -60,6 +60,8 @@ public class GameBootstrap : MonoBehaviour
         Enemy.Reset();
         HitFx.Reset();
         Missile.Reset();
+        SwarmBolt.Reset();
+        ToxicField.Reset();
         UpgradePickup.Reset();
         Popups.Clear();
         ClearScene();
@@ -157,7 +159,7 @@ public class GameBootstrap : MonoBehaviour
 
     // Both maps use this factory: art, collision, health, audio and drops stay identical.
     void CreateBuilding(Transform root, BuildingType type, int tilesX, int tilesY,
-        int heightPx, Vector3 position, string objectName)
+        int heightPx, Vector3 position, string objectName, bool flipped = false)
     {
         float ppu = tuning.pixelsPerUnit;
         var go = new GameObject(objectName);
@@ -191,7 +193,7 @@ public class GameBootstrap : MonoBehaviour
         col.points = points;
 
         // Init last: it caches the collider and sprite renderer.
-        building.Init(tuning, type, tilesX, tilesY, heightPx, ppu);
+        building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped);
     }
 
     bool IsGym => SceneManager.GetActiveScene().name == "Gym";
@@ -264,14 +266,15 @@ public class GameBootstrap : MonoBehaviour
 
                 // Flip non-square footprints so the grid does not read as one repeated shape.
                 int tilesX = type.tilesX, tilesY = type.tilesY;
-                if (type.AllowsFlip && rng.Next(0, 2) == 0) (tilesX, tilesY) = (tilesY, tilesX);
+                bool flipped = type.AllowsFlip && rng.Next(0, 2) == 0;
+                if (flipped) (tilesX, tilesY) = (tilesY, tilesX);
 
                 int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
 
                 float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
                 float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
 
-                CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f), $"{type.name}_{bx}_{by}");
+                CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f), $"{type.name}_{bx}_{by}", flipped);
             }
     }
 
@@ -314,6 +317,26 @@ public class GameBootstrap : MonoBehaviour
         foreach (var t in tuning.enemyTypes)
             if (t.name == name) return t;
         return null;
+    }
+
+    /// <summary>
+    /// Whichever enemy is currently the one worth stopping for. The Commander early,
+    /// the Elite Tank once the kaiju is big enough that a Commander dies in passing —
+    /// a prize you collect by walking over it has stopped being a decision.
+    ///
+    /// One lookup for both spawn paths, so the timeline and the debug swarm can never
+    /// disagree about who is carrying.
+    /// </summary>
+    public EnemyType FindUpgradeCarrier()
+    {
+        var progress = PlayerProgress.Instance;
+        if (progress != null && progress.Tier >= tuning.eliteCarrierFromTier)
+        {
+            var elite = FindType(tuning.eliteCarrierType);
+            if (elite != null) return elite;
+        }
+
+        return FindType(tuning.upgradeCarrierType);
     }
 
     public bool TryFindBossSpawn(EnemyType type, out Vector3 position)
@@ -497,6 +520,11 @@ public class GameBootstrap : MonoBehaviour
         var special = go.AddComponent<PlayerSpecial>();
         special.tuning = tuning;
 
+        // Always present, and inert until the Toxin upgrade is held. Cheaper than
+        // adding a component mid-run, and it keeps the pickup instant.
+        var toxin = go.AddComponent<ToxicField>();
+        toxin.tuning = tuning;
+
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;
         art.SetParent(go.transform, false);
@@ -542,7 +570,7 @@ public class GameBootstrap : MonoBehaviour
         }
 
         var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
-        var commander = FindType("Commander");
+        var commander = FindUpgradeCarrier();
         bool rollCommanders = type != commander && commander != null;
         int spawned = 0;
 

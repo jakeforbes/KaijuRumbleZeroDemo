@@ -239,6 +239,36 @@ public static class GreyboxArt
     }
 
     /// <summary>Soft elliptical contact shadow, drawn by the engine rather than baked into art.</summary>
+    /// <summary>
+    /// A soft 2:1 ellipse in white, so a SpriteRenderer tint decides the colour.
+    /// Shadow is the same shape but its pixels are black, and black multiplied by any
+    /// tint is still black — a coloured cloud has to start white.
+    ///
+    /// Falls off on a curve rather than linearly, which keeps a dense middle and a
+    /// vague edge instead of reading as a flat disc.
+    /// </summary>
+    public static Sprite Cloud(int w, float ppu)
+    {
+        int texW = w, texH = Mathf.Max(4, w / 2);
+        var px = new Color[texW * texH];
+        float cx = texW * 0.5f, cy = texH * 0.5f;
+
+        for (int x = 0; x < texW; x++)
+            for (int y = 0; y < texH; y++)
+            {
+                float nx = (x + 0.5f - cx) / (texW * 0.5f);
+                float ny = (y + 0.5f - cy) / (texH * 0.5f);
+                float d = Mathf.Sqrt(nx * nx + ny * ny);
+                if (d > 1f) continue;
+
+                float a = 1f - d;
+                px[y * texW + x] = new Color(1f, 1f, 1f, a * a * 0.85f + a * 0.15f);
+            }
+
+        var tex = MakeTexture(px, texW, texH);
+        return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), ppu);
+    }
+
     public static Sprite Shadow(int w, float ppu)
     {
         int texW = w, texH = Mathf.Max(4, w / 2);

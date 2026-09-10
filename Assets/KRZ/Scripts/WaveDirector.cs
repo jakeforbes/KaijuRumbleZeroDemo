@@ -64,7 +64,7 @@ public class WaveDirector : MonoBehaviour
     void Update()
     {
         var progress = PlayerProgress.Instance;
-        if (!Running || progress == null || progress.IsDead) return;
+        if (!Running || progress == null || progress.RunOver) return;
 
         Clock += Time.deltaTime;
 
@@ -111,7 +111,7 @@ public class WaveDirector : MonoBehaviour
         var type = GameBootstrap.Instance != null ? GameBootstrap.Instance.FindType(wave.enemyType) : null;
         if (type == null) return;
 
-        var commander = GameBootstrap.Instance.FindType("Commander");
+        var commander = GameBootstrap.Instance.FindUpgradeCarrier();
 
         // Just beyond the visible edge, so groups walk on rather than pop in.
         var cam = Camera.main;

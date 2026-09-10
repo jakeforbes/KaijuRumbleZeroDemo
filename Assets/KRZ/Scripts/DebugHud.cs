@@ -91,9 +91,17 @@ public class DebugHud : MonoBehaviour
             if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
             if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
 
-            // Direct spawns for anything the swarm key cannot reach.
+            // Direct spawns for anything the swarm key cannot reach. Ctrl is a third
+            // modifier rather than another key, so the F-row stays learnable.
+            bool brawler = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             if (kb.f11Key.wasPressedThisFrame)
-                GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
+            {
+                // Unmodified F11 spawns whoever is carrying power-ups right now, so
+                // the key keeps meaning "give me the prize target" as the run moves on.
+                var carrier = GameBootstrap.Instance.FindUpgradeCarrier();
+                GameBootstrap.Instance.SpawnOne(
+                    brawler ? "Bruiser" : heavy ? "Mech" : carrier != null ? carrier.name : "Commander");
+            }
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
             if (kb.f8Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Scavenger" : "Dropship");
@@ -212,6 +220,30 @@ public class DebugHud : MonoBehaviour
         DrawBlastAndUpgrades(x, hy);
 
         if (progress.IsDead) DrawGameOver();
+        else if (progress.HasWon) DrawWin(progress);
+    }
+
+    /// <summary>
+    /// Flashes rather than sits there. A static box reads as the game having stopped;
+    /// a pulse reads as a celebration, which is what the moment is owed.
+    /// </summary>
+    void DrawWin(PlayerProgress progress)
+    {
+        float since = Time.time - progress.WonAt;
+        float pulse = Mathf.PingPong(since * 3f, 1f);
+
+        var box = new Rect((Screen.width - 420f) * 0.5f, Screen.height * 0.34f, 420f, 104f);
+        GUI.color = new Color(0.05f, 0.10f, 0.06f, 0.80f);
+        GUI.DrawTexture(box, Texture2D.whiteTexture);
+
+        var big = new GUIStyle(meterStyle) { fontSize = 34 };
+        GUI.color = Color.Lerp(new Color(0.55f, 1f, 0.6f), Color.white, pulse);
+        GUI.Label(new Rect(box.x, box.y + 16f, box.width, 44f), "<b>YOU WIN!</b>", big);
+
+        GUI.color = Color.white;
+        GUI.Label(new Rect(box.x, box.y + 62f, box.width, 24f),
+                  $"the Abomination is down   —   food eaten {progress.FoodTotal:0}   —   F10 to restart",
+                  meterStyle);
     }
 
     /// <summary>Blast readiness on the left, collected upgrades stacked beside it.</summary>

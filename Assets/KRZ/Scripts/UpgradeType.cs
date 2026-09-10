@@ -4,10 +4,12 @@ public enum UpgradeId
 {
     Brawler,   // extra swipe strikes
     Prism,     // extra Blast beams, radiating outward
-    Fleet,     // faster movement
+    Speed,     // faster movement
     Stomp,     // adds an AoE around the kaiju
     Beam,      // stronger, longer special
     Furnace,   // faster special
+    Swarm,     // homing energy particles on a timer
+    Toxin,     // a poison cloud around you and in your wake
 }
 
 /// <summary>
@@ -31,6 +33,15 @@ public class UpgradeType
     [Tooltip("Extra swipes added to each activation, per stack. One stack turns " +
              "X...X...X into XX...XX...XX rather than making X bigger.")]
     public int extraHitsPerStack;
+
+    [Tooltip("Projectiles added per stack beyond the first. Swarm uses this: the " +
+             "first stack grants the ability at its base count, and each after it " +
+             "adds one more particle as well as multiplying damage by perStack.")]
+    public int extraProjectilesPerStack;
+
+    [Tooltip("Projectiles the first stack grants. Only meaningful alongside " +
+             "extraProjectilesPerStack.")]
+    public int baseProjectiles;
 
     public int maxStacks = 5;
 

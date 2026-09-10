@@ -5,7 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
-[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy)]
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar, Sfx.MechPunch)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -63,8 +63,9 @@ public class Enemy : Damageable
 
         // Mass by body size. The kaiju's mass scales with its own growth, so infantry
         // are brushed aside while a Mech still has real presence at size 1 — and by
-        // size 5 nothing short of the boss can move you.
-        rb.mass = Mathf.Max(0.2f, type.bodyPx / 64f);
+        // size 5 nothing short of the boss can move you. Anything that has to hold its
+        // ground against a full-grown kaiju states its own mass instead.
+        rb.mass = type.mass > 0f ? type.mass : Mathf.Max(0.2f, type.bodyPx / 64f);
 
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
@@ -112,6 +113,18 @@ public class Enemy : Damageable
             bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / frameSize);
         }
 
+        // Sized off the drawn sprite rather than bodyPx, so arcs cover the figure the
+        // player can see instead of the collider they cannot.
+        if (type.electrified)
+        {
+            float drawn = (e.art != null ? type.artDisplayPx : type.bodyPx) / ppu;
+
+            // Arcs take the unit's own tint pushed toward white, so an electrified
+            // enemy reads as that enemy overcharged rather than as a generic effect.
+            var arc = Color.Lerp(e.baseColour, Color.white, 0.6f);
+            ElectricFx.Attach(go, drawn, drawn * 0.30f, ppu, arc);
+        }
+
         e.nextVolleyAt = Time.time + type.specialCooldown;
         e.wanderAngle = Random.value * Mathf.PI * 2f;
 
@@ -140,7 +153,7 @@ public class Enemy : Damageable
         }
 
         var progress = PlayerProgress.Instance;
-        if (progress == null || progress.IsDead) { body.linearVelocity = Vector2.zero; return; }
+        if (progress == null || progress.RunOver) { body.linearVelocity = Vector2.zero; return; }
 
         Vector2 toPlayer = progress.transform.position - transform.position;
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
@@ -364,7 +377,46 @@ public class Enemy : Damageable
             case SpecialAction.DeployTroops:
                 Deploy();
                 break;
+
+            case SpecialAction.Knockback:
+                Shove();
+                break;
         }
+    }
+
+    /// <summary>
+    /// The answer to being kited. Everything else in the roster can be outrun, which at
+    /// size 5 makes a heavy a stationary target you circle; this takes the spacing away
+    /// and points you at whatever is behind you.
+    ///
+    /// One action, two feels, both from the type's own numbers: the Abomination's roar
+    /// is a wide ring that deals nothing and throws you a long way, a mech's punch is a
+    /// short reach that hurts and shoves you a shorter distance.
+    ///
+    /// The ring is drawn whether or not it connects, so the radius is something the
+    /// player can learn rather than guess at.
+    /// </summary>
+    void Shove()
+    {
+        AudioEvents.Play(type.specialSound, transform.position, owner: gameObject);
+        HitFx.Burst(transform.position, new Color(1f, 0.55f, 0.25f),
+                    type.specialRange, tuning.pixelsPerUnit, 0.5f);
+
+        var progress = PlayerProgress.Instance;
+        if (progress == null || progress.RunOver) return;
+
+        progress.ShakeExternal(tuning.tierUpShake * 1.2f);
+
+        Vector2 d = (Vector2)progress.transform.position - (Vector2)transform.position;
+        if (new Vector2(d.x, d.y / tuning.isoSquash).magnitude > type.specialRange) return;
+
+        if (type.specialDamage > 0f) progress.TakeDamage(type.specialDamage);
+
+        var controller = progress.GetComponent<PlayerController>();
+        if (controller == null) return;
+
+        float distance = type.specialKnockback > 0f ? type.specialKnockback : tuning.knockbackDistance;
+        controller.Knockback(transform.position, distance, tuning.knockbackSeconds);
     }
 
     void Deploy()
@@ -471,6 +523,11 @@ public class Enemy : Damageable
         if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
             UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
                                 transform.position, tuning.pixelsPerUnit);
+
+        // The boss is the run's end condition. Announced here rather than from the
+        // director so it holds for any enemy flagged isBoss, however it got spawned —
+        // including the F-key cheat, which is the only way anyone tests this.
+        if (IsBoss && PlayerProgress.Instance != null) PlayerProgress.Instance.Win();
 
         // With a destruction clip, the corpse lingers just long enough to play it.
         // Collision goes immediately so a dying enemy never blocks or shoves.

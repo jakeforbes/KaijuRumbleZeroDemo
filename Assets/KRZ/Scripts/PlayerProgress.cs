@@ -8,7 +8,7 @@ using UnityEngine;
 /// nothing happening; a curve with punctuation reads as constant progress. The
 /// tier-up still lands as a moment: a jump in size, a full heal, a shake.
 /// </summary>
-[SoundActions(Sfx.PlayerHit, Sfx.GrowTier, Sfx.Shrink, Sfx.Lose, Sfx.FoodPickup)]
+[SoundActions(Sfx.PlayerHit, Sfx.GrowTier, Sfx.Shrink, Sfx.Lose, Sfx.Win, Sfx.FoodPickup)]
 public class PlayerProgress : MonoBehaviour
 {
     public static PlayerProgress Instance { get; private set; }
@@ -39,6 +39,15 @@ public class PlayerProgress : MonoBehaviour
 
     /// <summary>Set when the kaiju dies at size 1. The run is over until F10.</summary>
     public bool IsDead { get; private set; }
+
+    /// <summary>Set when the Abomination falls. The other way a run ends.</summary>
+    public bool HasWon { get; private set; }
+
+    /// <summary>When the win landed, so the banner can flash from that moment.</summary>
+    public float WonAt { get; private set; }
+
+    /// <summary>Either ending. Enemies and the director both stand down on it.</summary>
+    public bool RunOver => IsDead || HasWon;
 
     // Also invulnerable for the duration of a boss's camera introduction, since
     // the player keeps moving/acting during it but shouldn't be able to be hit
@@ -115,6 +124,21 @@ public class PlayerProgress : MonoBehaviour
                    $"<b>-{amount:0}</b>", new Color(1f, 0.35f, 0.3f));
 
         if (Hp <= 0f) Die();
+    }
+
+    /// <summary>
+    /// Called by the boss on its own death. The player keeps control afterwards —
+    /// the arena is still standing and there is nothing left to threaten you, which
+    /// is the whole point of having won.
+    /// </summary>
+    public void Win()
+    {
+        if (HasWon || IsDead) return;
+
+        HasWon = true;
+        WonAt = Time.time;
+        AudioEvents.Play(Sfx.Win, transform.position, owner: gameObject);
+        Shake(tuning.tierUpShake * 2f);
     }
 
     void Die()

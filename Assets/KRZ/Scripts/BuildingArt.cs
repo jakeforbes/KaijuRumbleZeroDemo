@@ -8,9 +8,20 @@ using UnityEngine;
 ///
 /// The art is authored at 256x128 pixels per ground tile, which at this project's
 /// 128 PPU is exactly one world unit per half tile, so nothing is scaled.
+///
+/// Four damage states, named as the artist's manifest names them. Any state can be
+/// missing: a type with only a pristine render darkens instead, and a type with no
+/// render at all stays on greybox. That is what lets the roster be half illustrated
+/// while the rest of the art is still being made.
 /// </summary>
 public static class BuildingArt
 {
+    public const int Pristine = 0, Damaged1 = 1, Damaged2 = 2, Destroyed = 3;
+    public const int StageCount = 4;
+
+    static readonly string[] Suffix = { "_pristine", "_damaged_1", "_damaged_2", "_destroyed" };
+
+    // Keyed on ppu too, matching what Load() below actually builds.
     static readonly Dictionary<(string, int, int, float), Sprite> Cache = new();
 
     public static void ClearCache() => Cache.Clear();
@@ -29,7 +40,25 @@ public static class BuildingArt
         return new Vector2(0.5f, centreFromBottom / frameHeightPx);
     }
 
-    /// <summary>Returns null for a blank path or a missing file, leaving the type on greybox.</summary>
+    /// <summary>
+    /// All four states for one type, any of which may be null. Index with the Pristine
+    /// / Damaged1 / Damaged2 / Destroyed constants.
+    /// </summary>
+    public static Sprite[] LoadStages(string basePath, int tilesX, int tilesY, float ppu)
+    {
+        var stages = new Sprite[StageCount];
+        if (string.IsNullOrEmpty(basePath)) return stages;
+
+        for (int i = 0; i < StageCount; i++)
+            stages[i] = Load(basePath + Suffix[i], tilesX, tilesY, ppu);
+
+        // The first delivery shipped one unsuffixed file per building, before damage
+        // states existed. Falling back to it keeps those four types working untouched.
+        stages[Pristine] ??= Load(basePath, tilesX, tilesY, ppu);
+        return stages;
+    }
+
+    /// <summary>Returns null for a blank path or a missing file, without complaint.</summary>
     public static Sprite Load(string resourcePath, int tilesX, int tilesY, float ppu)
     {
         if (string.IsNullOrEmpty(resourcePath)) return null;
@@ -46,10 +75,6 @@ public static class BuildingArt
                                    Pivot(tex.height, tilesX, tilesY),
                                    ppu, 0, SpriteMeshType.FullRect);
             sprite.name = resourcePath;
-        }
-        else
-        {
-            Debug.LogWarning($"BuildingArt: no texture at Resources/{resourcePath}");
         }
 
         // A missing or reimported texture must not poison subsequent spawns.
