@@ -1111,10 +1111,32 @@ public class GameBootstrap : MonoBehaviour
         ssr.sprite = GreyboxArt.Shadow(160, ppu);
         ssr.sortingOrder = -1;
 
+        // A soft halo under the body, so the tint below reads as something glowing
+        // rather than as a repainted model. Sits on the art transform, so it grows
+        // with the kaiju without anything having to drive it.
+        var glowGo = new GameObject("Glow");
+        glowGo.transform.SetParent(art, false);
+        var glowSr = glowGo.AddComponent<SpriteRenderer>();
+        glowSr.sprite = GreyboxArt.Cloud(128, ppu);
+        glowSr.color = tuning.playerGlow;
+        glowSr.sortingOrder = -2;   // behind the contact shadow as well as the body
+        glowGo.transform.localPosition = new Vector3(0f, tuning.playerGlowHeight, 0f);
+
+        // Cloud is a 2:1 ellipse, so the vertical scale is doubled to make the halo
+        // round. Left as it comes, a glow meant to wrap a standing figure instead
+        // pools on the floor around its feet.
+        glowGo.transform.localScale = new Vector3(tuning.playerGlowSize,
+                                                  tuning.playerGlowSize * 2f, 1f);
+
         var bodyGo = new GameObject("Body");
         bodyGo.transform.SetParent(art, false);
         var bsr = bodyGo.AddComponent<SpriteRenderer>();
         bsr.sprite = GreyboxArt.Capsule(96, 128, new Color(0.55f, 0.85f, 0.45f), ppu);
+
+        // The kaiju is drawn almost entirely in white and pale grey, so a straight
+        // multiply is enough to recolour it — white takes the tint exactly, and the
+        // shading underneath survives as darker shades of the same hue.
+        bsr.color = tuning.playerTint;
 
         // Real art takes over if the package is present; greybox stays otherwise, so
         // the build never depends on the art having been delivered.

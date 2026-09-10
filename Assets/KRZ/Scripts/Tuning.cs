@@ -36,6 +36,27 @@ public class Tuning : ScriptableObject
              "1.0 makes it feel like a flat top-down game.")]
     [Range(0.2f, 1f)] public float isoSquash = 0.5f;
 
+    [Header("The kaiju's colour")]
+    [Tooltip("Multiplied over the delivered frames. The model is drawn almost entirely " +
+             "in white and pale grey, so this lands on it cleanly: white becomes the " +
+             "tint exactly and the shading survives as darker shades of the same hue.\n\n" +
+             "Kept bright rather than deep. A saturated orange cuts the green and blue " +
+             "channels hard, and past a point the kaiju stops reading as lit and starts " +
+             "reading as a silhouette.")]
+    public Color playerTint = new Color(1f, 0.62f, 0.26f);
+
+    [Tooltip("Halo behind the kaiju, which is what makes the tint read as a glow " +
+             "rather than as a repaint. Alpha is the strength.")]
+    public Color playerGlow = new Color(1f, 0.55f, 0.15f, 0.32f);
+
+    [Tooltip("Halo size relative to the body. Wider than the kaiju on purpose — a glow " +
+             "that stops at the silhouette reads as an outline.")]
+    public float playerGlowSize = 1.25f;
+
+    [Tooltip("How far up the body the halo sits. The kaiju's pivot is at its feet, so " +
+             "a halo centred on the pivot would pool on the ground.")]
+    public float playerGlowHeight = 0.5f;
+
     [Header("Camera")]
     [Min(0.01f)] public float bossIntroPanSeconds = 1.25f;
     [Min(0)] public float bossIntroHoldSeconds = 2f;
