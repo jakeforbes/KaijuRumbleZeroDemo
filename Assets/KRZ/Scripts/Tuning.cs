@@ -326,6 +326,12 @@ public class Tuning : ScriptableObject
              "flurry, long enough that each hit is visible.")]
     public float swipeBurstInterval = 0.13f;
 
+    [Tooltip("Delay between the swing starting and its damage landing, so the hit lands " +
+             "on the contact frame instead of before the arm has moved. The swipe clip " +
+             "is 6 frames at 12 fps, so 0.20 is roughly frame 3. Retime this if the art " +
+             "changes where contact happens.")]
+    [Range(0f, 0.5f)] public float swipeContactDelay = 0.20f;
+
     [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
     public bool showSwipeArc = true;
 
