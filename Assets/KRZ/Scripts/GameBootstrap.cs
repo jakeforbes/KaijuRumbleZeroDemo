@@ -518,8 +518,21 @@ public class GameBootstrap : MonoBehaviour
                 // enough to lose it without losing the block structure underneath.
                 // Vertical wander is halved to match the 2:1 projection, or the same
                 // number would read as twice as much drift going up the screen.
-                x += ((float)rng.NextDouble() - 0.5f) * 2f * tuning.blockJitter;
-                y += ((float)rng.NextDouble() - 0.5f) * tuning.blockJitter;
+                //
+                // Rolled every time so the sequence does not shift when a candidate is
+                // rejected — a given randomSeed has to build the same city.
+                float jx = ((float)rng.NextDouble() - 0.5f) * 2f * tuning.blockJitter;
+                float jy = ((float)rng.NextDouble() - 0.5f) * tuning.blockJitter;
+
+                // Take the wander only if the base still clears its neighbours. Block
+                // spacing on the short axis is 3.5 and a 3x3's diamond is 3 tall, so
+                // an unchecked nudge can bury one base under the next — which is what
+                // reads as a building being clipped along its bottom edge.
+                if (!Overlaps(placed, new Vector3(x + jx, y + jy, 0f), tilesX, tilesY, tuning.infillGap))
+                {
+                    x += jx;
+                    y += jy;
+                }
 
                 // Rolled from the same seeded generator as everything else, so a given
                 // randomSeed always builds the identical city.
@@ -550,6 +563,20 @@ public class GameBootstrap : MonoBehaviour
 
     static void Occupy(System.Collections.Generic.List<Rect> placed, Vector3 at, int tilesX, int tilesY)
         => placed.Add(Footprint(at, tilesX, tilesY));
+
+    /// <summary>Whether a footprint here would sit inside another, given a clearance.</summary>
+    static bool Overlaps(System.Collections.Generic.List<Rect> placed, Vector3 at,
+                         int tilesX, int tilesY, float gap)
+    {
+        var box = Footprint(at, tilesX, tilesY);
+        box = new Rect(box.x - gap, box.y - gap * 0.5f,
+                       box.width + gap * 2f, box.height + gap);
+
+        foreach (var r in placed)
+            if (r.Overlaps(box)) return true;
+
+        return false;
+    }
 
     /// <summary>
     /// Packs small buildings into whatever the block's main building left over.
@@ -589,14 +616,7 @@ public class GameBootstrap : MonoBehaviour
                 float oy = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingY * tuning.infillSpread;
                 var at = new Vector3(blockX + ox, blockY + oy, 0f);
 
-                var box = Footprint(at, tilesX, tilesY);
-                box = new Rect(box.x - tuning.infillGap, box.y - tuning.infillGap * 0.5f,
-                               box.width + tuning.infillGap * 2f, box.height + tuning.infillGap);
-
-                bool clear = true;
-                foreach (var r in placed)
-                    if (r.Overlaps(box)) { clear = false; break; }
-                if (!clear) continue;
+                if (Overlaps(placed, at, tilesX, tilesY, tuning.infillGap)) continue;
 
                 int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
                 int direction = rng.Next(0, Mathf.Clamp(type.artDirections, 1, BuildingArt.DirectionCount));

@@ -101,10 +101,13 @@ public class Tuning : ScriptableObject
     [Tooltip("Clearance in world units left around an infill building. This is the " +
              "density knob: it is the gap between neighbours, and squaring the number " +
              "of buildings means roughly halving it.\n\n" +
-             "Negative is allowed and means footprints may overlap by that much. Art " +
-             "overlapping is fine — sprites sort by their ground pivot, so whichever " +
-             "is further down the screen draws in front.")]
-    public float infillGap = -0.35f;
+             "Keep this positive. Upper storeys overlapping is fine and expected — the " +
+             "canvases are far wider than the footprints and sort correctly by ground " +
+             "pivot. Bases overlapping is not: the nearer building's opaque base cuts " +
+             "the further one along a hard diagonal, which reads as the sprite being " +
+             "clipped at its bottom corner rather than as one building in front of " +
+             "another.")]
+    public float infillGap = 0.35f;
 
     [Tooltip("How far a block's main building can wander off its grid position, in " +
              "world units. Zero puts every block on exact rails, which reads as " +
