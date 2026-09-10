@@ -70,7 +70,7 @@ public class Enemy : Damageable
         e.sr = bsr;
         e.baseColour = type.colour;
 
-        e.nextVolleyAt = Time.time + type.volleyCooldown;
+        e.nextVolleyAt = Time.time + type.specialCooldown;
 
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
@@ -101,7 +101,7 @@ public class Enemy : Damageable
         // The volley takes priority over everything: it plants the Mech, telegraphs,
         // then fires. Handled before movement so the stop is absolute rather than a
         // Mech that keeps walking while it winds up.
-        if (type.volley && HandleVolley(progress, flat)) return;
+        if (type.special != SpecialAction.None && HandleSpecial(progress, flat)) return;
 
         if (flat > type.attackRange)
         {
@@ -112,6 +112,10 @@ public class Enemy : Damageable
         else
         {
             body.linearVelocity = Vector2.zero;
+
+            // A Dropship holds station at its range and never strikes — its whole
+            // threat is what it unloads, so ignoring it costs you the swarm, not health.
+            if (!type.attacks) { Recolour(); return; }
 
             if (!winding && Time.time >= nextAttackAt)
             {
@@ -131,8 +135,8 @@ public class Enemy : Damageable
         Recolour();
     }
 
-    /// <summary>Returns true while the volley owns this frame.</summary>
-    bool HandleVolley(PlayerProgress progress, float flat)
+    /// <summary>Returns true while the special owns this frame.</summary>
+    bool HandleSpecial(PlayerProgress progress, float flat)
     {
         if (volleyWinding)
         {
@@ -140,23 +144,72 @@ public class Enemy : Damageable
             if (Time.time >= volleyEndsAt)
             {
                 volleyWinding = false;
-                nextVolleyAt = Time.time + type.volleyCooldown;
-                Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
+                nextVolleyAt = Time.time + type.specialCooldown;
+                FireSpecial();
             }
             Recolour();
             return true;
         }
 
-        if (Time.time >= nextVolleyAt && flat <= type.volleyRange)
+        if (Time.time >= nextVolleyAt && flat <= type.specialRange && CanFireSpecial())
         {
             volleyWinding = true;
-            volleyEndsAt = Time.time + type.volleyWindup;
+            volleyEndsAt = Time.time + type.specialWindup;
             body.linearVelocity = Vector2.zero;
             Recolour();
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>Lets a special decline to start, rather than telegraphing and doing nothing.</summary>
+    bool CanFireSpecial()
+    {
+        if (type.special != SpecialAction.DeployTroops) return true;
+
+        int mine = 0;
+        foreach (var e in All)
+            if (e != null && e.type != null && e.type.name == type.deployType) mine++;
+        return mine < type.deployMaxAlive;
+    }
+
+    void FireSpecial()
+    {
+        switch (type.special)
+        {
+            case SpecialAction.MissileVolley:
+                Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
+                break;
+
+            case SpecialAction.DeployTroops:
+                Deploy();
+                break;
+        }
+    }
+
+    void Deploy()
+    {
+        var spawnType = GameBootstrap.Instance != null
+            ? GameBootstrap.Instance.FindType(type.deployType)
+            : null;
+        if (spawnType == null) return;
+
+        AudioEvents.Play(Sfx.EnemyDeploy, transform.position, owner: gameObject);
+
+        for (int i = 0; i < type.deployCount; i++)
+        {
+            float angle = i / (float)type.deployCount * Mathf.PI * 2f + Random.value;
+            var at = transform.position + new Vector3(
+                Mathf.Cos(angle) * type.deploySpread,
+                Mathf.Sin(angle) * type.deploySpread * tuning.isoSquash, 0f);
+
+            // Skip blocked ground rather than dropping troops inside a building,
+            // where the solver would fling them across the map.
+            if (Physics2D.OverlapCircle(at, 0.4f) != null) continue;
+
+            Enemy.Spawn(tuning, spawnType, at, tuning.pixelsPerUnit);
+        }
     }
 
     void Recolour()
@@ -166,7 +219,7 @@ public class Enemy : Damageable
         if (volleyWinding)
         {
             // A faster, hotter pulse than the melee tell, so the two read differently.
-            float t = 1f - Mathf.Clamp01((volleyEndsAt - Time.time) / Mathf.Max(0.01f, type.volleyWindup));
+            float t = 1f - Mathf.Clamp01((volleyEndsAt - Time.time) / Mathf.Max(0.01f, type.specialWindup));
             sr.color = Color.Lerp(baseColour, new Color(1f, 0.45f, 0.2f),
                                   Mathf.PingPong(t * 6f, 1f) * 0.5f + t * 0.5f);
             return;

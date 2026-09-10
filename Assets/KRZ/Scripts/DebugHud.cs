@@ -94,6 +94,7 @@ public class DebugHud : MonoBehaviour
             if (kb.f11Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
+            if (kb.f8Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Dropship");
         }
 
         if (kb.leftBracketKey.wasPressedThisFrame)
@@ -127,7 +128,7 @@ public class DebugHud : MonoBehaviour
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"enemies  {Enemy.All.Count}{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
-            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>[ ]</b> time" +
+            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F8</b> dropship   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>[ ]</b> time" +
             $"\n<b>Space / E / pad A</b> blast";
 
         var size = style.CalcSize(new GUIContent(text));

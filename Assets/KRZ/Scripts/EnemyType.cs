@@ -1,5 +1,13 @@
 using UnityEngine;
 
+/// <summary>Periodic behaviours an enemy can have on top of its basic attack.</summary>
+public enum SpecialAction
+{
+    None,
+    MissileVolley,
+    DeployTroops,
+}
+
 /// <summary>
 /// One enemy species. sizeClass drives squishing: once your size exceeds it, you
 /// kill this thing by walking over it. That threshold is the payoff for growing —
@@ -44,19 +52,25 @@ public class EnemyType
              "rather than walk away from it.")]
     public bool dropsUpgrade;
 
-    [Header("Missile volley")]
-    [Tooltip("Periodically stops, telegraphs, then fires a cluster of homing missiles.")]
-    public bool volley;
+    [Tooltip("Whether it attacks at all. A Dropship keeps its distance and deploys " +
+             "instead of ever striking.")]
+    public bool attacks = true;
 
-    public float volleyCooldown = 5f;
+    [Header("Special action")]
+    [Tooltip("A periodic behaviour that plants the enemy, telegraphs, then fires. One " +
+             "mechanism for every special so each new one is data rather than code.")]
+    public SpecialAction special = SpecialAction.None;
 
-    [Tooltip("How long it stands still before firing. This is the tell — long enough " +
-             "to see it coming and break line of sight or close the distance.")]
-    public float volleyWindup = 1f;
+    public float specialCooldown = 5f;
 
-    [Tooltip("Will not fire from further than this, so off-screen enemies stay quiet.")]
-    public float volleyRange = 18f;
+    [Tooltip("How long it stands still first. This is the tell — long enough to see it " +
+             "coming and break away or close the distance.")]
+    public float specialWindup = 1f;
 
+    [Tooltip("Will not trigger from further than this, so off-screen enemies stay quiet.")]
+    public float specialRange = 18f;
+
+    [Header("Special: missile volley")]
     public int volleyCount = 8;
     public float missileDamage = 12f;
     public float missileSpeed = 14f;
@@ -66,6 +80,19 @@ public class EnemyType
     public float missileTurn = 40f;
 
     public float missileLife = 4f;
+
+    [Header("Special: deploy troops")]
+    [Tooltip("Name of the enemy type to deploy, matched against Tuning.enemyTypes.")]
+    public string deployType = "Grunt";
+
+    public int deployCount = 4;
+
+    [Tooltip("How far from the dropship they land.")]
+    public float deploySpread = 2.5f;
+
+    [Tooltip("Stops deploying once this many of its own troops are already alive, so " +
+             "one ignored Dropship cannot flood the arena.")]
+    public int deployMaxAlive = 24;
 
     [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
     public int bodyPx = 64;

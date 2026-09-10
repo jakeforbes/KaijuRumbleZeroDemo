@@ -98,8 +98,22 @@ public class Tuning : ScriptableObject
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
-                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f, volley = true,
+                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        special = SpecialAction.MissileVolley,
                         bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+
+        // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
+        // so it replaces the cut Barracks with something mobile and killable. Ignoring
+        // it costs you the swarm rather than health, which makes it a priority target
+        // by choice instead of by damage.
+        new EnemyType { name = "Dropship", sizeClass = 1, hp = 85f, armour = 2f,
+                        contactDamage = 0f, attacks = false,
+                        moveSpeed = 2.4f, attackRange = 6f,
+                        special = SpecialAction.DeployTroops,
+                        specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
+                        deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
+                        foodDrops = 7, foodScatter = 2.5f,
+                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
