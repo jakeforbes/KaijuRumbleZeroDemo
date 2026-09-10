@@ -331,10 +331,17 @@ public class GameBootstrap : MonoBehaviour
     {
         var chosen = new System.Collections.Generic.Dictionary<(int, int), BuildingType>();
 
+        // Unique reactors are placed first and unconditionally. Left to compete for
+        // slots with the common ones, a landmark that is supposed to exist once per
+        // run could simply fail to appear.
+        var uniques = new System.Collections.Generic.List<BuildingType>();
         var reactors = new System.Collections.Generic.List<BuildingType>();
         foreach (var t in tuning.buildingTypes)
-            if (t.isReactor) reactors.Add(t);
-        if (reactors.Count == 0 || tuning.reactorCount <= 0) return chosen;
+        {
+            if (!t.isReactor) continue;
+            if (t.unique) uniques.Add(t); else reactors.Add(t);
+        }
+        if (uniques.Count == 0 && (reactors.Count == 0 || tuning.reactorCount <= 0)) return chosen;
 
         // Every slot outside the clear starting area, shuffled.
         var slots = new System.Collections.Generic.List<(int bx, int by)>();
@@ -352,9 +359,13 @@ public class GameBootstrap : MonoBehaviour
         }
 
         var placed = new System.Collections.Generic.List<Vector2>();
+        int uniquesPlaced = 0;
+        int commonPlaced = 0;
+
         foreach (var (bx, by) in slots)
         {
-            if (chosen.Count >= tuning.reactorCount) break;
+            bool wantUnique = uniquesPlaced < uniques.Count;
+            if (!wantUnique && (reactors.Count == 0 || commonPlaced >= tuning.reactorCount)) break;
 
             var world = new Vector2((bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX,
                                     (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY);
@@ -364,7 +375,9 @@ public class GameBootstrap : MonoBehaviour
                 if (Vector2.Distance(p, world) < tuning.reactorMinSpacing) { tooClose = true; break; }
             if (tooClose) continue;
 
-            chosen[(bx, by)] = reactors[chosen.Count % reactors.Count];
+            if (wantUnique) chosen[(bx, by)] = uniques[uniquesPlaced++];
+            else chosen[(bx, by)] = reactors[commonPlaced++ % reactors.Count];
+
             placed.Add(world);
         }
 

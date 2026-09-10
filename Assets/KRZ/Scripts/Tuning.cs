@@ -453,6 +453,21 @@ public class Tuning : ScriptableObject
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
                            colour = new Color(0.96f, 0.45f, 0.18f) },
+
+        // The Core. One per run, and the only building that is genuinely a size-5 job.
+        // Class 4 and 700 hp puts it a full class above a size-4 kaiju, where the delta
+        // table already drops damage to a third — about 11 seconds at size 5, three
+        // quarters of a minute at size 4, and an outright wall below that.
+        //
+        // Pulse at 300 clears a Mech outright through its 12 armour, and takes roughly
+        // a quarter off the Abomination — so felling it before the boss lands is a real
+        // strategic play rather than just more damage.
+        new BuildingType { name = "Reactor Core", sizeClass = 4, tilesX = 3, tilesY = 3,
+                           minHeightPx = 520, maxHeightPx = 660, hp = 700f,
+                           foodDrops = 40, foodScatter = 9f,
+                           weight = 0f, isReactor = true, unique = true,
+                           pulseDamage = 300f, pulseRadius = 40f,
+                           colour = new Color(1f, 0.30f, 0.22f) },
     };
 
     [Tooltip("How many reactors to scatter through the arena.")]

@@ -49,6 +49,10 @@ public class BuildingType
              "from the weight table, so two can never be on screen together.")]
     public bool isReactor;
 
+    [Tooltip("Exactly one of these exists per run, placed before any other reactor. " +
+             "For landmarks that should be a destination rather than a fixture.")]
+    public bool unique;
+
     [Tooltip("Relative chance of being picked when the city is generated.")]
     public float weight = 30f;
 
