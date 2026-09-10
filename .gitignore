@@ -64,3 +64,7 @@ crashlytics-build.properties
 
 # GroundTank art package: 21MB, gitignored alongside the other frame sets
 /Assets/KRZ/Resources/GroundTank/
+
+# Environment sprite pack: 87MB of building damage states
+/Assets/KRZ/Resources/Buildings/
+/Assets/KRZ/Resources/Ground/

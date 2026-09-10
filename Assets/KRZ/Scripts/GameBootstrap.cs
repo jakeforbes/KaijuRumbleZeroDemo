@@ -75,6 +75,7 @@ public class GameBootstrap : MonoBehaviour
         fade.tuning = tuning;
 
         BuildGround();
+        ReportBuildingArt();
         if (IsGym) BuildGym(); else BuildCity();
         player = BuildPlayer();
         if (IsGym) player.transform.position = GymPoint(-Mathf.Ceil(GymTiles() * 0.5f), -3);
@@ -270,7 +271,7 @@ public class GameBootstrap : MonoBehaviour
 
     // Both maps use this factory: art, collision, health, audio and drops stay identical.
     void CreateBuilding(Transform root, BuildingType type, int tilesX, int tilesY,
-        int heightPx, Vector3 position, string objectName, bool flipped = false)
+        int heightPx, Vector3 position, string objectName, bool flipped = false, int direction = 0)
     {
         float ppu = tuning.pixelsPerUnit;
         var go = new GameObject(objectName);
@@ -304,7 +305,7 @@ public class GameBootstrap : MonoBehaviour
         col.points = points;
 
         // Init last: it caches the collider and sprite renderer.
-        building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped);
+        building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped, direction);
     }
 
     bool IsGym => SceneManager.GetActiveScene().name == "Gym";
@@ -350,6 +351,32 @@ public class GameBootstrap : MonoBehaviour
             cursor += type.tilesX + 1;
         }
     }
+    /// <summary>
+    /// Says which building types found their art and which fell back to greybox.
+    ///
+    /// Worth the console line: "the art isn't appearing" is otherwise indistinguishable
+    /// from "the art is appearing on two of ten types", and we have now spent two
+    /// rounds on that exact ambiguity. A missing file is silent by design everywhere
+    /// else, which is right for shipping and useless for diagnosing.
+    /// </summary>
+    void ReportBuildingArt()
+    {
+        var missing = new System.Collections.Generic.List<string>();
+        int found = 0;
+
+        foreach (var t in tuning.buildingTypes)
+        {
+            if (t == null) continue;
+            var probe = BuildingArt.LoadStages(t.artSprite, 0, t.tilesX, t.tilesY, tuning.pixelsPerUnit);
+            if (probe[BuildingArt.Pristine] != null) found++;
+            else missing.Add(string.IsNullOrEmpty(t.artSprite) ? $"{t.name} (no path set)" : t.artSprite);
+        }
+
+        if (missing.Count == 0) Debug.Log($"KRZ: building art found for all {found} types.");
+        else Debug.LogWarning($"KRZ: building art found for {found} type(s), greybox for " +
+                              $"{missing.Count}: {string.Join(", ", missing)}");
+    }
+
     void BuildCity()
     {
         float ppu = tuning.pixelsPerUnit;
@@ -389,7 +416,12 @@ public class GameBootstrap : MonoBehaviour
                 float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
                 float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
 
-                CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f), $"{type.name}_{bx}_{by}", flipped);
+                // Rolled from the same seeded generator as everything else, so a given
+                // randomSeed always builds the identical city.
+                int direction = rng.Next(0, Mathf.Clamp(type.artDirections, 1, BuildingArt.DirectionCount));
+
+                CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f),
+                               $"{type.name}_{bx}_{by}", flipped, direction);
             }
     }
 

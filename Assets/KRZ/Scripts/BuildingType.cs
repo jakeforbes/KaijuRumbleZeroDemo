@@ -94,6 +94,15 @@ public class BuildingType
              "accepted as the pristine state, which is how the first delivery landed.")]
     public string artSprite = "";
 
+    [Tooltip("How many of the pack's five rotations this type may use, picked per " +
+             "building. Free variety in a city that would otherwise repeat ten " +
+             "silhouettes across two hundred blocks.\n\n" +
+             "Square footprints can take all five, because turning the model does not " +
+             "change its ground diamond. Non-square ones stay at 1: a quarter turn " +
+             "would swap their footprint out from under the collider, and the random " +
+             "flip already gives those two orientations.")]
+    [Range(1, 5)] public int artDirections = 1;
+
     [Tooltip("How dark the sprite goes at the last damage step when only a pristine " +
              "render exists. Ignored once real damage states are delivered.")]
     [Range(0f, 1f)] public float damagedTint = 0.55f;

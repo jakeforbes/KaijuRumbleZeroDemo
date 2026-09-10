@@ -725,6 +725,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
                            artSprite = "Buildings/civilian_1x1",
+                           artDirections = 5,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
         // Non-square types are declared in the orientation the art is authored in.
@@ -746,6 +747,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 15f,
                            artSprite = "Buildings/civilian_2x2",
+                           artDirections = 5,
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
         // The largest civilian, and the only one that is a genuine size-5 job outside
@@ -754,6 +756,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
                            foodDrops = 34, foodScatter = 7f,  weight = 8f,
                            artSprite = "Buildings/civilian_3x3",
+                           artDirections = 5,
                            colour = new Color(0.25f, 0.26f, 0.42f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
@@ -769,6 +772,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            artSprite = "Buildings/laboratory_2x2",
+                           artDirections = 5,
                            // Finer, faster, wider chips than the rest of the city —
                            // Samson's calibration against the delivered lab art, moved
                            // here from the Tuning asset so it is not a stray override.
@@ -787,6 +791,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
                            artSprite = "Buildings/reactor_1x1",
+                           artDirections = 5,
                            colour = new Color(0.92f, 0.62f, 0.20f) },
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
@@ -796,6 +801,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
                            artSprite = "Buildings/reactor_2x2",
+                           artDirections = 5,
                            colour = new Color(0.96f, 0.45f, 0.18f) },
 
         // The Core. One per run, and the only building that is genuinely a size-5 job.
@@ -812,6 +818,7 @@ public class Tuning : ScriptableObject
                            weight = 0f, isReactor = true, unique = true,
                            pulseDamage = 300f, pulseRadius = 40f,
                            artSprite = "Buildings/reactor_3x3",
+                           artDirections = 5,
                            colour = new Color(1f, 0.30f, 0.22f) },
     };
 

@@ -42,7 +42,7 @@ public class Building : Damageable
     /// its variety instead of every Row facing the same way.
     /// </summary>
     public void Init(Tuning t, BuildingType buildingType, int tx, int ty, int heightPx,
-                     float pixelsPerUnit, bool flipped = false)
+                     float pixelsPerUnit, bool flipped = false, int direction = 0)
     {
         tuning = t;
         SoundPlayer.Attach(gameObject, t.buildingSounds);
@@ -63,7 +63,7 @@ public class Building : Damageable
 
         // The art is authored for the type's declared footprint, so it is loaded
         // against those tiles rather than the swapped ones the collider uses.
-        stages = BuildingArt.LoadStages(type.artSprite, type.tilesX, type.tilesY, ppu);
+        stages = BuildingArt.LoadStages(type.artSprite, direction, type.tilesX, type.tilesY, ppu);
         usingArt = stages[BuildingArt.Pristine] != null;
         if (usingArt) ApplyStage();
 

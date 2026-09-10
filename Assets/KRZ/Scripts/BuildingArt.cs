@@ -6,55 +6,62 @@ using UnityEngine;
 /// code from the raw texture rather than relying on import settings, so a fresh clone
 /// needs no setup pass — and one cache entry serves every copy of a given type.
 ///
-/// The art is authored at 256x128 pixels per ground tile, which at this project's
-/// 128 PPU is exactly one world unit per half tile, so nothing is scaled.
+/// Four damage states and five rotations per building. The rotation turns the model
+/// on the spot without changing its ground diamond, which is what makes it free
+/// variety: a city of two hundred and fifty buildings drawn from ten types repeats
+/// itself badly, and five turns of each is most of the way out of that for nothing.
 ///
-/// Four damage states, named as the artist's manifest names them. Any state can be
-/// missing: a type with only a pristine render darkens instead, and a type with no
-/// render at all stays on greybox. That is what lets the roster be half illustrated
-/// while the rest of the art is still being made.
+/// Any file can be missing. A type with only a pristine render darkens instead, and
+/// a type with no render at all stays on greybox.
 /// </summary>
 public static class BuildingArt
 {
     public const int Pristine = 0, Damaged1 = 1, Damaged2 = 2, Destroyed = 3;
     public const int StageCount = 4;
 
-    static readonly string[] Suffix = { "_pristine", "_damaged_1", "_damaged_2", "_destroyed" };
+    /// <summary>Rotations the pack ships. The other three are these mirrored.</summary>
+    public const int DirectionCount = 5;
 
-    // Keyed on ppu too, matching what Load() below actually builds.
+    /// <summary>
+    /// Where the model's ground contact sits above the bottom of its canvas, in
+    /// pixels. The pack authors to a bottom-centre pivot with a small fixed margin
+    /// rather than to a fraction of the frame, so this is a constant and not a ratio.
+    /// Confirmed against the art: every building in the set bottoms out at 8.
+    /// </summary>
+    public const float GroundContactPx = 8f;
+
+    static readonly string[] Suffix = { "pristine", "damaged_1", "damaged_2", "destroyed" };
+    static readonly string[] Directions = { "s", "se", "e", "ne", "n" };
+
     static readonly Dictionary<(string, int, int, float), Sprite> Cache = new();
 
     public static void ClearCache() => Cache.Clear();
 
     /// <summary>
-    /// Buildings pivot on the centre of their footprint, not on the art spec's ground
-    /// contact point. The contact point is the diamond's southern corner — that is what
-    /// 12%-from-the-bottom means for a building rather than a character — and the
-    /// collider is built around the centre, so pivoting on the corner would leave every
-    /// art building floating a full tile north of the thing you actually bump into.
+    /// Buildings pivot on the centre of their footprint, not on the artist's ground
+    /// contact point. The contact point is the diamond's southern corner, and the
+    /// collider is built around the centre, so pivoting on the corner would leave
+    /// every building floating a tile north of the thing you actually bump into.
     /// </summary>
     public static Vector2 Pivot(int frameHeightPx, int tilesX, int tilesY)
     {
-        float contactFromBottom = GreyboxArt.FootPadding * frameHeightPx;
-        float centreFromBottom = contactFromBottom + GreyboxArt.TileH * 0.25f * (tilesX + tilesY);
+        float centreFromBottom = GroundContactPx + GreyboxArt.TileH * 0.25f * (tilesX + tilesY);
         return new Vector2(0.5f, centreFromBottom / frameHeightPx);
     }
 
     /// <summary>
-    /// All four states for one type, any of which may be null. Index with the Pristine
-    /// / Damaged1 / Damaged2 / Destroyed constants.
+    /// All four states for one type in one rotation, any of which may be null. Index
+    /// with the Pristine / Damaged1 / Damaged2 / Destroyed constants.
     /// </summary>
-    public static Sprite[] LoadStages(string basePath, int tilesX, int tilesY, float ppu)
+    public static Sprite[] LoadStages(string basePath, int direction, int tilesX, int tilesY, float ppu)
     {
         var stages = new Sprite[StageCount];
         if (string.IsNullOrEmpty(basePath)) return stages;
 
+        string dir = Directions[Mathf.Clamp(direction, 0, DirectionCount - 1)];
         for (int i = 0; i < StageCount; i++)
-            stages[i] = Load(basePath + Suffix[i], tilesX, tilesY, ppu);
+            stages[i] = Load($"{basePath}_{Suffix[i]}_{dir}", tilesX, tilesY, ppu);
 
-        // The first delivery shipped one unsuffixed file per building, before damage
-        // states existed. Falling back to it keeps those four types working untouched.
-        stages[Pristine] ??= Load(basePath, tilesX, tilesY, ppu);
         return stages;
     }
 
