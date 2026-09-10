@@ -158,6 +158,16 @@ public class EnemyType
     [Tooltip("Draws arcs of electricity across the body. Purely cosmetic.")]
     public bool electrified;
 
+    [Tooltip("Walks through buildings instead of around them.\n\n" +
+             "For anything too big to use the streets. The Abomination's collider is " +
+             "two and a half units wide and a street is closer to one, so it cannot " +
+             "physically fit between blocks — it would spawn and then stand still for " +
+             "the rest of the run, which is not a boss.\n\n" +
+             "Also the right answer thematically: a kaiju that size wades through a " +
+             "city rather than taking the corners. Building collision is switched off " +
+             "for it outright, and its obstacle avoidance with it.")]
+    public bool ignoresBuildings;
+
     [Header("Delivered art (blank = greybox)")]
     [Tooltip("Resources folder holding the frames, e.g. \"Mech\".")]
     public string artFolder = "";

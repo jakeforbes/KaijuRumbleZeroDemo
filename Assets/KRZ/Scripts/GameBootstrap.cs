@@ -760,6 +760,11 @@ public class GameBootstrap : MonoBehaviour
         // rooftop on the frame it appears is not a problem; one that cannot spawn is.
         float needed = clearance * 0.6f;
 
+        // A boss that walks through buildings only needs to be on land and off screen.
+        // Holding it to clear ground as well would push it out to the beach every
+        // time, purely to satisfy a collision it does not have.
+        bool needsClearGround = !type.ignoresBuildings;
+
         float startAngle = Random.value * Mathf.PI * 2f;
         for (int ring = 0; ring < 8; ring++)
         {
@@ -771,7 +776,7 @@ public class GameBootstrap : MonoBehaviour
                        + new Vector3(Mathf.Cos(a) * r, Mathf.Sin(a) * r * tuning.isoSquash, 0f);
 
                 if (!land.Contains(at)) continue;
-                if (Physics2D.OverlapCircle(at, needed) != null) continue;
+                if (needsClearGround && Physics2D.OverlapCircle(at, needed) != null) continue;
 
                 position = at;
                 return true;

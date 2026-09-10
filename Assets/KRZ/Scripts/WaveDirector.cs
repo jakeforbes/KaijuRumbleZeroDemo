@@ -122,7 +122,30 @@ public class WaveDirector : MonoBehaviour
         if (player == null) return;
 
         var type = GameBootstrap.Instance != null ? GameBootstrap.Instance.FindType(wave.enemyType) : null;
-        if (type == null) return;
+        if (type == null)
+        {
+            Debug.LogWarning($"KRZ: wave '{wave.label}' wants enemy type '{wave.enemyType}', which does not exist.");
+            return;
+        }
+
+        // A boss places itself, and must not go through the squad path at all.
+        //
+        // Two gates in there were quietly eating it. The living-enemy cap is checked
+        // per member, so at 2:40 with sixty things already on the map the boss wave
+        // returned having spawned nothing. And the placement loop demands a clear
+        // circle of the spawner's own radius — two and a half units for the
+        // Abomination — which a city at double density fails six times out of six.
+        //
+        // Neither logged anything, and Enemy.Spawn discards the position it is handed
+        // for a boss anyway and runs its own search. So the whole loop was a coin toss
+        // the boss had to win in order to be allowed to place itself properly.
+        if (IsBossWave(wave))
+        {
+            Debug.Log($"KRZ: wave '{wave.label}' spawning {type.name}.");
+            if (Enemy.Spawn(tuning, type, player.position, tuning.pixelsPerUnit) == null)
+                Debug.LogWarning($"KRZ: {type.name} found nowhere to spawn.");
+            return;
+        }
 
         var commander = GameBootstrap.Instance.FindUpgradeCarrier();
 

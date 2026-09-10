@@ -9,8 +9,14 @@ using UnityEngine;
 [SoundActions(Sfx.BuildingHit, Sfx.BuildingStageChanged, Sfx.BuildingDestroyed, Sfx.ReactorPulse)]
 public class Building : Damageable
 {
+    /// <summary>Every building standing, so a kaiju can be told to ignore all of them.</summary>
+    public static readonly System.Collections.Generic.List<Building> All = new();
+
     /// <summary>Above the ground tiles at -100, below everything that sorts by Y at 0.</summary>
     const int RubbleSortingOrder = -50;
+
+    void OnEnable() => All.Add(this);
+    void OnDisable() => All.Remove(this);
 
     public Tuning tuning;
 

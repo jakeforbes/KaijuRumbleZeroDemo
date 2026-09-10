@@ -72,6 +72,17 @@ public class Enemy : Damageable
         float w = type.bodyPx / ppu * type.footprintFraction;
         col.size = new Vector2(w, w * 0.5f);
 
+        // Anything too big for the streets walks through them instead. Done as a
+        // per-pair ignore rather than a layer, because layers would have to be set up
+        // in project settings and nothing else here needs the Editor touched.
+        if (type.ignoresBuildings)
+            foreach (var building in Building.All)
+            {
+                if (building == null) continue;
+                foreach (var bc in building.GetComponents<Collider2D>())
+                    if (bc != null) Physics2D.IgnoreCollision(col, bc);
+            }
+
         var art = new GameObject("Art").transform;
         art.SetParent(go.transform, false);
 
@@ -256,6 +267,10 @@ public class Enemy : Damageable
     /// </summary>
     Vector2 AvoidBuildings(Vector2 moveDir)
     {
+        // Nothing to steer around when nothing blocks you, and the probe would find
+        // buildings everywhere and fan uselessly.
+        if (type.ignoresBuildings) return moveDir;
+
         float probeDist = Mathf.Max(1f, type.moveSpeed * 0.5f);
         if (IsHeadingClear(moveDir, probeDist)) return moveDir;
 

@@ -470,7 +470,7 @@ public class Tuning : ScriptableObject
                         specialCooldown = 7f, specialWindup = 1.1f, specialRange = 9f,
                         specialSound = Sfx.BossRoar,
                         foodDrops = 0, foodScatter = 4f,
-                        bodyPx = 700, mass = 900f, electrified = true,
+                        bodyPx = 700, mass = 900f, electrified = true, ignoresBuildings = true,
                         colour = new Color(0.45f, 0.85f, 0.40f),
                         artFolder = "Uries/Level_5", artPrefix = "uries_l5",
                         artPathFormat = "{root}/{clip}/{dir}/{prefix}_{clip}_{dir}_{frame}",
