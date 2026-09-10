@@ -52,22 +52,6 @@ crashlytics-build.properties
 # Stray nested repo, not part of the Unity project
 /KaijuRumbleZero/
 
-# Artist art package: 102MB. Uncomment to keep it out of git, or delete
-# these lines to commit it so collaborators get art on pull.
-/Assets/KRZ/Resources/Uries/
-
-# Mech art package: 29MB, gitignored alongside the Uries frames
-/Assets/KRZ/Resources/Mech/
-
-# FlyingTank art package
-/Assets/KRZ/Resources/FlyingTank/
-
-# GroundTank art package: 21MB, gitignored alongside the other frame sets
-/Assets/KRZ/Resources/GroundTank/
-
-# Environment sprite pack: 87MB of building damage states
-/Assets/KRZ/Resources/Buildings/
-/Assets/KRZ/Resources/Ground/
-
-# Modular ground tile pack
-/Assets/KRZ/Resources/Ground/
+# The art packages are committed on purpose, all 213MB of them: Uries, Mech,
+# FlyingTank, GroundTank, Buildings and Ground. Without them a clone runs on
+# greybox, which is fine for code but means nobody else can see the game.
