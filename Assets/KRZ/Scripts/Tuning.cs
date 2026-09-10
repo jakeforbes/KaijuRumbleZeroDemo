@@ -61,8 +61,10 @@ public class Tuning : ScriptableObject
     public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
-             "sizes exist — everything else derives from this array's length.")]
-    public float[] tierScale = { 1f, 1.75f, 2.5f, 3.25f, 4f };
+             "sizes exist — everything else derives from this array's length." +
+             " Camera zoom is relative to the first entry, so raising every value makes " +
+             "the kaiju read bigger on screen rather than just pulling the camera back.")]
+    public float[] tierScale = { 1.5f, 2.625f, 3.75f, 4.875f, 6f };
 
     [Tooltip("Health cap at each tier. Reaching a tier heals you to its cap.")]
     public float[] tierMaxHp = { 100f, 140f, 175f, 210f, 250f };
@@ -113,8 +115,8 @@ public class Tuning : ScriptableObject
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
-                        bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f),
-                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 192,
+                        bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,

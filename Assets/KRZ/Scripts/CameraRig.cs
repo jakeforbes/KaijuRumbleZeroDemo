@@ -43,9 +43,16 @@ public class CameraRig : MonoBehaviour
         var player = target.GetComponent<PlayerController>();
         if (player != null) scale = player.Scale;
 
+        // Zoom is relative to the kaiju's starting size, not its absolute scale.
+        // Keyed to absolute scale, making the kaiju bigger also pulled the camera
+        // back, which quietly cancelled most of the increase — so tierScale could
+        // not be used to change how big the kaiju reads on screen.
+        float startScale = tuning.tierScale != null && tuning.tierScale.Length > 0
+            ? Mathf.Max(0.01f, tuning.tierScale[0]) : 1f;
+
         cam.orthographicSize = Mathf.Lerp(
             cam.orthographicSize,
-            tuning.baseOrthoSize * Mathf.Pow(scale, tuning.zoomExponent),
+            tuning.baseOrthoSize * Mathf.Pow(scale / startScale, tuning.zoomExponent),
             1f - Mathf.Exp(-6f * Time.deltaTime));
 
         float halfH = cam.orthographicSize;
