@@ -513,6 +513,14 @@ public class GameBootstrap : MonoBehaviour
                 float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
                 float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
 
+                // Break the lattice. On exact rails the eye finds the grid instantly
+                // and the city reads as a spreadsheet; a couple of units of wander is
+                // enough to lose it without losing the block structure underneath.
+                // Vertical wander is halved to match the 2:1 projection, or the same
+                // number would read as twice as much drift going up the screen.
+                x += ((float)rng.NextDouble() - 0.5f) * 2f * tuning.blockJitter;
+                y += ((float)rng.NextDouble() - 0.5f) * tuning.blockJitter;
+
                 // Rolled from the same seeded generator as everything else, so a given
                 // randomSeed always builds the identical city.
                 int direction = rng.Next(0, Mathf.Clamp(type.artDirections, 1, BuildingArt.DirectionCount));

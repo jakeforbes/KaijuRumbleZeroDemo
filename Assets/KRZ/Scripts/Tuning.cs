@@ -100,8 +100,19 @@ public class Tuning : ScriptableObject
 
     [Tooltip("Clearance in world units left around an infill building. This is the " +
              "density knob: it is the gap between neighbours, and squaring the number " +
-             "of buildings means roughly halving it.")]
-    public float infillGap = 0.6f;
+             "of buildings means roughly halving it.\n\n" +
+             "Negative is allowed and means footprints may overlap by that much. Art " +
+             "overlapping is fine — sprites sort by their ground pivot, so whichever " +
+             "is further down the screen draws in front.")]
+    public float infillGap = -0.35f;
+
+    [Tooltip("How far a block's main building can wander off its grid position, in " +
+             "world units. Zero puts every block on exact rails, which reads as " +
+             "columns rather than as a city — the eye finds the lattice immediately " +
+             "and the whole map goes flat.\n\n" +
+             "Vertical wander is halved, because in a 2:1 projection a world unit of " +
+             "depth is half a unit on screen and the two would not otherwise match.")]
+    public float blockJitter = 1.6f;
 
     [Tooltip("How much of a block's width infill may spread across, as a fraction. " +
              "Below 1 it keeps off the block boundaries, which is what preserves a " +
@@ -1073,6 +1084,16 @@ public class Tuning : ScriptableObject
 
     [Tooltip("How transparent a covering building becomes. Lower is more see-through.")]
     [Range(0.1f, 1f)] public float occluderAlpha = 0.40f;
+
+    [Tooltip("How much of a building's sprite bounds to ignore when asking whether " +
+             "it covers the player, as a fraction of its extents.
+
+" +
+             "A canvas is mostly empty air, and the ones scaled up to a 3x3 footprint " +
+             "are nine world units across, so testing the raw bounds fades half a " +
+             "street at once and the city reads as see-through rather than as one " +
+             "building stepping aside.")]
+    [Range(0f, 0.6f)] public float occluderInset = 0.35f;
 
     [Tooltip("Seconds to fade in and out. Too fast reintroduces the pop, too slow smears.")]
     [Range(0.02f, 0.6f)] public float occluderFadeTime = 0.12f;

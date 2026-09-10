@@ -53,9 +53,20 @@ public class OccluderFade : MonoBehaviour
             if (sr == null) continue;
 
             // Drawn in front of the player, and actually covering them.
+            //
+            // Tested against an inset of the sprite's bounds, not the whole thing. A
+            // building's canvas is mostly empty air — and the ones scaled up to fit a
+            // 3x3 footprint are nine world units across — so a raw bounds test fades
+            // half the street the moment you walk down it. Two buildings at 40% each
+            // read as the city going see-through rather than as one thing getting out
+            // of the way.
+            var box = sr.bounds;
+            float keep = 1f - tuning.occluderInset;
+            box.extents = new Vector3(box.extents.x * keep, box.extents.y * keep, box.extents.z);
+
             bool covering = tuning.occluderFadeEnabled
                             && sr.transform.position.y < feetY
-                            && sr.bounds.Intersects(player);
+                            && box.Intersects(player);
 
             float target = covering ? tuning.occluderAlpha : 1f;
             var c = sr.color;
