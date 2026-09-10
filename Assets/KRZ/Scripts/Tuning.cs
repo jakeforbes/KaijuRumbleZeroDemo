@@ -1086,9 +1086,7 @@ public class Tuning : ScriptableObject
     [Range(0.1f, 1f)] public float occluderAlpha = 0.40f;
 
     [Tooltip("How much of a building's sprite bounds to ignore when asking whether " +
-             "it covers the player, as a fraction of its extents.
-
-" +
+             "it covers the player, as a fraction of its extents.\n\n" +
              "A canvas is mostly empty air, and the ones scaled up to a 3x3 footprint " +
              "are nine world units across, so testing the raw bounds fades half a " +
              "street at once and the city reads as see-through rather than as one " +
