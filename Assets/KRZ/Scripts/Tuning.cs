@@ -148,52 +148,49 @@ public class Tuning : ScriptableObject
              "interval repeats until its end time; without one it fires once.")]
     public WaveEntry[] waves =
     {
-        // Opening: nothing but the city. Learn to smash, reach size 2 unpressured.
-        new WaveEntry { label = "first contact", startTime = 25f,
-                        enemyType = "Grunt", count = 6, shape = SpawnShape.Clump },
+        // First contact at 0:10: three squads of three, two seconds apart, each from a
+        // different side. Small enough to be a lesson rather than a threat.
+        new WaveEntry { label = "first contact", startTime = 10f, endTime = 14f, interval = 2f,
+                        enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
 
-        new WaveEntry { label = "infantry", startTime = 30f, endTime = 155f, interval = 8f,
-                        enemyType = "Grunt", count = 5, shape = SpawnShape.Clump },
+        // The real infantry line. A Commander leads the first squad and every third
+        // after — a rhythm you can learn rather than a roll you cannot read.
+        new WaveEntry { label = "infantry", startTime = 25f, endTime = 155f, interval = 10f,
+                        enemyType = "Grunt", count = 9, shape = SpawnShape.Clump,
+                        commanderEvery = 3 },
 
         // First Dropship: a grunt source you can switch off by killing it.
         new WaveEntry { label = "dropship", startTime = 45f,
-                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
 
         // Armour arrives. The swipe stops being enough and the Blast earns its place.
         new WaveEntry { label = "armour", startTime = 60f,
-                        enemyType = "Tank", count = 3, shape = SpawnShape.Ring,
-                        allowCommanders = false },
+                        enemyType = "Tank", count = 3, shape = SpawnShape.Ring },
 
         new WaveEntry { label = "armour", startTime = 65f, endTime = 155f, interval = 25f,
-                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump },
 
         new WaveEntry { label = "dropships", startTime = 80f,
-                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
 
         // Mechs: the volley threat, and the first thing that punishes standing still.
         new WaveEntry { label = "mechs", startTime = 90f, endTime = 155f, interval = 35f,
-                        enemyType = "Mech", count = 1, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Mech", count = 1, shape = SpawnShape.Clump },
 
         // Late push. Ahead means it lands in front of wherever you are running.
         new WaveEntry { label = "push", startTime = 120f,
-                        enemyType = "Grunt", count = 12, shape = SpawnShape.Ahead },
+                        enemyType = "Grunt", count = 12, shape = SpawnShape.Ahead,
+                        commanderEvery = 1 },
 
         new WaveEntry { label = "push", startTime = 130f,
-                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump },
 
         new WaveEntry { label = "push", startTime = 145f,
-                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
 
         // The finale.
         new WaveEntry { label = "BOSS", startTime = 160f,
-                        enemyType = "Abomination", count = 1, shape = SpawnShape.Clump,
-                        allowCommanders = false },
+                        enemyType = "Abomination", count = 1, shape = SpawnShape.Clump },
     };
 
     [Header("Survival")]

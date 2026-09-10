@@ -95,7 +95,14 @@ public class WaveDirector : MonoBehaviour
         var cam = Camera.main;
         float offScreen = cam != null ? cam.orthographicSize * cam.aspect + 2.5f : 12f;
 
-        float baseAngle = ShapeAngle(wave.shape);
+        float baseAngle = ShapeAngle(wave);
+        wave.lastAngle = baseAngle;
+
+        // One Commander leads the group when it is this beat's turn. Placed at a
+        // random index so it is not always the same member of the squad.
+        bool wantsCommander = wave.IsCommanderTurn && commander != null && type != commander;
+        int commanderIndex = wantsCommander ? Random.Range(0, wave.count) : -1;
+        wave.fireIndex++;
 
         for (int i = 0; i < wave.count; i++)
         {
@@ -104,12 +111,7 @@ public class WaveDirector : MonoBehaviour
             // wave, so a big group partially lands rather than being dropped whole.
             if (Enemy.All.Count >= tuning.maxEnemiesAlive) return;
 
-            var spawning = type;
-            if (wave.allowCommanders && commander != null && type != commander)
-            {
-                int per = Random.Range(tuning.commanderPerMin, tuning.commanderPerMax + 1);
-                if (per > 0 && Random.value < 1f / per) spawning = commander;
-            }
+            var spawning = i == commanderIndex ? commander : type;
 
             float angle = wave.shape == SpawnShape.Ring
                 ? baseAngle + i / (float)wave.count * Mathf.PI * 2f
@@ -131,9 +133,9 @@ public class WaveDirector : MonoBehaviour
         }
     }
 
-    float ShapeAngle(SpawnShape shape)
+    float ShapeAngle(WaveEntry wave)
     {
-        if (shape == SpawnShape.Ahead)
+        if (wave.shape == SpawnShape.Ahead)
         {
             var pc = player.GetComponent<PlayerController>();
             if (pc != null && pc.AimDir.sqrMagnitude > 0.001f)
@@ -143,6 +145,20 @@ public class WaveDirector : MonoBehaviour
                 var flat = new Vector2(pc.AimDir.x, pc.AimDir.y / tuning.isoSquash);
                 return Mathf.Atan2(flat.y, flat.x);
             }
+        }
+
+        // Successive clumps come from genuinely different sides. Pure random would
+        // occasionally drop three groups on the same flank, which reads as one blob
+        // rather than as being worked around.
+        const float MinSeparation = 1.2f;   // radians, about 70 degrees
+        for (int attempt = 0; attempt < 8; attempt++)
+        {
+            float angle = Random.value * Mathf.PI * 2f;
+            if (wave.lastAngle < -50f) return angle;
+
+            float delta = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg,
+                                                     wave.lastAngle * Mathf.Rad2Deg)) * Mathf.Deg2Rad;
+            if (delta >= MinSeparation) return angle;
         }
         return Random.value * Mathf.PI * 2f;
     }

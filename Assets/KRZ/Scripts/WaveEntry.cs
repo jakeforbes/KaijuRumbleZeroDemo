@@ -39,11 +39,18 @@ public class WaveEntry
 
     public SpawnShape shape = SpawnShape.Clump;
 
-    [Tooltip("Roll Commanders into this group at the usual ratio. Grunt waves only.")]
-    public bool allowCommanders = true;
+    [Tooltip("Include a Commander every Nth time this beat fires, counting the first. " +
+             "3 means the first clump and every third after. 0 means never. Deliberate " +
+             "rather than a random roll, so the rhythm is something you can learn.")]
+    public int commanderEvery;
 
     [HideInInspector] public float nextFireAt = -1f;
     [HideInInspector] public bool fired;
+    [HideInInspector] public int fireIndex;
+    [HideInInspector] public float lastAngle = -99f;
+
+    public bool IsCommanderTurn =>
+        commanderEvery > 0 && fireIndex % commanderEvery == 0;
 
     public bool IsSustained => interval > 0f && endTime > startTime;
 }
