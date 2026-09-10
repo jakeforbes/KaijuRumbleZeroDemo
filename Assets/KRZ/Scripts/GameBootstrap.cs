@@ -55,6 +55,8 @@ public class GameBootstrap : MonoBehaviour
         }
 
         Food.Reset();
+        BuildingArt.ClearCache();
+        DirectionalArt.ClearCache();
         Enemy.Reset();
         HitFx.Reset();
         Missile.Reset();
@@ -72,18 +74,20 @@ public class GameBootstrap : MonoBehaviour
         fade.tuning = tuning;
 
         BuildGround();
-        BuildCity();
+        if (IsGym) BuildGym(); else BuildCity();
         player = BuildPlayer();
+        if (IsGym) player.transform.position = GymPoint(-Mathf.Ceil(GymTiles() * 0.5f), -3);
 
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
 
-        PlaceFreeUpgrades();
+        if (!IsGym) PlaceFreeUpgrades();
         gameObject.AddComponent<Popups>();
 
         var director = gameObject.AddComponent<WaveDirector>();
         director.tuning = tuning;
         director.player = player.transform;
+        director.Running = !IsGym;
 
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
@@ -124,12 +128,13 @@ public class GameBootstrap : MonoBehaviour
         float tileW = GreyboxArt.TileW / ppu;   // 2 world units
         float tileH = GreyboxArt.TileH / ppu;   // 1 world unit
 
-        float spanX = tuning.blocksX * tuning.blockSpacingX;
-        float spanY = tuning.blocksY * tuning.blockSpacingY;
+        float spanX = IsGym ? GymWidth() + 12f : tuning.blocksX * tuning.blockSpacingX;
+        float spanY = IsGym ? (GymTiles() + 12) * tileH * 0.5f : tuning.blocksY * tuning.blockSpacingY;
         // Rows sit half a tile apart so the diamonds interlock, so this needs
         // twice the count a full-tile spacing would.
         int cols = Mathf.CeilToInt(spanX / tileW) + 4;
         int rows = Mathf.CeilToInt(spanY / (tileH * 0.5f)) + 8;
+        if (IsGym) { cols += cols % 2; rows += rows % 4 == 0 ? 0 : 4 - rows % 4; }
         playfieldBounds = Rect.MinMaxRect(-cols * 0.5f * tileW - tileW * 0.5f,
             -rows * 0.25f * tileH - tileH * 0.5f,
             (cols - cols * 0.5f) * tileW,
@@ -152,6 +157,88 @@ public class GameBootstrap : MonoBehaviour
             }
     }
 
+    // Both maps use this factory: art, collision, health, audio and drops stay identical.
+    void CreateBuilding(Transform root, BuildingType type, int tilesX, int tilesY,
+        int heightPx, Vector3 position, string objectName, bool flipped = false)
+    {
+        float ppu = tuning.pixelsPerUnit;
+        var go = new GameObject(objectName);
+        go.transform.SetParent(root, false);
+        go.transform.position = position;
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, heightPx, type.colour, ppu);
+        fade.Register(sr);
+
+        var building = go.AddComponent<Building>();
+
+        // Footprint only — never the sprite bounds, so the player can overlap
+        // a tower's upper floors without colliding with them. Built from the
+        // same corner function the sprite uses, so art and collision cannot
+        // drift apart the way they did when this was an approximated capsule.
+        var cornersPx = GreyboxArt.FootprintCornersPx(tilesX, tilesY);
+        var points = new Vector2[cornersPx.Length];
+        for (int i = 0; i < cornersPx.Length; i++)
+        {
+            // Idealised tile math first, then the per-class calibration for delivered
+            // art whose actual base doesn't line up with that math. Identity by
+            // default, so greybox buildings (already exact) are untouched.
+            Vector2 p = cornersPx[i] / ppu * tuning.buildingFootprint;
+            p.x *= type.footprintScale.x;
+            p.y *= type.footprintScale.y;
+            points[i] = p + type.footprintOffset;
+        }
+
+        var col = go.AddComponent<PolygonCollider2D>();
+        col.points = points;
+
+        // Init last: it caches the collider and sprite renderer.
+        building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped);
+    }
+
+    bool IsGym => SceneManager.GetActiveScene().name == "Gym";
+
+    float GymTiles()
+    {
+        float length = 0;
+        foreach (var type in tuning.buildingTypes)
+            if (type != null) length += type.tilesX + 1;
+        return length;
+    }
+
+    float GymWidth() => (GymTiles() + 6) * GreyboxArt.TileW * 0.5f / tuning.pixelsPerUnit;
+
+    Vector3 GymPoint(float x, float y) => new Vector3(
+        (x + y) * GreyboxArt.TileW * 0.5f / tuning.pixelsPerUnit,
+        (y - x) * GreyboxArt.TileH * 0.5f / tuning.pixelsPerUnit, 0);
+
+    void BuildGym()
+    {
+        var root = new GameObject("Gym Buildings").transform;
+        float cursor = -Mathf.Ceil(GymTiles() * 0.5f);
+        // Artwork first so the delivered models are immediately accessible.
+        for (int pass = 0; pass < 2; pass++)
+        foreach (var type in tuning.buildingTypes)
+        {
+            if (type == null || (!string.IsNullOrEmpty(type.artSprite) ? 0 : 1) != pass) continue;
+            // Anchor the footprint corner to the ground lattice. Advance exactly
+            // the footprint width plus one empty tile along the same grid axis.
+            var position = GymPoint(cursor + type.tilesX * 0.5f, type.tilesY * 0.5f);
+            CreateBuilding(root, type, type.tilesX, type.tilesY, type.minHeightPx,
+                position, type.name);
+            var label = new GameObject(type.name + " Label");
+            label.transform.SetParent(root, false);
+            label.transform.position = GymPoint(cursor + type.tilesX * 0.5f, -1);
+            var text = label.AddComponent<TextMesh>();
+            text.text = type.name;
+            text.fontSize = 32;
+            text.characterSize = 0.07f;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            text.GetComponent<MeshRenderer>().sortingOrder = 5;
+            cursor += type.tilesX + 1;
+        }
+    }
     void BuildCity()
     {
         float ppu = tuning.pixelsPerUnit;
@@ -169,8 +256,12 @@ public class GameBootstrap : MonoBehaviour
         for (int by = 0; by < tuning.blocksY; by++)
             for (int bx = 0; bx < tuning.blocksX; bx++)
             {
-                // Leave the centre clear so the player has room to start.
-                if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 && Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
+                // Only the block the player is standing on is left out, so the run
+                // opens surrounded rather than in a clearing. A plaza at the start
+                // meant the first thing you did was walk somewhere; food is the whole
+                // economy, and it should be within reach of the spawn point.
+                if (Mathf.Abs(bx - tuning.blocksX / 2) <= tuning.startClearBlocks &&
+                    Mathf.Abs(by - tuning.blocksY / 2) <= tuning.startClearBlocks) continue;
 
                 var type = reactorSlots.TryGetValue((bx, by), out var reactor)
                     ? reactor
@@ -187,30 +278,7 @@ public class GameBootstrap : MonoBehaviour
                 float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
                 float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
 
-                var go = new GameObject($"{type.name}_{bx}_{by}");
-                go.transform.SetParent(root, false);
-                go.transform.position = new Vector3(x, y, 0f);
-
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, heightPx, type.colour, ppu);
-                fade.Register(sr);
-
-                var building = go.AddComponent<Building>();
-
-                // Footprint only — never the sprite bounds, so the player can overlap
-                // a tower's upper floors without colliding with them. Built from the
-                // same corner function the sprite uses, so art and collision cannot
-                // drift apart the way they did when this was an approximated capsule.
-                var cornersPx = GreyboxArt.FootprintCornersPx(tilesX, tilesY);
-                var points = new Vector2[cornersPx.Length];
-                for (int i = 0; i < cornersPx.Length; i++)
-                    points[i] = cornersPx[i] / ppu * tuning.buildingFootprint;
-
-                var col = go.AddComponent<PolygonCollider2D>();
-                col.points = points;
-
-                // Init last: it caches the collider and sprite renderer.
-                building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped);
+                CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f), $"{type.name}_{bx}_{by}", flipped);
             }
     }
 

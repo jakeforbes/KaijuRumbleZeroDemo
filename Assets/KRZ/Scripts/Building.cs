@@ -91,6 +91,9 @@ public class Building : Damageable
     {
         if (!IsAlive) return;
 
+        Vector2 hitDirection = (Vector2)transform.position - from;
+        Vector3 impact = sr.bounds.center;
+        HitFx.BuildingDebris(impact, hitDirection, type.debrisColour, ppu, transform.position.y, type);
         hp -= amount * DeltaMultiplier();
         AudioEvents.Play(Sfx.BuildingHit, transform.position, owner: gameObject);
 

@@ -11,6 +11,23 @@ using UnityEngine;
 [System.Serializable]
 public class BuildingType
 {
+    [Header("Hit debris")]
+    public bool debrisEnabled = true;
+    [Range(0, 100)] public int debrisCount = 15;
+    [Tooltip("Fragment size multiplier range.")]
+    public Vector2 debrisSize = new Vector2(1.4f, 2.6f);
+    [Tooltip("Outward speed range in world units per second.")]
+    public Vector2 debrisForce = new Vector2(1.5f, 3.3f);
+    [Range(0, 180)] public float debrisSpread = 25f;
+    [Min(0.1f)] public float debrisGravity = 7f;
+
+    [Tooltip("Tint for hit debris chips. Defaults to the same concrete-blue every " +
+             "building class shares in the delivered art, rather than this type's own " +
+             "accent colour, so debris reads as one consistent material across the " +
+             "whole city. Override per class only where it should chip differently " +
+             "(e.g. a reactor's hot innards).")]
+    public Color debrisColour = new Color(0.266f, 0.286f, 0.382f);
+    [Header("Building")]
     public string name = "Block";
 
     [Tooltip("Which kaiju size this is a fair fight for. 0 is size 1.")]
@@ -19,6 +36,18 @@ public class BuildingType
     [Tooltip("Ground footprint in tiles. Orientation is flipped at random when placed.")]
     public int tilesX = 1;
     public int tilesY = 1;
+
+    [Tooltip("Per-axis scale applied to the generated footprint diamond, on top of the " +
+             "global Building Footprint fraction. 1,1 matches the idealised tile math " +
+             "exactly, which is always correct for greybox. Only delivered art whose " +
+             "actual base doesn't match that math needs this touched. Calibrate with " +
+             "the F12 collider overlay against the real sprite.")]
+    public Vector2 footprintScale = Vector2.one;
+
+    [Tooltip("World-unit nudge applied to the footprint after scaling, for delivered art " +
+             "whose ground contact point sits off from the idealised centre. Calibrate " +
+             "with the F12 collider overlay.")]
+    public Vector2 footprintOffset = Vector2.zero;
 
     [Tooltip("Height above the footprint, in pixels. Not tied to footprint area.")]
     public int minHeightPx = 140;

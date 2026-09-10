@@ -54,6 +54,11 @@ public class Tuning : ScriptableObject
     public float blockSpacingY = 3.5f;
     public int randomSeed = 1337;
 
+    [Tooltip("How many blocks around the spawn point are left empty. 0 clears only " +
+             "the block the player stands on, so the run opens with buildings on all " +
+             "sides and food within reach. Raise it to open the start out again.")]
+    [Range(0, 3)] public int startClearBlocks;
+
     [Header("Growth")]
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes.\n\n" +
              "Each gate is roughly triple the last, because income does not just grow " +
@@ -726,6 +731,11 @@ public class Tuning : ScriptableObject
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            artSprite = "Buildings/laboratory_2x2",
+                           // Finer, faster, wider chips than the rest of the city —
+                           // Samson's calibration against the delivered lab art, moved
+                           // here from the Tuning asset so it is not a stray override.
+                           debrisCount = 30, debrisSize = new Vector2(1f, 1.5f),
+                           debrisForce = new Vector2(2.5f, 5f), debrisSpread = 62f,
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and

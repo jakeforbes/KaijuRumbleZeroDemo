@@ -21,7 +21,10 @@ public static class BuildingArt
 
     static readonly string[] Suffix = { "_pristine", "_damaged_1", "_damaged_2", "_destroyed" };
 
-    static readonly Dictionary<(string, int, int), Sprite> Cache = new();
+    // Keyed on ppu too, matching what Load() below actually builds.
+    static readonly Dictionary<(string, int, int, float), Sprite> Cache = new();
+
+    public static void ClearCache() => Cache.Clear();
 
     /// <summary>
     /// Buildings pivot on the centre of their footprint, not on the art spec's ground
@@ -60,8 +63,8 @@ public static class BuildingArt
     {
         if (string.IsNullOrEmpty(resourcePath)) return null;
 
-        var key = (resourcePath, tilesX, tilesY);
-        if (Cache.TryGetValue(key, out var cached)) return cached;
+        var key = (resourcePath, tilesX, tilesY, ppu);
+        if (Cache.TryGetValue(key, out var cached) && cached != null) return cached;
 
         var tex = Resources.Load<Texture2D>(resourcePath);
         Sprite sprite = null;
@@ -74,7 +77,8 @@ public static class BuildingArt
             sprite.name = resourcePath;
         }
 
-        Cache[key] = sprite;
+        // A missing or reimported texture must not poison subsequent spawns.
+        if (sprite != null) Cache[key] = sprite;
         return sprite;
     }
 }

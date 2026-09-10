@@ -90,7 +90,7 @@ public static class DirectionalArt
             _ => ShortLower,
         })[dirIndex];
 
-        string key = $"{cfg.folder}|{cfg.prefix}|{clip}|{dir}";
+        string key = $"{cfg.folder}|{cfg.prefix}|{clip}|{dir}|{cfg.pathFormat}|{cfg.firstFrame}|{cfg.frameDigits}|{frameCount}";
         if (cache.TryGetValue(key, out var cached)) return cached;
 
         var frames = new Sprite[frameCount];

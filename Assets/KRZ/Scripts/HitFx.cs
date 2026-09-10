@@ -9,11 +9,53 @@ public class HitFx : MonoBehaviour
 {
     static Sprite barSprite;
     static Sprite burstSprite;
+    static Sprite debrisSprite;
     static Transform root;
 
     SpriteRenderer sr;
     float life;
     float age;
+    bool debris;
+    bool landed;
+    Vector3 ground;
+    Vector2 drift;
+    float height, lift, spin;
+    float gravity;
+    float flightTime;
+
+    /// <summary>Chips fall from the building's visible centre along the strike.</summary>
+    public static void BuildingDebris(Vector3 at, Vector2 direction, Color colour, float ppu, float groundY, BuildingType settings)
+    {
+        if (!settings.debrisEnabled) return;
+        if (debrisSprite == null) debrisSprite = GreyboxArt.Solid(8, 5, Color.white, ppu);
+        if (direction.sqrMagnitude < 0.001f) direction = Vector2.up;
+        direction.Normalize();
+        for (int i = 0; i < Mathf.Clamp(settings.debrisCount, 0, 100); i++)
+        {
+            var go = New("building chip", at, colour, 2);
+            var renderer = go.GetComponent<SpriteRenderer>();
+            renderer.sprite = debrisSprite;
+            renderer.color = Color.Lerp(colour, new Color(0.55f, 0.57f, 0.63f), Random.Range(0.2f, 0.65f));
+            go.transform.localScale = Vector3.one * Range(settings.debrisSize, 0.01f);
+            var fx = go.AddComponent<HitFx>();
+            fx.sr = renderer;
+            fx.debris = true;
+            fx.ground = new Vector3(at.x, Mathf.Min(groundY, at.y), at.z);
+            float spread = Mathf.Clamp(settings.debrisSpread, 0, 180);
+            fx.drift = (Vector2)(Quaternion.Euler(0, 0, Random.Range(-spread, spread)) * direction)
+                * Range(settings.debrisForce, 0);
+            fx.gravity = Mathf.Max(0.1f, settings.debrisGravity);
+            fx.height = Mathf.Max(0, at.y - fx.ground.y);
+            fx.lift = 0;
+            fx.spin = Random.Range(-360f, 360f);
+            fx.flightTime = Mathf.Sqrt(2f * fx.height / fx.gravity);
+            fx.life = fx.flightTime + 0.2f;
+        }
+    }
+
+    static float Range(Vector2 range, float minimum) => Random.Range(
+        Mathf.Max(minimum, Mathf.Min(range.x, range.y)),
+        Mathf.Max(minimum, Mathf.Max(range.x, range.y)));
 
     public static void Reset() => root = null;
 
@@ -80,7 +122,28 @@ public class HitFx : MonoBehaviour
     void Update()
     {
         age += Time.deltaTime;
-        float t = 1f - Mathf.Clamp01(age / life);
+        if (debris && !landed)
+        {
+            ground += (Vector3)drift * Time.deltaTime;
+            lift -= gravity * Time.deltaTime;
+            height = Mathf.Max(0, height + lift * Time.deltaTime);
+            transform.position = ground + Vector3.up * height;
+            transform.Rotate(0, 0, spin * Time.deltaTime);
+            if (height <= 0f) landed = true;
+        }
+        // Debris fades out across the second half of its flight, so it is gone by
+        // the time it would otherwise sit motionless on the ground. Everything else
+        // (tracers, bursts) keeps its original full-lifetime fade.
+        float t;
+        if (debris)
+        {
+            float fadeStart = flightTime * 0.5f;
+            t = age <= fadeStart ? 1f : 1f - Mathf.Clamp01((age - fadeStart) / Mathf.Max(0.0001f, flightTime - fadeStart));
+        }
+        else
+        {
+            t = 1f - Mathf.Clamp01(age / life);
+        }
         var c = sr.color;
         c.a = t;
         sr.color = c;
