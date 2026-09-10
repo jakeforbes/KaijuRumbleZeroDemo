@@ -51,8 +51,18 @@ as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 
 | Input | Action |
 | --- | --- |
-| WASD / left stick | Move (8-way on keys, analog on pad) |
-| — | Swipe fires automatically on a cooldown |
+| WASD or arrows | Move, 8-way |
+| Left stick | Move, analog |
+| D-pad | Move, 8-way — identical to WASD |
+| Space or E | Blast |
+| A button or right trigger | Blast |
+| — | The swipe fires automatically on a cooldown |
+
+Keyboard and pad are live at the same time and never need switching between:
+whichever of keys, stick or d-pad is pushed hardest is the one that steers. They
+are compared rather than summed, so a controller sitting on the desk with a
+drifting stick cannot bend a key press off its axis or quietly walk the kaiju
+across the map on its own.
 
 ## Debug keys
 

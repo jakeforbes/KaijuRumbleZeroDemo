@@ -188,18 +188,30 @@ public class PlayerController : MonoBehaviour
             if (keys.sqrMagnitude > 1f) keys.Normalize();
         }
 
-        Vector2 pad = Vector2.zero;
+        Vector2 stick = Vector2.zero;
+        Vector2 dpad = Vector2.zero;
         var gamepad = Gamepad.current;
         if (gamepad != null)
         {
-            pad = gamepad.leftStick.ReadValue();
-            if (pad.sqrMagnitude < DeadZone * DeadZone) pad = Vector2.zero;
+            stick = gamepad.leftStick.ReadValue();
+            if (stick.sqrMagnitude < DeadZone * DeadZone) stick = Vector2.zero;
+
+            // The d-pad is a digital control, so it gets the same treatment as the
+            // keys: full deflection, normalised on the diagonals. Anything else and
+            // pressing two directions would move you 1.41 times as fast as one.
+            dpad = gamepad.dpad.ReadValue();
+            if (dpad.sqrMagnitude > 1f) dpad.Normalize();
         }
 
-        // Whichever is being pushed harder wins. Reading the pad first and only
-        // falling back to keys meant a controller with any stick drift silently
-        // locked out the keyboard and walked the kaiju on its own.
-        return pad.sqrMagnitude > keys.sqrMagnitude ? pad : keys;
+        // Whichever of the three is being pushed hardest wins, rather than summing
+        // them. Reading the pad first and only falling back to keys meant a
+        // controller with any stick drift silently locked out the keyboard and
+        // walked the kaiju on its own; summing would let a drifting stick bend a
+        // d-pad or key press off its axis in the same way.
+        Vector2 best = keys;
+        if (stick.sqrMagnitude > best.sqrMagnitude) best = stick;
+        if (dpad.sqrMagnitude > best.sqrMagnitude) best = dpad;
+        return best;
     }
 
     /// <summary>
