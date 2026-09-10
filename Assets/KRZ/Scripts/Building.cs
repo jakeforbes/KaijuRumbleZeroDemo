@@ -89,6 +89,7 @@ public class Building : Damageable
     void ShowDamaged()
     {
         damagedShown = true;
+        AudioEvents.Play(Sfx.BuildingStageChanged, transform.position, owner: gameObject);
 
         // Only a pristine render was delivered, so an art building darkens in place
         // rather than swapping to a second sprite. Keeping the silhouette also keeps
@@ -104,7 +105,7 @@ public class Building : Damageable
         var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY,
                                       Mathf.RoundToInt(fullHeightPx * 0.72f), faded, ppu);
-        AudioEvents.Play(Sfx.BuildingStageChanged, transform.position, owner: gameObject);
+
     }
 
     /// <summary>Created on first damage, not up front — an intact building says nothing.</summary>
