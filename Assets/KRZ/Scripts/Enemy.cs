@@ -27,6 +27,7 @@ public class Enemy : Damageable
     bool volleyWinding;
     bool dying;
     float destroyAt;
+    HealthBar bar;
 
     public EnemyArt art;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
@@ -77,10 +78,7 @@ public class Enemy : Damageable
 
         // Delivered art replaces the greybox capsule when the type points at a folder.
         var art2 = go.AddComponent<EnemyArt>();
-        art2.owner = e;
-        art2.target = bsr;
-        art2.type = type;
-        if (art2.Available)
+        if (art2.Init(e, bsr, type))
         {
             e.art = art2;
             e.baseColour = Color.white;          // sprites carry their own colour
@@ -160,7 +158,41 @@ public class Enemy : Damageable
             }
         }
 
+        if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
         Recolour();
+    }
+
+    /// <summary>Whether the kaiju has outgrown this enemy's class.</summary>
+    public bool Squishable
+    {
+        get
+        {
+            var p = PlayerProgress.Instance;
+            if (p == null) return false;
+            return p.Tier >= tuning.squishFirstTier + type.sizeClass * tuning.squishTiersPerClass;
+        }
+    }
+
+    /// <summary>
+    /// Appears on first damage, like a building's. Removed once the kaiju has outgrown
+    /// the class: something you kill by walking over is not worth tracking, and sixty
+    /// bars over things that die on contact is noise rather than feedback.
+    /// </summary>
+    void ShowBar()
+    {
+        if (!tuning.showEnemyHealthBars || Squishable)
+        {
+            if (bar != null) { Destroy(bar.gameObject); bar = null; }
+            return;
+        }
+
+        float displayPx = art != null ? type.artDisplayPx : type.bodyPx;
+        float top = displayPx / tuning.pixelsPerUnit;
+
+        if (bar == null)
+            bar = HealthBar.Attach(transform, top * 0.55f, top, tuning.pixelsPerUnit);
+
+        bar.Set(hp / type.hp);
     }
 
     /// <summary>Returns true while the special owns this frame.</summary>
@@ -296,6 +328,7 @@ public class Enemy : Damageable
 
         hp -= dealt;
         if (art != null && hp > 0f) art.Play("hit", true);
+        if (hp > 0f) ShowBar();
         AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
         Popups.Add(transform.position, $"{dealt:0}", Color.white);
@@ -312,6 +345,7 @@ public class Enemy : Damageable
     void Die(Sfx sound)
     {
         hp = 0f;
+        if (bar != null) { Destroy(bar.gameObject); bar = null; }
         if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f, owner: gameObject);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);
 

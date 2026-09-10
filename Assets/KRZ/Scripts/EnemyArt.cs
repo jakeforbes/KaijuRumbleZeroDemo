@@ -21,10 +21,20 @@ public class EnemyArt : MonoBehaviour
     bool oneShot;
     int facing;
 
-    void Awake()
+    /// <summary>
+    /// Called after the fields are assigned, never from Awake. AddComponent runs Awake
+    /// immediately, before the caller can set anything, so probing for art there tested
+    /// a null type and always reported none.
+    /// </summary>
+    public bool Init(Enemy enemy, SpriteRenderer renderer, EnemyType enemyType)
     {
+        owner = enemy;
+        target = renderer;
+        type = enemyType;
+
         Available = type != null && !string.IsNullOrEmpty(type.artFolder) &&
                     Frames("idle", 0) != null;
+        return Available;
     }
 
     Sprite[] Frames(string clip, int face) =>

@@ -421,6 +421,9 @@ public class Tuning : ScriptableObject
              "each step up in class roughly triples the work. Right of it is the payoff.")]
     public float[] damageVsBuildingByDelta = { 0.025f, 0.05f, 0.125f, 0.33f, 1f, 2f, 3f, 4f, 5f };
 
+    [Tooltip("Progress bar over enemies you have damaged. Vanishes once you outgrow them.")]
+    public bool showEnemyHealthBars = true;
+
     [Tooltip("Progress bar over buildings you have damaged. Intact ones show nothing.")]
     public bool showBuildingHealthBars = true;
 
