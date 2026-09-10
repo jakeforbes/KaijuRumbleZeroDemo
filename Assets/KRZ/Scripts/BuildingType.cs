@@ -110,7 +110,21 @@ public class BuildingType
              "Applied through the sprite's pixels-per-unit, so it scales about the " +
              "pivot and never touches the collider. Check it with the F12 overlay: the " +
              "drawn base should sit just outside the diamond, never inside it.")]
-    [Range(0.4f, 1.6f)] public float artScale = 1f;
+    [Range(0.2f, 2.5f)] public float artScale = 1f;
+
+    [Tooltip("Sideways nudge of the sprite against its collider, in texture pixels, " +
+             "positive moving the building left. For art whose base is not drawn in " +
+             "the middle of its canvas — two of the civilians are tens of pixels off " +
+             "centre, which no amount of scaling corrects because the building is not " +
+             "the wrong size, it is simply standing beside its own footprint.")]
+    public float artPivotOffsetX;
+
+    [Tooltip("Vertical nudge of the sprite against its collider, in texture pixels, " +
+             "positive moving the building UP. For art whose ground contact is not " +
+             "where the fixed 8px margin says it is. Use this only after the scale is " +
+             "right: a building the wrong size looks vertically wrong too, and nudging " +
+             "it only hides the real fault.")]
+    public float artPivotOffsetY;
 
     [Tooltip("How dark the sprite goes at the last damage step when only a pristine " +
              "render exists. Ignored once real damage states are delivered.")]

@@ -854,6 +854,12 @@ public class Tuning : ScriptableObject
         // Art paths are wired ahead of the frames existing. A missing file loads as
         // null and the type stays on greybox, so the next delivery is a file drop
         // rather than another pass through here.
+        // Every artScale and pivot offset below is measured, not guessed: the base
+        // plate's width and centre are read off the sprite's own silhouette and set
+        // against what the tile maths wants. Where a file's name and its real
+        // footprint disagree, the name is the one that is wrong — the artist relabelled
+        // between deliveries and the pixels are the fact.
+
         new BuildingType { name = "Civilian 1x1", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 15f,
@@ -861,49 +867,6 @@ public class Tuning : ScriptableObject
                            artDirections = 1, artScale = 0.72f,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
-        // Non-square types are declared in the orientation the art is authored in.
-        // The placer still flips half of them; a flipped one mirrors the sprite, which
-        // lands exactly on the swapped footprint in this projection.
-        new BuildingType { name = "Civilian 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
-                           minHeightPx = 150, maxHeightPx = 230, hp = 38f,
-                           foodDrops = 9,  foodScatter = 3.2f, weight = 12f,
-                           artSprite = "Buildings/civilian_1x2",
-                           artDirections = 1, artScale = 0.86f,
-                           colour = new Color(0.22f, 0.31f, 0.39f) },
-
-        new BuildingType { name = "Civilian 1x3", sizeClass = 2, tilesX = 1, tilesY = 3,
-                           minHeightPx = 400, maxHeightPx = 560, hp = 47f,
-                           foodDrops = 14, foodScatter = 4.2f, weight = 20f,
-                           artSprite = "Buildings/civilian_1x3",
-                           artDirections = 1, artScale = 0.79f,
-                           colour = new Color(0.29f, 0.27f, 0.37f) },
-
-        new BuildingType { name = "Civilian 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
-                           minHeightPx = 380, maxHeightPx = 520, hp = 59f,
-                           foodDrops = 22, foodScatter = 5.2f, weight = 5f,
-                           artSprite = "Buildings/civilian_2x2",
-                           artDirections = 1, artScale = 0.85f,
-                           colour = new Color(0.31f, 0.30f, 0.35f) },
-
-        // The largest civilian, and the only one that is a genuine size-5 job outside
-        // the Reactor. Rare on purpose — a city of these would be a city of walls.
-        new BuildingType { name = "Civilian 3x3", sizeClass = 4, tilesX = 3, tilesY = 3,
-                           minHeightPx = 620, maxHeightPx = 820, hp = 73f,
-                           foodDrops = 34, foodScatter = 7f,  weight = 8f,
-                           artSprite = "Buildings/civilian_3x3",
-                           artDirections = 1,
-                           colour = new Color(0.25f, 0.26f, 0.42f) },
-
-        // Cantilever variants. Cosmetic only — each one shares its class, health and
-        // payout with the plain civilian of the same footprint, so the size ladder is
-        // untouched and only the silhouette changes.
-        //
-        // Weights split the family total rather than adding to it: the 1x1 family
-        // still adds up to 44, the 1x2 to 34, the 2x2 to 15. Density and the mix of
-        // sizes stay exactly where they were tuned; there is simply more to look at.
-        //
-        // This matters most for infill, which is nearly all 1x1 and 1x2 and makes up
-        // more of the city than the block buildings do.
         new BuildingType { name = "Cantilever 1x1 Low", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6, foodScatter = 2.5f, weight = 15f,
@@ -916,37 +879,84 @@ public class Tuning : ScriptableObject
                            artSprite = "Buildings/cantilever_1x1_high", artScale = 0.71f,
                            colour = new Color(0.27f, 0.30f, 0.39f) },
 
-        new BuildingType { name = "Cantilever 1x2 Low", sizeClass = 1, tilesX = 1, tilesY = 2,
+        // The base is the right size for a 1x2 and simply is not drawn in the middle
+        // of its canvas — 47 pixels right of centre. Scaling could never have fixed
+        // that; the building was standing beside its own footprint.
+        new BuildingType { name = "Civilian 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
-                           foodDrops = 9, foodScatter = 3.2f, weight = 11f,
-                           artSprite = "Buildings/cantilever_1x2_low", artScale = 1.17f,
-                           colour = new Color(0.20f, 0.29f, 0.37f) },
+                           foodDrops = 9,  foodScatter = 3.2f, weight = 34f,
+                           artSprite = "Buildings/civilian_1x2",
+                           artDirections = 1, artScale = 0.97f, artPivotOffsetX = 47f,
+                           colour = new Color(0.22f, 0.31f, 0.39f) },
 
-        new BuildingType { name = "Cantilever 1x2 High", sizeClass = 1, tilesX = 1, tilesY = 2,
-                           minHeightPx = 240, maxHeightPx = 330, hp = 38f,
-                           foodDrops = 9, foodScatter = 3.2f, weight = 11f,
-                           artSprite = "Buildings/cantilever_1x2_high", artScale = 1.06f,
-                           colour = new Color(0.24f, 0.33f, 0.41f) },
+        // Same fault, 34 pixels off, and the least confident numbers in the roster:
+        // this one's silhouette never settles into a clean diamond, so the base is
+        // being estimated rather than read.
+        new BuildingType { name = "Civilian 1x3", sizeClass = 2, tilesX = 1, tilesY = 3,
+                           minHeightPx = 400, maxHeightPx = 560, hp = 47f,
+                           foodDrops = 14, foodScatter = 4.2f, weight = 20f,
+                           artSprite = "Buildings/civilian_1x3",
+                           artDirections = 1, artScale = 0.88f, artPivotOffsetX = 34f,
+                           colour = new Color(0.29f, 0.27f, 0.37f) },
 
+        new BuildingType { name = "Civilian 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 380, maxHeightPx = 520, hp = 59f,
+                           foodDrops = 22, foodScatter = 5.2f, weight = 5f,
+                           artSprite = "Buildings/civilian_2x2",
+                           artDirections = 1, artScale = 0.85f,
+                           colour = new Color(0.31f, 0.30f, 0.35f) },
+
+        // The two files named 1x2 are square. Their bases measure 313 and 361 wide
+        // against a 2x2's 512, and both sit dead centre in their canvas, so they take
+        // the 2x2 slot scaled up rather than the 1x2 slot they are named for.
         new BuildingType { name = "Cantilever 2x2 Low", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 5f,
-                           artSprite = "Buildings/cantilever_2x2_low", artScale = 1.24f,
-                           colour = new Color(0.29f, 0.28f, 0.33f) },
+                           artSprite = "Buildings/cantilever_1x2_low",
+                           artScale = 1.64f, artPivotOffsetX = 5f,
+                           colour = new Color(0.20f, 0.29f, 0.37f) },
 
         new BuildingType { name = "Cantilever 2x2 High", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 460, maxHeightPx = 620, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 5f,
-                           artSprite = "Buildings/cantilever_2x2_high", artScale = 1.03f,
+                           artSprite = "Buildings/cantilever_1x2_high",
+                           artScale = 1.42f, artPivotOffsetX = 1f,
+                           colour = new Color(0.24f, 0.33f, 0.41f) },
+
+        // Civilian 3x3 is gone — its art never sat on the grid at any scale. The two
+        // files named 2x2 take the class-4 slot instead: bases of 412 and 447 against
+        // a 3x3's 768, both cleanly centred and both a clean 2:1 diamond, which is
+        // more than the sprite they replace ever managed.
+        new BuildingType { name = "Cantilever 3x3 Low", sizeClass = 4, tilesX = 3, tilesY = 3,
+                           minHeightPx = 620, maxHeightPx = 820, hp = 73f,
+                           foodDrops = 34, foodScatter = 7f, weight = 4f,
+                           artSprite = "Buildings/cantilever_2x2_low",
+                           artScale = 1.86f, artPivotOffsetX = 9f,
+                           colour = new Color(0.29f, 0.28f, 0.33f) },
+
+        new BuildingType { name = "Cantilever 3x3 High", sizeClass = 4, tilesX = 3, tilesY = 3,
+                           minHeightPx = 700, maxHeightPx = 900, hp = 73f,
+                           foodDrops = 34, foodScatter = 7f, weight = 4f,
+                           artSprite = "Buildings/cantilever_2x2_high",
+                           artScale = 1.72f, artPivotOffsetX = 26f,
                            colour = new Color(0.33f, 0.32f, 0.37f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
-        // read as prizes across a crowded street. Deliberately squat and a hue no
-        // filler block uses — silhouette and colour are all greybox has to work with.
-        new BuildingType { name = "Laboratory 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
+        // read as prizes across a crowded street.
+        //
+        // Both are the same render at different scales. The 1x2 lab's own art never
+        // sat on the grid, and rather than keep a broken building for the sake of a
+        // footprint nobody needed, the small lab is the 2x2 shrunk onto one tile —
+        // which also makes the two labs unmistakably the same institution.
+        //
+        // Class 1 on a 1x1 footprint is the one place the roster breaks its own rule
+        // that class follows area. A lab has to stay a real job at size 1 or the
+        // upgrade that makes a run is something you collect by accident.
+        new BuildingType { name = "Laboratory 1x1", sizeClass = 1, tilesX = 1, tilesY = 1,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
                            foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
-                           artSprite = "Buildings/laboratory_1x2",
+                           artSprite = "Buildings/laboratory_2x2",
+                           artDirections = 1, artScale = 0.41f,
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Laboratory 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
@@ -955,8 +965,7 @@ public class Tuning : ScriptableObject
                            artSprite = "Buildings/laboratory_2x2",
                            artDirections = 1, artScale = 0.82f,
                            // Finer, faster, wider chips than the rest of the city —
-                           // Samson's calibration against the delivered lab art, moved
-                           // here from the Tuning asset so it is not a stray override.
+                           // Samson's calibration against the delivered lab art.
                            debrisCount = 30, debrisSize = new Vector2(1f, 1.5f),
                            debrisForce = new Vector2(2.5f, 5f), debrisSpread = 62f,
                            colour = new Color(0.24f, 0.72f, 0.68f) },
@@ -973,6 +982,12 @@ public class Tuning : ScriptableObject
                            pulseDamage = 20f, pulseRadius = 24f,
                            artSprite = "Buildings/reactor_1x1",
                            artDirections = 1, artScale = 0.71f,
+                           // Left at zero on purpose. This was reported sitting low,
+                           // but that reading was taken before the pivot was corrected,
+                           // and the correction moves every building on this same axis.
+                           // Judge it again first; if it is still low the number goes
+                           // here, and roughly 36 is the 20% that was asked for.
+                           artPivotOffsetY = 0f,
                            colour = new Color(0.92f, 0.62f, 0.20f) },
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and

@@ -42,35 +42,60 @@ public static class BuildingArt
     /// contact point. The contact point is the diamond's southern corner, and the
     /// collider is built around the centre, so pivoting on the corner would leave
     /// every building floating a tile north of the thing you actually bump into.
+    ///
+    /// The half-height is divided by artScale, and that division is the whole point.
+    /// The sprite is drawn at ppu/artScale, so a distance measured in texture pixels
+    /// shrinks by artScale on its way to the world. Using the unscaled half-height
+    /// left every building floating above its diamond by (1 - artScale) of that
+    /// half-height — fourteen percent of the footprint on the 1x1. Invisible on a
+    /// tall building, whose mass anchors the eye, and glaring on rubble, which is
+    /// nothing but its own base.
+    ///
+    /// <paramref name="offsetXPx"/> is for art whose base is not centred in its
+    /// canvas. Two of the civilian sprites are drawn tens of pixels off centre, which
+    /// no amount of scaling corrects — the building simply stands beside its collider.
     /// </summary>
-    public static Vector2 Pivot(int frameHeightPx, int tilesX, int tilesY)
+    public static Vector2 Pivot(int frameWidthPx, int frameHeightPx, int tilesX, int tilesY,
+                                float artScale, float offsetXPx, float offsetYPx)
     {
-        float centreFromBottom = GroundContactPx + GreyboxArt.TileH * 0.25f * (tilesX + tilesY);
-        return new Vector2(0.5f, centreFromBottom / frameHeightPx);
+        float s = Mathf.Max(0.05f, artScale);
+        float halfHeight = GreyboxArt.TileH * 0.25f * (tilesX + tilesY) / s;
+
+        // Subtracting raises the drawn building: a lower pivot leaves less of the
+        // sprite hanging below the transform.
+        float centreFromBottom = GroundContactPx + halfHeight - offsetYPx;
+
+        return new Vector2(0.5f + offsetXPx / frameWidthPx, centreFromBottom / frameHeightPx);
     }
 
     /// <summary>
     /// All four states for one type in one rotation, any of which may be null. Index
     /// with the Pristine / Damaged1 / Damaged2 / Destroyed constants.
     /// </summary>
-    public static Sprite[] LoadStages(string basePath, int direction, int tilesX, int tilesY, float ppu)
+    public static Sprite[] LoadStages(string basePath, int direction, int tilesX, int tilesY,
+                                      float ppu, float artScale, float offsetXPx, float offsetYPx)
     {
         var stages = new Sprite[StageCount];
         if (string.IsNullOrEmpty(basePath)) return stages;
 
         string dir = Directions[Mathf.Clamp(direction, 0, DirectionCount - 1)];
         for (int i = 0; i < StageCount; i++)
-            stages[i] = Load($"{basePath}_{Suffix[i]}_{dir}", tilesX, tilesY, ppu);
+            stages[i] = Load($"{basePath}_{Suffix[i]}_{dir}", tilesX, tilesY,
+                             ppu, artScale, offsetXPx, offsetYPx);
 
         return stages;
     }
 
     /// <summary>Returns null for a blank path or a missing file, without complaint.</summary>
-    public static Sprite Load(string resourcePath, int tilesX, int tilesY, float ppu)
+    public static Sprite Load(string resourcePath, int tilesX, int tilesY,
+                              float ppu, float artScale, float offsetXPx, float offsetYPx)
     {
         if (string.IsNullOrEmpty(resourcePath)) return null;
 
-        var key = (resourcePath, tilesX, tilesY, ppu);
+        float s = Mathf.Max(0.05f, artScale);
+
+        // Scale and offset both change the sprite, so both belong in the key.
+        var key = (resourcePath, tilesX * 100 + tilesY, Mathf.RoundToInt(offsetXPx) * 4096 + Mathf.RoundToInt(offsetYPx), ppu / s);
         if (Cache.TryGetValue(key, out var cached) && cached != null) return cached;
 
         var tex = Resources.Load<Texture2D>(resourcePath);
@@ -79,8 +104,8 @@ public static class BuildingArt
         if (tex != null)
         {
             sprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height),
-                                   Pivot(tex.height, tilesX, tilesY),
-                                   ppu, 0, SpriteMeshType.FullRect);
+                                   Pivot(tex.width, tex.height, tilesX, tilesY, s, offsetXPx, offsetYPx),
+                                   ppu / s, 0, SpriteMeshType.FullRect);
             sprite.name = resourcePath;
         }
 

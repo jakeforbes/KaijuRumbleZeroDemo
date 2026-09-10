@@ -72,8 +72,8 @@ public class Building : Damageable
         // Scale rides on pixels-per-unit rather than the transform: a sprite built at
         // a lower PPU simply draws bigger, about its own pivot, and the collider on
         // this same object is left exactly where the tile grid put it.
-        float artPpu = ppu / Mathf.Max(0.05f, type.artScale);
-        stages = BuildingArt.LoadStages(type.artSprite, direction, type.tilesX, type.tilesY, artPpu);
+        stages = BuildingArt.LoadStages(type.artSprite, direction, type.tilesX, type.tilesY,
+                                        ppu, type.artScale, type.artPivotOffsetX, type.artPivotOffsetY);
         usingArt = stages[BuildingArt.Pristine] != null;
         if (usingArt) ApplyStage();
 
