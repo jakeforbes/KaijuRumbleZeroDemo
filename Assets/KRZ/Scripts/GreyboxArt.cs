@@ -240,6 +240,51 @@ public static class GreyboxArt
 
     /// <summary>Soft elliptical contact shadow, drawn by the engine rather than baked into art.</summary>
     /// <summary>
+    /// A stacked burger, read from the side rather than in projection. Everything else
+    /// on the ground is an isometric diamond, so breaking the projection is exactly
+    /// what makes this one findable across a district — it is the only thing on the
+    /// map that does not look like it belongs to the city.
+    /// </summary>
+    public static Sprite Burger(int size, float ppu)
+    {
+        int texW = Mathf.Max(8, size), texH = Mathf.Max(6, size * 3 / 4);
+        var px = new Color[texW * texH];
+
+        // Bottom bun, patty, lettuce, top bun — as fractions of the height, bottom up.
+        var bands = new (float from, float to, Color colour)[]
+        {
+            (0.00f, 0.26f, new Color(0.78f, 0.53f, 0.26f)),
+            (0.26f, 0.44f, new Color(0.36f, 0.20f, 0.13f)),
+            (0.44f, 0.56f, new Color(0.48f, 0.72f, 0.30f)),
+            (0.56f, 1.00f, new Color(0.93f, 0.70f, 0.34f)),
+        };
+
+        for (int y = 0; y < texH; y++)
+        {
+            float ny = (y + 0.5f) / texH;
+
+            // The top bun domes and the bottom bun tucks in, so the silhouette reads
+            // as a burger rather than as a stack of bars.
+            float half = 0.5f;
+            if (ny > 0.56f) half = 0.5f * Mathf.Sqrt(Mathf.Max(0f, 1f - Mathf.Pow((ny - 0.56f) / 0.44f, 2f)));
+            else if (ny < 0.26f) half = 0.5f * (0.72f + 0.28f * (ny / 0.26f));
+
+            Color band = bands[0].colour;
+            foreach (var b in bands) if (ny >= b.from && ny < b.to) band = b.colour;
+
+            for (int x = 0; x < texW; x++)
+            {
+                float nx = (x + 0.5f) / texW - 0.5f;
+                if (Mathf.Abs(nx) <= half) px[y * texW + x] = band;
+            }
+        }
+
+        Outline(px, texW, texH, 0.45f);
+        var tex = MakeTexture(px, texW, texH);
+        return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.25f), ppu);
+    }
+
+    /// <summary>
     /// A soft 2:1 ellipse in white, so a SpriteRenderer tint decides the colour.
     /// Shadow is the same shape but its pixels are black, and black multiplied by any
     /// tint is still black — a coloured cloud has to start white.

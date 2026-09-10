@@ -64,6 +64,7 @@ public class GameBootstrap : MonoBehaviour
         SwarmBolt.Reset();
         ToxicField.Reset();
         UpgradePickup.Reset();
+        Hamburger.Reset();
         Popups.Clear();
         ClearScene();
         var cam = BuildCamera();
@@ -83,7 +84,7 @@ public class GameBootstrap : MonoBehaviour
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
 
-        if (!IsGym) PlaceFreeUpgrades();
+        if (!IsGym) { PlaceFreeUpgrades(); PlaceHamburgers(); }
         gameObject.AddComponent<Popups>();
 
         var director = gameObject.AddComponent<WaveDirector>();
@@ -555,6 +556,56 @@ public class GameBootstrap : MonoBehaviour
                 UpgradePickup.Spawn(tuning, upgrades.RollDrop(), at, ppu);
                 break;
             }
+        }
+    }
+
+    /// <summary>
+    /// One hamburger per district quadrant, out where the quadrant lives rather than
+    /// near the start. Going to get one should mean leaving downtown — that trip is
+    /// the decision, and a pull radius is only worth having if you had to travel for it.
+    /// </summary>
+    void PlaceHamburgers()
+    {
+        if (tuning.hamburgerCount <= 0) return;
+
+        float ppu = tuning.pixelsPerUnit;
+        float radius = Mathf.Max(landBounds.width, landBounds.height) * tuning.hamburgerRadiusFraction;
+
+        // Colliders built this frame are not queryable until the physics system has
+        // caught up with their transforms, and a miss here buries a hamburger inside
+        // a tower where nobody will ever reach it.
+        Physics2D.SyncTransforms();
+
+        var centre = landBounds.center;
+        var quadrants = new[]
+        {
+            new Vector2( 0.5f,  0.5f), new Vector2(-0.5f,  0.5f),
+            new Vector2(-0.5f, -0.5f), new Vector2( 0.5f, -0.5f),
+        };
+
+        for (int i = 0; i < tuning.hamburgerCount; i++)
+        {
+            var q = quadrants[i % quadrants.Length];
+            var ideal = centre + new Vector2(q.x * landBounds.width * 0.5f,
+                                             q.y * landBounds.height * 0.5f);
+
+            // Spiral outward from the quadrant's heart until the ground is free.
+            bool placed = false;
+            for (int attempt = 0; attempt < 60 && !placed; attempt++)
+            {
+                float angle = attempt * 2.4f;
+                float r = attempt * 0.6f;
+                var at = new Vector3(ideal.x + Mathf.Cos(angle) * r,
+                                     ideal.y + Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+
+                if (!landBounds.Contains(at)) continue;
+                if (Physics2D.OverlapCircle(at, 1.4f) != null) continue;
+
+                Hamburger.Spawn(tuning, at, radius, ppu);
+                placed = true;
+            }
+
+            if (!placed) Debug.LogWarning($"KRZ: no clear ground for hamburger {i}.");
         }
     }
 

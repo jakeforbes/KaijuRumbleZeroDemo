@@ -102,6 +102,24 @@ public class Tuning : ScriptableObject
              "walkable at size 5 rather than becoming a maze you clip through.")]
     public float infillGap = 1.1f;
 
+    [Header("Hamburgers")]
+    [Tooltip("One per district quadrant. A one-shot consumable rather than a stacking " +
+             "upgrade: walking into it hauls every gem within its radius to you.")]
+    [Range(0, 8)] public int hamburgerCount = 4;
+
+    [Tooltip("Pull radius as a fraction of the map's longer side. A sixth keeps it a " +
+             "reason to flatten a district and then collect, rather than a button " +
+             "that ends the food economy.")]
+    [Range(0.02f, 0.5f)] public float hamburgerRadiusFraction = 1f / 6f;
+
+    [Tooltip("How long gems stay under the hamburger's pull. Long enough for the far " +
+             "edge of the radius to actually arrive.")]
+    public float hamburgerAttractSeconds = 4f;
+
+    [Tooltip("Sprite size in pixels. Deliberately large — it has to be findable from " +
+             "across a district, since going to get one is the whole decision.")]
+    public int hamburgerPx = 96;
+
     [Header("Ocean")]
     [Tooltip("Walkable ground kept outside the outermost buildings, in world units. " +
              "This is the beach: enough to fight along without the shoreline reading " +

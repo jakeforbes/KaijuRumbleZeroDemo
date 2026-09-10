@@ -8,6 +8,9 @@ using UnityEngine;
 [SoundActions(Sfx.FoodPickup)]
 public class Food : MonoBehaviour
 {
+    /// <summary>Every gem currently on the ground, so the hamburger can sweep them.</summary>
+    public static readonly System.Collections.Generic.List<Food> All = new();
+
     static Sprite spriteSmall, spriteMedium, spriteLarge;
     static Transform root;
 
@@ -22,6 +25,17 @@ public class Food : MonoBehaviour
     float bobPhase;
     float spawnedAt;
     float magnetSpeed;
+    float attractUntil;
+
+    void OnEnable() => All.Add(this);
+    void OnDisable() => All.Remove(this);
+
+    /// <summary>
+    /// Overrides the player's own pickup field for a while, so a gem clear across a
+    /// district comes home. Ignores the arm delay too: a hamburger taken the instant
+    /// a building falls should still sweep what it dropped.
+    /// </summary>
+    public void Attract(float seconds) => attractUntil = Time.time + seconds;
 
     public static void Scatter(Tuning tuning, Vector3 at, int count, float scatter, float ppu)
     {
@@ -103,7 +117,11 @@ public class Food : MonoBehaviour
         // The exponent is what makes distant food barely stir while close food is
         // hauled in — a linear falloff reads as one uniform vacuum.
         float wanted = 0f;
-        if (Time.time - spawnedAt >= tuning.foodArmDelay && flat < radius)
+        if (Time.time < attractUntil)
+        {
+            wanted = tuning.foodMagnetMaxSpeed;
+        }
+        else if (Time.time - spawnedAt >= tuning.foodArmDelay && flat < radius)
         {
             float t = 1f - flat / radius;
             wanted = tuning.foodMagnetMaxSpeed * Mathf.Pow(t, tuning.foodPullFalloff);
