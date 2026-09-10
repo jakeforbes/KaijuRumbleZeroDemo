@@ -391,6 +391,10 @@ public class GameBootstrap : MonoBehaviour
         // two pulses in one screen is a very different thing from one.
         var reactorSlots = PickReactorSlots(rng);
 
+        // Every footprint placed so far, so infill can find real gaps.
+        var placed = new System.Collections.Generic.List<Rect>();
+        var open = new System.Collections.Generic.List<(int bx, int by, float x, float y)>();
+
         for (int by = 0; by < tuning.blocksY; by++)
             for (int bx = 0; bx < tuning.blocksX; bx++)
             {
@@ -401,9 +405,10 @@ public class GameBootstrap : MonoBehaviour
                 if (Mathf.Abs(bx - tuning.blocksX / 2) <= tuning.startClearBlocks &&
                     Mathf.Abs(by - tuning.blocksY / 2) <= tuning.startClearBlocks) continue;
 
+                int district = DistrictTarget(bx, by);
                 var type = reactorSlots.TryGetValue((bx, by), out var reactor)
                     ? reactor
-                    : PickType(tuning.buildingTypes, totalWeight, rng);
+                    : PickType(tuning.buildingTypes, rng, district);
                 if (type == null) continue;
 
                 // Flip non-square footprints so the grid does not read as one repeated shape.
@@ -422,7 +427,102 @@ public class GameBootstrap : MonoBehaviour
 
                 CreateBuilding(root, type, tilesX, tilesY, heightPx, new Vector3(x, y, 0f),
                                $"{type.name}_{bx}_{by}", flipped, direction);
+
+                Occupy(placed, new Vector3(x, y, 0f), tilesX, tilesY);
+                open.Add((bx, by, x, y));
             }
+
+        // Second pass, because a 3x3 in the next block reaches three units toward this
+        // one and infill placed before it existed would end up inside it. Every main
+        // footprint has to be on the list before any gap is judged to be a gap.
+        foreach (var (bx, by, x, y) in open) Infill(root, placed, rng, bx, by, x, y);
+    }
+
+    /// <summary>
+    /// The screen-space box a footprint covers, in world units. A w by h diamond is
+    /// (w+h) across and half that tall, which falls straight out of the tile maths.
+    /// </summary>
+    static Rect Footprint(Vector3 at, int tilesX, int tilesY)
+    {
+        float w = tilesX + tilesY;
+        return new Rect(at.x - w * 0.5f, at.y - w * 0.25f, w, w * 0.5f);
+    }
+
+    static void Occupy(System.Collections.Generic.List<Rect> placed, Vector3 at, int tilesX, int tilesY)
+        => placed.Add(Footprint(at, tilesX, tilesY));
+
+    /// <summary>
+    /// Packs small buildings into whatever the block's main building left over.
+    ///
+    /// Doubling the map doubled the walking without adding anything to walk past, and
+    /// one building per block leaves most of a block empty at these spacings. This is
+    /// the fill: small types only, placed where they actually fit.
+    ///
+    /// Overlap is tested against a list rather than Physics2D, because colliders made
+    /// this same frame are not queryable until the physics system syncs, and a silent
+    /// miss here would spawn buildings inside each other.
+    /// </summary>
+    void Infill(Transform root, System.Collections.Generic.List<Rect> placed,
+                System.Random rng, int bx, int by, float blockX, float blockY)
+    {
+        int wanted = tuning.infillPerBlock;
+        if (wanted <= 0) return;
+
+        // Room to breathe around the spawn point, whatever the block roll said.
+        if (Mathf.Abs(bx - tuning.blocksX / 2) <= tuning.startClearBlocks &&
+            Mathf.Abs(by - tuning.blocksY / 2) <= tuning.startClearBlocks) return;
+
+        for (int i = 0; i < wanted; i++)
+        {
+            var type = PickInfillType(rng);
+            if (type == null) return;
+
+            int tilesX = type.tilesX, tilesY = type.tilesY;
+            bool flipped = type.AllowsFlip && rng.Next(0, 2) == 0;
+            if (flipped) (tilesX, tilesY) = (tilesY, tilesX);
+
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                float ox = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingX;
+                float oy = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingY;
+                var at = new Vector3(blockX + ox, blockY + oy, 0f);
+
+                var box = Footprint(at, tilesX, tilesY);
+                box = new Rect(box.x - tuning.infillGap, box.y - tuning.infillGap * 0.5f,
+                               box.width + tuning.infillGap * 2f, box.height + tuning.infillGap);
+
+                bool clear = true;
+                foreach (var r in placed)
+                    if (r.Overlaps(box)) { clear = false; break; }
+                if (!clear) continue;
+
+                int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
+                int direction = rng.Next(0, Mathf.Clamp(type.artDirections, 1, BuildingArt.DirectionCount));
+
+                CreateBuilding(root, type, tilesX, tilesY, heightPx, at,
+                               $"{type.name}_{bx}_{by}_fill{i}", flipped, direction);
+                Occupy(placed, at, tilesX, tilesY);
+                break;
+            }
+        }
+    }
+
+    /// <summary>Small civilian types only. Filler is filler, not a second skyline.</summary>
+    BuildingType PickInfillType(System.Random rng)
+    {
+        float total = 0f;
+        foreach (var t in tuning.buildingTypes)
+            if (t.weight > 0f && t.sizeClass <= tuning.infillMaxClass) total += t.weight;
+        if (total <= 0f) return null;
+
+        float roll = (float)rng.NextDouble() * total;
+        foreach (var t in tuning.buildingTypes)
+        {
+            if (t.weight <= 0f || t.sizeClass > tuning.infillMaxClass) continue;
+            roll -= t.weight;
+            if (roll <= 0f) return t;
+        }
+        return null;
     }
 
     /// <summary>
@@ -616,6 +716,62 @@ public class GameBootstrap : MonoBehaviour
         }
 
         return chosen;
+    }
+
+    /// <summary>
+    /// The size class a district leans toward. Not a rule — the weight roll only gets
+    /// pushed, so every district still holds a spread and the city reads as one place
+    /// with neighbourhoods rather than four tiled zones.
+    ///
+    /// Downtown is deliberately low-rise whichever quadrant it falls in. The run starts
+    /// there, and the first minute has to be food you can actually reach: a wall of
+    /// size-4 towers around the spawn point is a run that never gets going.
+    /// </summary>
+    int DistrictTarget(int bx, int by)
+    {
+        float nx = (bx + 0.5f) / tuning.blocksX * 2f - 1f;
+        float ny = (by + 0.5f) / tuning.blocksY * 2f - 1f;
+
+        if (Mathf.Max(Mathf.Abs(nx), Mathf.Abs(ny)) < tuning.downtownFraction) return 0;
+
+        bool right = nx >= 0f, top = ny >= 0f;
+        if (right && top) return 4;        // uptown: the skyline, and the late game
+        if (!right && !top) return 0;      // the sprawl: low, dense, early food
+        return 2;                          // everything else: mixed, leaning medium
+    }
+
+    /// <summary>
+    /// Weight roll pushed toward a size class. Each class of distance from the target
+    /// divides a type's chance by districtBias, so the far end of the range thins out
+    /// rather than disappearing.
+    /// </summary>
+    BuildingType PickType(BuildingType[] types, System.Random rng, int target)
+    {
+        if (types == null || types.Length == 0) return null;
+
+        float bias = Mathf.Max(1f, tuning.districtBias);
+        float total = 0f;
+        foreach (var t in types)
+        {
+            if (t.weight <= 0f) continue;
+            total += t.weight / Mathf.Pow(bias, Mathf.Abs(t.sizeClass - target));
+        }
+        if (total <= 0f) return null;
+
+        float roll = (float)rng.NextDouble() * total;
+        foreach (var t in types)
+        {
+            if (t.weight <= 0f) continue;
+            roll -= t.weight / Mathf.Pow(bias, Mathf.Abs(t.sizeClass - target));
+            if (roll <= 0f) return t;
+        }
+
+        // Fall back to the last *weighted* type. Returning types[^1] would hand back a
+        // zero-weight reactor on a floating-point edge, placing one outside the spacing
+        // pass that exists to keep two off the same screen.
+        for (int i = types.Length - 1; i >= 0; i--)
+            if (types[i].weight > 0f) return types[i];
+        return null;
     }
 
     static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)

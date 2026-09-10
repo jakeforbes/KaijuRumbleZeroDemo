@@ -76,6 +76,32 @@ public class Tuning : ScriptableObject
              "sides and food within reach. Raise it to open the start out again.")]
     [Range(0, 3)] public int startClearBlocks;
 
+    [Header("Districts and density")]
+    [Tooltip("How hard a district pushes the weight roll toward its size class. Each " +
+             "class of distance from the target divides a type's chance by this, so " +
+             "2.2 makes a two-class mismatch about a fifth as likely rather than " +
+             "impossible. 1 turns districts off entirely and rolls the flat table.")]
+    [Range(1f, 5f)] public float districtBias = 2.2f;
+
+    [Tooltip("How much of the map counts as downtown, as a fraction of the half-width. " +
+             "Downtown stays low-rise whichever quadrant it sits in — the run starts " +
+             "here and the first minute has to be food you can reach.")]
+    [Range(0f, 0.8f)] public float downtownFraction = 0.34f;
+
+    [Tooltip("Extra small buildings packed into each block's leftover space. One " +
+             "building per block leaves most of a block empty at these spacings, and " +
+             "doubling the map doubled the walking without adding anything to walk " +
+             "past. Set to 0 for the old one-per-block city.")]
+    [Range(0, 4)] public int infillPerBlock = 2;
+
+    [Tooltip("Largest size class allowed as infill. 1 keeps filler to 1x1 and 1x2, " +
+             "which is what filler should be — not a second skyline.")]
+    [Range(0, 4)] public int infillMaxClass = 1;
+
+    [Tooltip("Clearance in world units left around an infill building, so streets stay " +
+             "walkable at size 5 rather than becoming a maze you clip through.")]
+    public float infillGap = 1.1f;
+
     [Header("Ocean")]
     [Tooltip("Walkable ground kept outside the outermost buildings, in world units. " +
              "This is the beach: enough to fight along without the shoreline reading " +
@@ -733,7 +759,7 @@ public class Tuning : ScriptableObject
         // rather than another pass through here.
         new BuildingType { name = "Civilian 1x1", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
-                           foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
+                           foodDrops = 6,  foodScatter = 2.5f, weight = 44f,
                            artSprite = "Buildings/civilian_1x1",
                            artDirections = 5,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
@@ -743,7 +769,7 @@ public class Tuning : ScriptableObject
         // lands exactly on the swapped footprint in this projection.
         new BuildingType { name = "Civilian 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
-                           foodDrops = 9,  foodScatter = 3.2f, weight = 25f,
+                           foodDrops = 9,  foodScatter = 3.2f, weight = 34f,
                            artSprite = "Buildings/civilian_1x2",
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
