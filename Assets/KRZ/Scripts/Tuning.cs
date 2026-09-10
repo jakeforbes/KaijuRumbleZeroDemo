@@ -138,6 +138,64 @@ public class Tuning : ScriptableObject
     public int commanderPerMin = 25;
     public int commanderPerMax = 50;
 
+    [Header("The run")]
+    [Tooltip("Hard ceiling on living enemies. The timeline is written to push against " +
+             "this rather than to stay under it, so the cap is what actually sets the " +
+             "peak crowd — and protects the framerate.")]
+    public int maxEnemiesAlive = 60;
+
+    [Tooltip("The whole arc, as data. Times are seconds into the run. A beat with an " +
+             "interval repeats until its end time; without one it fires once.")]
+    public WaveEntry[] waves =
+    {
+        // Opening: nothing but the city. Learn to smash, reach size 2 unpressured.
+        new WaveEntry { label = "first contact", startTime = 25f,
+                        enemyType = "Grunt", count = 6, shape = SpawnShape.Clump },
+
+        new WaveEntry { label = "infantry", startTime = 30f, endTime = 155f, interval = 8f,
+                        enemyType = "Grunt", count = 5, shape = SpawnShape.Clump },
+
+        // First Dropship: a grunt source you can switch off by killing it.
+        new WaveEntry { label = "dropship", startTime = 45f,
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        // Armour arrives. The swipe stops being enough and the Blast earns its place.
+        new WaveEntry { label = "armour", startTime = 60f,
+                        enemyType = "Tank", count = 3, shape = SpawnShape.Ring,
+                        allowCommanders = false },
+
+        new WaveEntry { label = "armour", startTime = 65f, endTime = 155f, interval = 25f,
+                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        new WaveEntry { label = "dropships", startTime = 80f,
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        // Mechs: the volley threat, and the first thing that punishes standing still.
+        new WaveEntry { label = "mechs", startTime = 90f, endTime = 155f, interval = 35f,
+                        enemyType = "Mech", count = 1, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        // Late push. Ahead means it lands in front of wherever you are running.
+        new WaveEntry { label = "push", startTime = 120f,
+                        enemyType = "Grunt", count = 12, shape = SpawnShape.Ahead },
+
+        new WaveEntry { label = "push", startTime = 130f,
+                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        new WaveEntry { label = "push", startTime = 145f,
+                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+
+        // The finale.
+        new WaveEntry { label = "BOSS", startTime = 160f,
+                        enemyType = "Abomination", count = 1, shape = SpawnShape.Clump,
+                        allowCommanders = false },
+    };
+
     [Header("Survival")]
     [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]
     public float hitInvulnerability = 0.5f;

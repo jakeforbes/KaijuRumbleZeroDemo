@@ -75,6 +75,10 @@ public class GameBootstrap : MonoBehaviour
 
         gameObject.AddComponent<Popups>();
 
+        var director = gameObject.AddComponent<WaveDirector>();
+        director.tuning = tuning;
+        director.player = player.transform;
+
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
         hud.player = player;
