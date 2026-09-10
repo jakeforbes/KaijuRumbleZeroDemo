@@ -9,6 +9,7 @@ using UnityEngine;
 /// Stomp and Claws — change how you play rather than only how hard you hit, which
 /// is what stops the set reading as six flavours of the same number.
 /// </summary>
+[SoundActions(Sfx.UpgradePickup)]
 public class PlayerUpgrades : MonoBehaviour
 {
     public static PlayerUpgrades Instance { get; private set; }
@@ -98,7 +99,7 @@ public class PlayerUpgrades : MonoBehaviour
         if (type == null || IsMaxed(id)) return;
 
         stacks[id] = Count(id) + 1;
-        AudioEvents.Play(Sfx.UpgradePickup, transform.position);
+        AudioEvents.Play(Sfx.UpgradePickup, transform.position, owner: gameObject);
         Popups.Add(transform.position + Vector3.up * 1.5f,
                    $"<b>{type.displayName}</b>", type.colour);
     }

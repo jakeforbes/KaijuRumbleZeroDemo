@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 /// Blast damages everything in a line, which is why it answers armour: the swipe
 /// chips, the Blast lands one number big enough to matter.
 /// </summary>
+[SoundActions(Sfx.Blast)]
 public class PlayerSpecial : MonoBehaviour
 {
     public Tuning tuning;
@@ -80,7 +81,7 @@ public class PlayerSpecial : MonoBehaviour
         // rather than bent by the projection.
         Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
 
-        AudioEvents.Play(Sfx.Blast, origin);
+        AudioEvents.Play(Sfx.Blast, origin, owner: gameObject);
         if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Blast);
         // Centred on the body rather than fired from the head. Hit detection still runs
         // on the ground plane where every footprint lives, so a beam as thick as most

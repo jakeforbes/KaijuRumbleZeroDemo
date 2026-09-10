@@ -130,6 +130,13 @@ public class SoundPlayer : MonoBehaviour
     public bool RefreshActions()
     {
         bool changed = false;
+        // Migrate the removed Collect action without renumbering serialized events.
+        foreach (var legacy in actions.FindAll(x => (int)x.action == 23))
+        {
+            if (actions.Exists(x => x.action == Sfx.FoodPickup)) actions.Remove(legacy);
+            else legacy.action = Sfx.FoodPickup;
+            changed = true;
+        }
         foreach (var action in DetectActions())
         {
             if (actions.Exists(x => x.action == action)) continue;

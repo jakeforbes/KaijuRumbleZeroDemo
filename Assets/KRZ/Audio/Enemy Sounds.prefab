@@ -42,7 +42,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e20ca10ae3d87a4f8fd0ef6bf0f09bf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundPlayer
   masterVolume: 1
   output: {fileID: 0}
@@ -52,8 +52,7 @@ MonoBehaviour:
   maxVoices: 8
   footstepInterval: 0.35
   actions:
-  - action: 12
-    enabled: 1
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -67,8 +66,10 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 0
-    enabled: 1
+    action: 12
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -82,8 +83,28 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 17
-    enabled: 1
+    action: 0
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips:
+    - {fileID: 8300000, guid: 90015bf4b380c5647910d32d6db1e057, type: 3}
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 17
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -97,8 +118,10 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 18
-    enabled: 1
+    action: 18
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -112,8 +135,10 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 19
-    enabled: 1
+    action: 19
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -127,8 +152,10 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 13
-    enabled: 1
+    action: 13
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -142,8 +169,10 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 10
-    enabled: 1
+    action: 10
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
     clips: []
     volume: 1
     randomizePitch: 0
@@ -157,18 +186,6 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-  - action: 20
-    enabled: 1
-    clips: []
-    volume: 1
-    randomizePitch: 0
-    pitch: 1
-    pitchRange: {x: 0.9, y: 1.1}
-    size: 0
-    echo: 0
-    echoDelay: 150
-    echoDecay: 0.35
-    echoWet: 0.3
-    reverb: 0
-    reverbPreset: 2
-    cooldown: 0
+    action: 20
+    useSizeSettings: 0
+    sizeSettings: []

@@ -5,7 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
-[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed)]
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -104,7 +104,9 @@ public class Enemy : Damageable
         e.nextVolleyAt = Time.time + type.specialCooldown;
         e.wanderAngle = Random.value * Mathf.PI * 2f;
 
-        SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
+        var sounds = type.sounds;
+        if (sounds == null) sounds = Resources.Load<SoundPlayer>("Enemy Sounds/" + type.name);
+        SoundPlayer.Attach(go, sounds != null ? sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
         if (e.IsBoss && Camera.main != null && Camera.main.TryGetComponent<CameraRig>(out var rig))
             rig.IntroduceBoss(e);
@@ -344,6 +346,7 @@ public class Enemy : Damageable
         switch (type.special)
         {
             case SpecialAction.MissileVolley:
+                AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
                 Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
                 break;
 

@@ -33,11 +33,12 @@ public enum Sfx
     EnemyPushed,
     SwipeHitEnemy,
     SwipeHitBuilding,
-    Collect,
+    // Value 23 was Collect; reserved for migration of existing sound settings.
     // New entries go at the end: these values are serialized into the Sound Player
     // templates, so inserting mid-enum would silently repoint every clip assignment.
-    EnemyDeploy,
-    ReactorPulse
+    EnemyDeploy = 24,
+    ReactorPulse,
+    BuildingStageChanged
 }
 
 public static class AudioEvents
@@ -49,7 +50,10 @@ public static class AudioEvents
     public static void Register(Sfx id, AudioClip clip) => clips[id] = clip;
 
     /// <returns>True when configured, including intentional mute/cooldown; false when unassigned.</returns>
-    public static bool Play(Sfx id, Vector3 at = default, float volume = 1f, GameObject owner = null)
+    public static bool Play(Sfx id, Vector3 at, GameObject owner) => Play(id, at, 1f, owner);
+
+    // Requiring an owner makes accidental SoundPlayer bypasses a compile error.
+    public static bool Play(Sfx id, Vector3 at, float volume, GameObject owner)
     {
         if (logEvents) Debug.Log($"[sfx] {id}");
 

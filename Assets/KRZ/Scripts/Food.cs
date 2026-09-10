@@ -120,8 +120,8 @@ public class Food : MonoBehaviour
         {
             progress.AddFood(value);
             // Player-owned settings follow the collector's size, including at max tier.
-            // Keep older pickup setups working until a Collect sound is assigned.
-            if (!AudioEvents.Play(Sfx.Collect, progress.transform.position, owner: progress.gameObject))
+            // Fall back to the food object when the player has no pickup sound.
+            if (!AudioEvents.Play(Sfx.FoodPickup, progress.transform.position, owner: progress.gameObject))
                 AudioEvents.Play(Sfx.FoodPickup, transform.position, 0.5f, owner: gameObject);
             Destroy(gameObject);
         }

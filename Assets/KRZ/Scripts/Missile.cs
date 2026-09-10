@@ -52,7 +52,7 @@ public class Missile : MonoBehaviour
             m.velocity = dir * type.missileSpeed * Random.Range(0.5f, 0.8f);
         }
 
-        AudioEvents.Play(Sfx.EnemySpawn, from, 0.4f);
+
     }
 
     void Update()

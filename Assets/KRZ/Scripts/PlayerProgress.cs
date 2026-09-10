@@ -8,7 +8,7 @@ using UnityEngine;
 /// nothing happening; a curve with punctuation reads as constant progress. The
 /// tier-up still lands as a moment: a jump in size, a full heal, a shake.
 /// </summary>
-[SoundActions(Sfx.PlayerHit, Sfx.GrowTier, Sfx.Shrink, Sfx.Lose, Sfx.Collect)]
+[SoundActions(Sfx.PlayerHit, Sfx.GrowTier, Sfx.Shrink, Sfx.Lose, Sfx.FoodPickup)]
 public class PlayerProgress : MonoBehaviour
 {
     public static PlayerProgress Instance { get; private set; }

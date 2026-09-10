@@ -49,7 +49,7 @@ MonoBehaviour:
   spatialBlend: 0
   minDistance: 1
   maxDistance: 40
-  maxVoices: 8
+  maxVoices: 16
   footstepInterval: 0.35
   actions:
   - enabled: 1
@@ -416,7 +416,7 @@ MonoBehaviour:
     randomizePitch: 1
     pitch: 1
     pitchRange: {x: 0.7, y: 1.4}
-    size: -1
+    size: -0.25
     echo: 0
     echoDelay: 150
     echoDecay: 0.35
@@ -436,7 +436,7 @@ MonoBehaviour:
         randomizePitch: 1
         pitch: 1
         pitchRange: {x: 0.7, y: 1.4}
-        size: -1
+        size: -0.25
         echo: 0
         echoDelay: 150
         echoDecay: 0.35
@@ -531,9 +531,10 @@ MonoBehaviour:
     useSizeSettings: 0
     sizeSettings: []
   - enabled: 1
-    clips: []
-    volume: 1
-    randomizePitch: 0
+    clips:
+    - {fileID: 8300000, guid: 8352a8e3554d8c14eba9855e4c9cc3db, type: 3}
+    volume: 0.75
+    randomizePitch: 1
     pitch: 1
     pitchRange: {x: 0.9, y: 1.1}
     size: 0
@@ -541,14 +542,100 @@ MonoBehaviour:
     echoDelay: 150
     echoDecay: 0.35
     echoWet: 0.3
-    reverb: 0
-    reverbPreset: 2
+    reverb: 1
+    reverbPreset: 11
     cooldown: 0
     action: 7
     useSizeSettings: 0
-    sizeSettings: []
+    sizeSettings:
+    - overrideSettings: 0
+      settings:
+        enabled: 1
+        clips:
+        - {fileID: 8300000, guid: 8352a8e3554d8c14eba9855e4c9cc3db, type: 3}
+        volume: 1
+        randomizePitch: 0
+        pitch: 1
+        pitchRange: {x: 0.9, y: 1.1}
+        size: 0
+        echo: 0
+        echoDelay: 150
+        echoDecay: 0.35
+        echoWet: 0.3
+        reverb: 0
+        reverbPreset: 2
+        cooldown: 0
+    - overrideSettings: 1
+      settings:
+        enabled: 1
+        clips:
+        - {fileID: 8300000, guid: 2db4f4142a9e61d468baf456428d12bf, type: 3}
+        volume: 1
+        randomizePitch: 0
+        pitch: 1
+        pitchRange: {x: 0.9, y: 1.1}
+        size: 0
+        echo: 0
+        echoDelay: 150
+        echoDecay: 0.35
+        echoWet: 0.3
+        reverb: 0
+        reverbPreset: 2
+        cooldown: 0
+    - overrideSettings: 1
+      settings:
+        enabled: 1
+        clips:
+        - {fileID: 8300000, guid: 7824a96048b526540a445a4c7c28aa07, type: 3}
+        volume: 1
+        randomizePitch: 0
+        pitch: 1
+        pitchRange: {x: 0.9, y: 1.1}
+        size: 0
+        echo: 0
+        echoDelay: 150
+        echoDecay: 0.35
+        echoWet: 0.3
+        reverb: 0
+        reverbPreset: 2
+        cooldown: 0
+    - overrideSettings: 1
+      settings:
+        enabled: 1
+        clips:
+        - {fileID: 8300000, guid: d4a9050c5999f194992f5365e0944906, type: 3}
+        volume: 1
+        randomizePitch: 0
+        pitch: 1
+        pitchRange: {x: 0.9, y: 1.1}
+        size: 0
+        echo: 0
+        echoDelay: 150
+        echoDecay: 0.35
+        echoWet: 0.3
+        reverb: 0
+        reverbPreset: 2
+        cooldown: 0
+    - overrideSettings: 0
+      settings:
+        enabled: 1
+        clips:
+        - {fileID: 8300000, guid: 8352a8e3554d8c14eba9855e4c9cc3db, type: 3}
+        volume: 1
+        randomizePitch: 0
+        pitch: 1
+        pitchRange: {x: 0.9, y: 1.1}
+        size: 0
+        echo: 0
+        echoDelay: 150
+        echoDecay: 0.35
+        echoWet: 0.3
+        reverb: 0
+        reverbPreset: 2
+        cooldown: 0
   - enabled: 1
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 21f352c500842a8499c5d6de629dbc2b, type: 3}
     volume: 1
     randomizePitch: 0
     pitch: 1
@@ -584,18 +671,56 @@ MonoBehaviour:
   - enabled: 1
     clips:
     - {fileID: 8300000, guid: ed4171b00f71a39469c2527717845672, type: 3}
-    volume: 0.1
+    volume: 0.7
     randomizePitch: 1
     pitch: 1
     pitchRange: {x: 0.5, y: 1.5}
-    size: -1
+    size: 0
     echo: 0
     echoDelay: 150
     echoDecay: 0.35
     echoWet: 0.3
     reverb: 0
     reverbPreset: 2
+    cooldown: 0.06
+    action: 3
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips:
+    - {fileID: 8300000, guid: 229b1dc5f5707204a97c86da02f9e8d5, type: 3}
+    - {fileID: 8300000, guid: c696ba2fc1fbf8b48a79cda597953c44, type: 3}
+    - {fileID: 8300000, guid: 88d4fc34ca438f6429e14bb398c984b4, type: 3}
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 3
     cooldown: 0
-    action: 23
+    action: 11
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips:
+    - {fileID: 8300000, guid: eb680cac7bb75c54b9a600903448d4a1, type: 3}
+    volume: 0.639
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0.81
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 14
+    cooldown: 0
+    action: 6
     useSizeSettings: 0
     sizeSettings: []

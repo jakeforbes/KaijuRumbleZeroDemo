@@ -23,6 +23,7 @@ public sealed class RuntimeSoundPlayer : MonoBehaviour
         public double endsAt;
         public long sequence;
         public bool active;
+        public Sfx action;
     }
 
     readonly List<Voice> voices = new();
@@ -73,18 +74,21 @@ public sealed class RuntimeSoundPlayer : MonoBehaviour
         return voice;
     }
 
-    Voice Acquire(SoundPlayer owner)
+    static bool IsRoutine(Sfx action) => action == Sfx.Footstep || action == Sfx.FoodPickup;
+
+    Voice Acquire(SoundPlayer owner, Sfx action)
     {
         Voice oldestOwned = null, oldest = null, free = null;
         int owned = 0;
         foreach (var voice in voices)
         {
             if (!voice.active) { if (free == null) free = voice; continue; }
-            if (oldest == null || voice.sequence < oldest.sequence) oldest = voice;
+            bool canReplace = !IsRoutine(action) || IsRoutine(voice.action);
+            if (canReplace && (oldest == null || voice.sequence < oldest.sequence)) oldest = voice;
             if (owner != null && voice.owner == owner)
             {
                 owned++;
-                if (oldestOwned == null || voice.sequence < oldestOwned.sequence) oldestOwned = voice;
+                if (canReplace && (oldestOwned == null || voice.sequence < oldestOwned.sequence)) oldestOwned = voice;
             }
         }
         if (owner != null && owned >= Mathf.Max(1, owner.maxVoices)) return oldestOwned;
@@ -99,7 +103,8 @@ public sealed class RuntimeSoundPlayer : MonoBehaviour
             Debug.LogWarning("Sound Player could not load " + clip.name, clip);
             return;
         }
-        var voice = Acquire(owner);
+        var voice = Acquire(owner, action);
+        if (voice == null) return;
         var source = voice.source;
         source.Stop();
         source.transform.position = position;
@@ -135,6 +140,7 @@ public sealed class RuntimeSoundPlayer : MonoBehaviour
             tail += voice.reverb.decayTime + voice.reverb.reverbDelay;
         }
         voice.owner = owner;
+        voice.action = action;
         voice.endsAt = AudioSettings.dspTime + clip.length / source.pitch + tail + 0.1f;
         voice.sequence = ++sequence;
         voice.active = true;

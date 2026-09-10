@@ -24,7 +24,7 @@ public class SoundPlayerEditor : Editor
     {
         var player = (SoundPlayer)target;
         bool missing = player.DetectActions().Exists(id => !System.Linq.Enumerable.Any(player.Actions, x => x.action == id));
-        if (!missing) return;
+        if (!missing && !System.Linq.Enumerable.Any(player.Actions, x => (int)x.action == 23)) return;
         Undo.RecordObject(player, "Detect sound actions");
         player.RefreshActions();
         EditorUtility.SetDirty(player);
@@ -53,12 +53,12 @@ public class SoundPlayerEditor : Editor
             item.isExpanded = EditorGUILayout.Foldout(item.isExpanded, ObjectNames.NicifyVariableName(id.enumNames[id.enumValueIndex]), true);
             if (item.isExpanded)
             {
-                using (new EditorGUI.DisabledScope(detected.Contains((Sfx)id.enumValueIndex)))
+                using (new EditorGUI.DisabledScope(detected.Contains((Sfx)id.intValue)))
                     EditorGUILayout.PropertyField(id);
                 for (int j = 0; j < i; j++)
                     if (actions.GetArrayElementAtIndex(j).FindPropertyRelative("action").enumValueIndex == id.enumValueIndex)
                         EditorGUILayout.HelpBox("Duplicate action: only the first row is used. Choose another action or remove this row.", MessageType.Warning);
-                if (!detected.Contains((Sfx)id.enumValueIndex)) EditorGUILayout.LabelField("Manual / previously detected action", EditorStyles.miniLabel);
+                if (!detected.Contains((Sfx)id.intValue)) EditorGUILayout.LabelField("Manual / previously detected action", EditorStyles.miniLabel);
                 EditorGUILayout.LabelField("Default settings", EditorStyles.boldLabel);
                 DrawPlaybackSettings(item);
                 DrawSizeSettings(item, i);
@@ -66,10 +66,10 @@ public class SoundPlayerEditor : Editor
                     if (GUILayout.Button("Test sound (Play mode)"))
                     {
                         serializedObject.ApplyModifiedProperties();
-                        ((SoundPlayer)target).TryPlay((Sfx)id.enumValueIndex);
+                        ((SoundPlayer)target).TryPlay((Sfx)id.intValue);
                     }
 
-                using (new EditorGUI.DisabledScope(detected.Contains((Sfx)id.enumValueIndex)))
+                using (new EditorGUI.DisabledScope(detected.Contains((Sfx)id.intValue)))
                     if (GUILayout.Button("Remove manual action"))
                     {
                         actions.DeleteArrayElementAtIndex(i);

@@ -6,7 +6,7 @@ using UnityEngine;
 /// a couple of seconds, one above is a real fight, two above is a wall you come back
 /// to. Three visual states — pristine, damaged, rubble — with rubble walkable.
 /// </summary>
-[SoundActions(Sfx.BuildingHit, Sfx.BuildingDestroyed, Sfx.ReactorPulse)]
+[SoundActions(Sfx.BuildingHit, Sfx.BuildingStageChanged, Sfx.BuildingDestroyed, Sfx.ReactorPulse)]
 public class Building : Damageable
 {
     /// <summary>Above the ground tiles at -100, below everything that sorts by Y at 0.</summary>
@@ -82,6 +82,7 @@ public class Building : Damageable
         var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY,
                                       Mathf.RoundToInt(fullHeightPx * 0.72f), faded, ppu);
+        AudioEvents.Play(Sfx.BuildingStageChanged, transform.position, owner: gameObject);
     }
 
     /// <summary>Created on first damage, not up front — an intact building says nothing.</summary>

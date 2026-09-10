@@ -38,7 +38,7 @@ Select the runtime Sound Player to see Active Voices, Sounds Played, Last Clip, 
 
 ## Adding the component to your own objects
 
-**Collect** in Player Sounds plays when a dropped bit reaches the player, whether it came from an enemy or a building. It supports all five size overrides and continues at maximum size. Assign clips to Collect; its cooldown can limit overlapping pickup sounds. Until Collect is assigned, the older Food Pickup sound remains the fallback. Both sounds do not play for the same pickup.
+**Food Pickup** in Player Sounds plays when a dropped bit reaches the player, whether it came from an enemy or a building. It supports all five size overrides and continues at maximum size. Assign clips to Food Pickup; its cooldown can limit overlapping pickup sounds. When the player has no Food Pickup clip assigned, the Food Sounds template remains the fallback. Both sounds do not play for the same pickup.
 
 1. Add **Sound Player** to the same GameObject as Enemy, PlayerController, PlayerAttack, PlayerProgress, Building, or Food. Its Inspector lists the sound actions declared by those components, combining them when several are attached.
 2. Expand an action. Drag clips from **Assets/Sounds** into its Clips list, or use **Add clips from Sounds...**. Multiple clips are selected randomly; empty slots are ignored.

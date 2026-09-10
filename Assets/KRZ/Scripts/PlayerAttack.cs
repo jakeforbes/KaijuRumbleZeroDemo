@@ -5,7 +5,7 @@ using UnityEngine;
 /// Swipe — the auto attack. Fires on a cooldown with no input, Vampire Survivors
 /// style, hitting everything in an arc in front of the kaiju.
 /// </summary>
-[SoundActions(Sfx.Swipe, Sfx.SwipeHitEnemy, Sfx.SwipeHitBuilding)]
+[SoundActions(Sfx.Swipe, Sfx.SwipeHitEnemy, Sfx.SwipeHitBuilding, Sfx.SwipeHit)]
 public class PlayerAttack : MonoBehaviour
 {
     public Tuning tuning;
@@ -111,7 +111,7 @@ public class PlayerAttack : MonoBehaviour
         // Once per target kind per swipe, even when several targets are hit.
         // A mixed swipe plays both impact sounds, using the player's size settings.
         if (hitEnemy) AudioEvents.Play(Sfx.SwipeHitEnemy, transform.position, 0.6f, owner: gameObject);
-        if (hitBuilding) AudioEvents.Play(Sfx.SwipeHitBuilding, transform.position, 0.6f, owner: gameObject);
+        if (hitBuilding) AudioEvents.Play(Sfx.SwipeHitBuilding, transform.position, owner: gameObject);
         if (hitOther) AudioEvents.Play(Sfx.SwipeHit, transform.position, 0.6f, owner: gameObject);
     }
 }

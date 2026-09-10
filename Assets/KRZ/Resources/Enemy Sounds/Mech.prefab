@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 400000}
   - component: {fileID: 11400000}
   m_Layer: 0
-  m_Name: Building Sounds
+  m_Name: Mech Sounds
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -53,8 +53,7 @@ MonoBehaviour:
   footstepInterval: 0.35
   actions:
   - enabled: 1
-    clips:
-    - {fileID: 8300000, guid: 2646173c5392d3549955edecdf3b4846, type: 3}
+    clips: []
     volume: 1
     randomizePitch: 0
     pitch: 1
@@ -67,25 +66,7 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-    action: 26
-    useSizeSettings: 0
-    sizeSettings: []
-  - enabled: 1
-    clips:
-    - {fileID: 8300000, guid: cbd94ebe68573ec49aea6f1a9b47d0a9, type: 3}
-    volume: 1
-    randomizePitch: 0
-    pitch: 1
-    pitchRange: {x: 0.9, y: 1.1}
-    size: 0
-    echo: 0
-    echoDelay: 150
-    echoDecay: 0.35
-    echoWet: 0.3
-    reverb: 0
-    reverbPreset: 2
-    cooldown: 0
-    action: 2
+    action: 12
     useSizeSettings: 0
     sizeSettings: []
   - enabled: 1
@@ -102,6 +83,126 @@ MonoBehaviour:
     reverb: 0
     reverbPreset: 2
     cooldown: 0
-    action: 25
+    action: 0
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips:
+    - {fileID: 8300000, guid: 90015bf4b380c5647910d32d6db1e057, type: 3}
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 17
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 18
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 19
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 13
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 10
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 20
+    useSizeSettings: 0
+    sizeSettings: []
+  - enabled: 1
+    clips: []
+    volume: 1
+    randomizePitch: 0
+    pitch: 1
+    pitchRange: {x: 0.9, y: 1.1}
+    size: 0
+    echo: 0
+    echoDelay: 150
+    echoDecay: 0.35
+    echoWet: 0.3
+    reverb: 0
+    reverbPreset: 2
+    cooldown: 0
+    action: 24
     useSizeSettings: 0
     sizeSettings: []

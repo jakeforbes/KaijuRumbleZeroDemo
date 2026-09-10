@@ -26,6 +26,7 @@ public enum SpecialAction
 [System.Serializable]
 public class EnemyType
 {
+    [Tooltip("Optional sound template override. Otherwise uses this unit's template in Resources/Enemy Sounds, then the shared Enemy Sounds template.")]
     public SoundPlayer sounds;
 
     public string name = "Grunt";
