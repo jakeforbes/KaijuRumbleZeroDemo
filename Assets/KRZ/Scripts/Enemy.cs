@@ -48,6 +48,11 @@ public class Enemy : Damageable
         rb.gravityScale = 0f;
         rb.freezeRotation = true;
 
+        // Mass by body size. The kaiju's mass scales with its own growth, so infantry
+        // are brushed aside while a Mech still has real presence at size 1 — and by
+        // size 5 nothing short of the boss can move you.
+        rb.mass = Mathf.Max(0.2f, type.bodyPx / 64f);
+
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
         float w = type.bodyPx / ppu * 0.8f;
@@ -128,7 +133,14 @@ public class Enemy : Damageable
         // Mech that keeps walking while it winds up.
         if (type.special != SpecialAction.None && HandleSpecial(progress, flat)) return;
 
-        if (flat > type.attackRange)
+        // Ranges are measured from the kaiju's edge, not its centre. Measuring to the
+        // centre meant an enemy had to bulldoze its way through the player's footprint
+        // before it would stop pressing — which is what shoved the player around, and
+        // why it got worse the bigger the kaiju grew.
+        float playerRadius = tuning.playerFootprint.x * 0.5f * progress.Scale;
+        float stopAt = type.attackRange + playerRadius;
+
+        if (flat > stopAt)
         {
             winding = false;
             Vector2 dir = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized;

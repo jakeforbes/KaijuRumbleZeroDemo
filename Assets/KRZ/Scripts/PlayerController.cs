@@ -92,6 +92,12 @@ public class PlayerController : MonoBehaviour
         Scale = s;
         if (art != null) art.localScale = Vector3.one * s;
         if (footprint != null) footprint.size = baseFootprint * s;
+
+        // Mass grows with the square of size, so collisions with infantry move them
+        // and not you. A giant monster being jostled by soldiers reads as wrong, and
+        // the disparity should widen as you grow. The Abomination's knockback is a
+        // deliberate ability rather than a physics outcome.
+        if (body != null && tuning != null) body.mass = tuning.playerMass * s * s;
     }
 
     static Vector2 ReadInput()

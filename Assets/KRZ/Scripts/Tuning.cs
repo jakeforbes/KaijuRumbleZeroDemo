@@ -247,6 +247,10 @@ public class Tuning : ScriptableObject
     [Tooltip("Player collision ellipse in world units, at size 1. Tile is 2 x 1.")]
     public Vector2 playerFootprint = new Vector2(1.1f, 0.55f);
 
+    [Tooltip("Kaiju mass at size 1, against enemy masses of roughly 1 to 9. Scales with " +
+             "the square of size, so infantry never shove you and the gap widens as you grow.")]
+    public float playerMass = 25f;
+
     [Header("Swipe — the auto attack")]
     public float swipeDamage = 10f;
     public float swipeCooldown = 2f;
