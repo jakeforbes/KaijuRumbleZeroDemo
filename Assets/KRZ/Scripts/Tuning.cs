@@ -121,13 +121,27 @@ public class Tuning : ScriptableObject
     public int hamburgerPx = 96;
 
     [Header("City floor")]
-    [Tooltip("Width of the streets between blocks, in world units. Roads are drawn on " +
-             "the block boundaries, so this is how much of each street is carriageway " +
-             "rather than kerb and lot.")]
+    [Tooltip("Paint roads, kerbs and lot markings on the ground.\n\n" +
+             "Off, and deliberately. Every line on the floor competes with the things " +
+             "that have to be read instantly — where an enemy is, where a gem landed, " +
+             "which building is damaged — and a street plan under all of that turned " +
+             "the background into noise. A flat ground is the readable one.\n\n" +
+             "The whole road generator is still here behind this switch, for when the " +
+             "floor is worth a second look.")]
+    public bool drawStreets;
+
+    [Tooltip("The ground. Neutral and slightly cool so it belongs to the palette " +
+             "without competing with it: dark enough that the navy buildings read as " +
+             "masses on top of it, light enough that the warm enemy tints, the gold " +
+             "elite and the cyan dropship all separate from it cleanly.")]
+    public Color groundColour = new Color(0.29f, 0.30f, 0.335f);
+
+    [Tooltip("Width of the streets between blocks, in world units. Only used when " +
+             "streets are drawn.")]
     public float roadWidth = 2.4f;
 
-    [Tooltip("Kerb strip either side of a road, in world units. Its whole job is to " +
-             "stop lots from meeting tarmac on a hard line.")]
+    [Tooltip("Kerb strip either side of a road, in world units. Only used when " +
+             "streets are drawn.")]
     public float kerbWidth = 0.9f;
 
     [Header("Ocean")]

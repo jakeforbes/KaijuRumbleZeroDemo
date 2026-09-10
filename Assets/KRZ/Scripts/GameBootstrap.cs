@@ -188,8 +188,32 @@ public class GameBootstrap : MonoBehaviour
         int cols = Mathf.CeilToInt(spanX / tileW) + 4;
         int rows = Mathf.CeilToInt(spanY / (tileH * 0.5f)) + 8;
 
-        LayGround(new GameObject("Ground").transform, landBounds.center, cols, rows,
-                  tileW, tileH, null, null, shallowA, shallowB);
+        var root = new GameObject("Ground").transform;
+
+        if (!tuning.drawStreets)
+        {
+            // Flat ground is one quad. With no seams, no markings and no kerbs there
+            // is nothing for a lattice to express, and drawing thirteen thousand
+            // identical diamonds to render one colour is thirteen thousand objects
+            // spent on nothing. Only the coast keeps its tiles.
+            var landGo = new GameObject("Land");
+            landGo.transform.SetParent(root, false);
+            landGo.transform.position = landBounds.center;
+
+            var lsr = landGo.AddComponent<SpriteRenderer>();
+            lsr.sprite = GreyboxArt.Solid(64, 64, Color.white, ppu);
+            lsr.color = tuning.groundColour;
+
+            // Between the ocean at -110 and the coastal lattice at -100, so the
+            // half-transparent shore tiles overlap the land edge and soften it
+            // instead of fighting the quad for the same sorting slot.
+            lsr.sortingOrder = -101;
+            landGo.transform.localScale = new Vector3(landBounds.width * ppu / 64f,
+                                                      landBounds.height * ppu / 64f, 1f);
+        }
+
+        LayGround(root, landBounds.center, cols, rows,
+                  tileW, tileH, null, null, shallowA, shallowB, !tuning.drawStreets);
     }
 
     /// <summary>
@@ -202,7 +226,7 @@ public class GameBootstrap : MonoBehaviour
     /// checker, because a street plan drawn under a row of specimens is noise.
     /// </summary>
     void LayGround(Transform root, Vector2 centre, int cols, int rows, float tileW, float tileH,
-                   Sprite a, Sprite b, Sprite shallowA, Sprite shallowB)
+                   Sprite a, Sprite b, Sprite shallowA, Sprite shallowB, bool waterOnly = false)
     {
         for (int r = 0; r < rows; r++)
             for (int c = 0; c < cols; c++)
@@ -213,6 +237,11 @@ public class GameBootstrap : MonoBehaviour
 
                 bool even = (r + c) % 2 == 0;
                 bool water = shallowA != null && !landBounds.Contains(new Vector2(x, y));
+
+                // Flat ground is already covered by a single quad, so the lattice is
+                // only laid where it is doing something: softening the coastline.
+                if (waterOnly && !water) continue;
+
                 Sprite sprite = water ? (even ? shallowA : shallowB)
                               : a != null ? (even ? a : b)
                               : CityTile(x, y);
