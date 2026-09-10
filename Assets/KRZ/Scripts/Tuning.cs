@@ -145,6 +145,24 @@ public class Tuning : ScriptableObject
              "elite and the cyan dropship all separate from it cleanly.")]
     public Color groundColour = new Color(0.29f, 0.30f, 0.335f);
 
+    [Tooltip("Tile size in pixels for the concrete grain. At 128 PPU, 256 repeats " +
+             "every two world units.")]
+    public int groundTilePx = 256;
+
+    [Tooltip("Size of one grain pixel, in texture pixels. This is the chunkiness: it " +
+             "is what makes the surface read as 16-bit concrete rather than dissolving " +
+             "into fine noise at the size it is drawn.")]
+    [Range(1, 8)] public int groundChunkPx = 4;
+
+    [Tooltip("Per-pixel grain, as a fraction of the ground's brightness. Small on " +
+             "purpose. The floor has to survive being looked straight through — the " +
+             "moment it competes with an enemy or a gem it has failed at its only job.")]
+    [Range(0f, 0.25f)] public float groundGrain = 0.05f;
+
+    [Tooltip("Broad tonal patches, as a fraction of brightness. Reads as slabs poured " +
+             "at different times, and is what stops a large flat area looking printed.")]
+    [Range(0f, 0.25f)] public float groundPatch = 0.045f;
+
     [Tooltip("Width of the streets between blocks, in world units. Only used when " +
              "streets are drawn.")]
     public float roadWidth = 2.4f;

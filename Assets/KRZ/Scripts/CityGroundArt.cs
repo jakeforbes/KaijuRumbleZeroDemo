@@ -28,6 +28,94 @@ public static class CityGroundArt
     public enum Kind { Lot, RoadU, RoadV, Crossing, Kerb }
 
     /// <summary>
+    /// A seamless concrete tile in white, so the renderer's tint sets the colour.
+    ///
+    /// Three scales of variation and nothing else. No lines, no markings, no edges —
+    /// those are what made the last floor unreadable. This has to survive being looked
+    /// straight through, so every value stays within a few percent of flat: broad
+    /// patches where a slab was poured differently, a fine per-pixel grain, and the
+    /// occasional darker chip of aggregate.
+    ///
+    /// Generated at a fraction of its resolution and point-upscaled, which is what
+    /// makes the grain land on a chunky pixel grid rather than dissolving into noise
+    /// at the size it is actually drawn.
+    /// </summary>
+    public static Sprite Concrete(int sizePx, int chunk, float grain, float patch, float ppu)
+    {
+        chunk = Mathf.Max(1, chunk);
+        int lo = Mathf.Max(8, sizePx / chunk);
+
+        // Broad patches, on a wrapping lattice so the tile has no seam.
+        const int Lattice = 4;
+        var rng = new System.Random(5150);
+        var lat = new float[Lattice, Lattice];
+        for (int y = 0; y < Lattice; y++)
+            for (int x = 0; x < Lattice; x++)
+                lat[x, y] = (float)rng.NextDouble() * 2f - 1f;
+
+        var small = new Color[lo * lo];
+
+        for (int y = 0; y < lo; y++)
+            for (int x = 0; x < lo; x++)
+            {
+                float v = 1f + Patch(lat, Lattice, x / (float)lo, y / (float)lo) * patch;
+
+                // Fine grain: uncorrelated by design, which also tiles for free.
+                v += (Hash(x, y, 1) - 0.5f) * 2f * grain;
+
+                // Aggregate. Rare, and dark far more often than light, because a chip
+                // in concrete is a shadow rather than a highlight.
+                float chip = Hash(x, y, 2);
+                if (chip > 0.982f) v += grain * 3.5f;
+                else if (chip < 0.028f) v -= grain * 4.5f;
+
+                v = Mathf.Clamp(v, 0.6f, 1.4f);
+                small[y * lo + x] = new Color(v, v, v, 1f);
+            }
+
+        int size = lo * chunk;
+        var px = new Color[size * size];
+        for (int y = 0; y < size; y++)
+        {
+            int sy = y / chunk;
+            for (int x = 0; x < size; x++) px[y * size + x] = small[sy * lo + x / chunk];
+        }
+
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Repeat,
+        };
+        tex.SetPixels(px);
+        tex.Apply();
+
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f),
+                             ppu, 0, SpriteMeshType.FullRect);
+    }
+
+    /// <summary>Smoothed value noise on a wrapping lattice.</summary>
+    static float Patch(float[,] lat, int n, float u, float v)
+    {
+        float fx = u * n, fy = v * n;
+        int x0 = Mathf.FloorToInt(fx) % n, y0 = Mathf.FloorToInt(fy) % n;
+        int x1 = (x0 + 1) % n, y1 = (y0 + 1) % n;
+
+        float tx = fx - Mathf.Floor(fx), ty = fy - Mathf.Floor(fy);
+        tx = tx * tx * (3f - 2f * tx);
+        ty = ty * ty * (3f - 2f * ty);
+
+        return Mathf.Lerp(Mathf.Lerp(lat[x0, y0], lat[x1, y0], tx),
+                          Mathf.Lerp(lat[x0, y1], lat[x1, y1], tx), ty);
+    }
+
+    static float Hash(int x, int y, int salt)
+    {
+        int h = x * 374761393 + y * 668265263 + salt * 1442695040;
+        h = (h ^ (h >> 13)) * 1274126177;
+        return ((h ^ (h >> 16)) & 0xFFFFFF) / (float)0xFFFFFF;
+    }
+
+    /// <summary>
     /// One tile. <paramref name="variant"/> only matters for lots, where it picks
     /// between plain tarmac, parking bays, a patched surface and a hatched yard — the
     /// point being that open ground looks like somewhere, rather than like a hole

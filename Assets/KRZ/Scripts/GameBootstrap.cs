@@ -201,15 +201,20 @@ public class GameBootstrap : MonoBehaviour
             landGo.transform.position = landBounds.center;
 
             var lsr = landGo.AddComponent<SpriteRenderer>();
-            lsr.sprite = GreyboxArt.Solid(64, 64, Color.white, ppu);
+            lsr.sprite = CityGroundArt.Concrete(tuning.groundTilePx, tuning.groundChunkPx,
+                                                tuning.groundGrain, tuning.groundPatch, ppu);
             lsr.color = tuning.groundColour;
 
             // Between the ocean at -110 and the coastal lattice at -100, so the
             // half-transparent shore tiles overlap the land edge and soften it
             // instead of fighting the quad for the same sorting slot.
             lsr.sortingOrder = -101;
-            landGo.transform.localScale = new Vector3(landBounds.width * ppu / 64f,
-                                                      landBounds.height * ppu / 64f, 1f);
+
+            // Tiled rather than stretched, so the grain stays at its authored pixel
+            // size across a hundred and twenty units of ground instead of smearing.
+            lsr.drawMode = SpriteDrawMode.Tiled;
+            lsr.tileMode = SpriteTileMode.Continuous;
+            lsr.size = new Vector2(landBounds.width, landBounds.height);
         }
 
         LayGround(root, landBounds.center, cols, rows,
