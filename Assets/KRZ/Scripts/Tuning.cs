@@ -148,7 +148,7 @@ public class Tuning : ScriptableObject
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
-                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384,
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
@@ -295,7 +295,13 @@ public class Tuning : ScriptableObject
     [Range(0.5f, 1.2f)] public float buildingFootprint = 1f;
 
     [Tooltip("Player collision ellipse in world units, at size 1. Tile is 2 x 1.")]
-    public Vector2 playerFootprint = new Vector2(1.1f, 0.55f);
+    [Tooltip("Kaiju collision ellipse as a fraction of its own height, so it tracks " +
+             "growth instead of being a fixed number the art outgrows.\n\n" +
+             "Deliberately near the feet rather than the body: clipping a shoulder " +
+             "through a tower reads as a big monster in a tight street, while being " +
+             "stopped by a gap you can see through reads as a broken game. When in " +
+             "doubt, smaller.")]
+    public Vector2 playerFootprintFraction = new Vector2(0.30f, 0.15f);
 
     [Tooltip("Kaiju mass at size 1, against enemy masses of roughly 1 to 9. Scales with " +
              "the square of size, so infantry never shove you and the gap widens as you grow.")]

@@ -39,7 +39,6 @@ public class PlayerController : MonoBehaviour
 
     Rigidbody2D body;
     CapsuleCollider2D footprint;
-    Vector2 baseFootprint;
     Transform art;
     Vector2 desired;
 
@@ -47,7 +46,6 @@ public class PlayerController : MonoBehaviour
     {
         body = GetComponent<Rigidbody2D>();
         footprint = GetComponent<CapsuleCollider2D>();
-        if (footprint != null) baseFootprint = footprint.size;
         body.gravityScale = 0f;
         body.freezeRotation = true;
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -91,7 +89,7 @@ public class PlayerController : MonoBehaviour
     {
         Scale = s;
         if (art != null) art.localScale = Vector3.one * s;
-        if (footprint != null) footprint.size = baseFootprint * s;
+        if (footprint != null && tuning != null) footprint.size = tuning.playerFootprintFraction * s;
 
         // Mass grows with the square of size, so collisions with infantry move them
         // and not you. A giant monster being jostled by soldiers reads as wrong, and

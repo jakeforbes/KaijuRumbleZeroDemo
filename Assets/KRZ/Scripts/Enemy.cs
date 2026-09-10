@@ -65,7 +65,7 @@ public class Enemy : Damageable
 
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
-        float w = type.bodyPx / ppu * 0.8f;
+        float w = type.bodyPx / ppu * type.footprintFraction;
         col.size = new Vector2(w, w * 0.5f);
 
         var art = new GameObject("Art").transform;
@@ -159,7 +159,7 @@ public class Enemy : Damageable
         // centre meant an enemy had to bulldoze its way through the player's footprint
         // before it would stop pressing — which is what shoved the player around, and
         // why it got worse the bigger the kaiju grew.
-        float playerRadius = tuning.playerFootprint.x * 0.5f * progress.Scale;
+        float playerRadius = tuning.playerFootprintFraction.x * 0.5f * progress.Scale;
         float stopAt = type.attackRange + playerRadius;
 
         if (flat > stopAt)
