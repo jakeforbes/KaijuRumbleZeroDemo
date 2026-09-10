@@ -76,6 +76,7 @@ public class GameBootstrap : MonoBehaviour
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
 
+        PlaceFreeUpgrades();
         gameObject.AddComponent<Popups>();
 
         var director = gameObject.AddComponent<WaveDirector>();
@@ -208,6 +209,39 @@ public class GameBootstrap : MonoBehaviour
                 // Init last: it caches the collider and sprite renderer.
                 building.Init(tuning, type, tilesX, tilesY, heightPx, ppu);
             }
+    }
+
+    /// <summary>
+    /// Scatters a few power-ups around the map at run start, free for the taking.
+    /// Every other source is conditional — smash the right building, kill the elite —
+    /// so early power depends on what the city happens to roll. These are guaranteed,
+    /// evenly spaced, and reward exploring outward from the start.
+    /// </summary>
+    void PlaceFreeUpgrades()
+    {
+        var upgrades = PlayerUpgrades.Instance;
+        if (upgrades == null || tuning.freeUpgradeCount <= 0) return;
+
+        float ppu = tuning.pixelsPerUnit;
+
+        for (int i = 0; i < tuning.freeUpgradeCount; i++)
+        {
+            // Even angles around the player's start, on the isometric ground ellipse.
+            float angle = i / (float)tuning.freeUpgradeCount * Mathf.PI * 2f + Mathf.PI * 0.25f;
+
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                float r = tuning.freeUpgradeRadius - attempt * 1.5f;
+                if (r < 4f) break;
+
+                var at = new Vector3(Mathf.Cos(angle) * r,
+                                     Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+                if (Physics2D.OverlapCircle(at, 1f) != null) continue;
+
+                UpgradePickup.Spawn(tuning, upgrades.RollDrop(), at, ppu);
+                break;
+            }
+        }
     }
 
     public EnemyType FindType(string name)

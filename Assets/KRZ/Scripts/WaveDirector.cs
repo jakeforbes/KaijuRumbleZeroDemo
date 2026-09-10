@@ -20,6 +20,28 @@ public class WaveDirector : MonoBehaviour
     /// <summary>Seconds since the run began. Cheats can move this.</summary>
     public float Clock { get; private set; }
 
+    /// <summary>
+    /// Breathing room after losing a size. Spawning thins out, but the clock keeps
+    /// running — the boss still arrives on schedule, so recovering costs you progress
+    /// toward the ending rather than delaying it. Losing a tier already hurts; being
+    /// immediately buried again is what makes it stop being recoverable.
+    /// </summary>
+    float recoveryUntil = -1f;
+
+    public bool Recovering => Time.time < recoveryUntil;
+    public float RecoverySecondsLeft => Mathf.Max(0f, recoveryUntil - Time.time);
+
+    public void BeginRecovery()
+    {
+        recoveryUntil = Time.time + tuning.recoverySeconds;
+
+        // Push pending sustained beats out immediately, so relief is felt now rather
+        // than after whatever was already queued lands on top of you.
+        foreach (var w in tuning.waves)
+            if (w.IsSustained && w.nextFireAt < Clock + w.interval)
+                w.nextFireAt = Clock + w.interval * tuning.recoverySpawnInterval;
+    }
+
     public string CurrentLabel { get; private set; } = "calm";
     public bool Running { get; set; } = true;
 
@@ -56,7 +78,7 @@ public class WaveDirector : MonoBehaviour
                 if (Clock > w.endTime) continue;
                 active ??= w.label;
                 if (Clock < w.nextFireAt) continue;
-                w.nextFireAt = Clock + w.interval;
+                w.nextFireAt = Clock + w.interval * (Recovering ? tuning.recoverySpawnInterval : 1f);
             }
             else
             {

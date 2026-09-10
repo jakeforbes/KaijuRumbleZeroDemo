@@ -70,7 +70,21 @@ public class Tuning : ScriptableObject
     public float[] tierScale = { 1.5f, 2.625f, 3.75f, 4.875f, 6f };
 
     [Tooltip("Health cap at each tier. Reaching a tier heals you to its cap.")]
-    public float[] tierMaxHp = { 100f, 140f, 175f, 210f, 250f };
+    public float[] tierMaxHp = { 100f, 150f, 205f, 265f, 330f };
+
+    [Tooltip("Flat damage subtracted from every hit taken, by size — the kaiju's own " +
+             "armour. Flat rather than a percentage so small-arms fire falls away " +
+             "entirely as you grow while heavy attacks still land, which is what stops " +
+             "losing a size being a routine event.")]
+    public float[] damageResistBySize = { 0f, 2f, 4f, 7f, 10f };
+
+    [Tooltip("Seconds of eased-off spawning after losing a size. The run clock keeps " +
+             "going, so the boss still arrives on schedule.")]
+    public float recoverySeconds = 14f;
+
+    [Tooltip("Sustained wave intervals are multiplied by this while recovering. " +
+             "2.5 means roughly 40% of the usual pressure.")]
+    public float recoverySpawnInterval = 2.5f;
 
     [Tooltip("How much of the gap to the next size is covered continuously as the meter " +
              "fills, with the rest arriving as a jump at tier-up. 0 makes growth purely " +
@@ -170,6 +184,12 @@ public class Tuning : ScriptableObject
     public int commanderPerMax = 50;
 
     [Header("The run")]
+    [Tooltip("Free power-ups placed around the map at the start, evenly spaced.")]
+    public int freeUpgradeCount = 4;
+
+    [Tooltip("How far from the start point they sit, in world units.")]
+    public float freeUpgradeRadius = 18f;
+
     [Tooltip("Hard ceiling on living enemies. The timeline is written to push against " +
              "this rather than to stay under it, so the cap is what actually sets the " +
              "peak crowd — and protects the framerate.")]

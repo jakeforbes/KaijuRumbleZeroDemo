@@ -92,9 +92,18 @@ public class PlayerProgress : MonoBehaviour
         else bodyArt.color = bodyColour;
     }
 
+    /// <summary>Flat damage reduction at the current size, like enemy armour.</summary>
+    public float Resistance => At(tuning.damageResistBySize, Tier, 0f);
+
     public void TakeDamage(float amount)
     {
         if (IsDead || Invulnerable) return;
+
+        // Flat subtraction rather than a percentage, so small attacks fall away
+        // entirely as you grow while heavy ones still land. A Grunt's 6 stops
+        // mattering by size 4; an Abomination's 45 never does.
+        amount = Mathf.Max(0f, amount - Resistance);
+        if (amount <= 0f) return;
 
         Hp -= amount;
         flashUntil = Time.time + 0.1f;
@@ -186,6 +195,10 @@ public class PlayerProgress : MonoBehaviour
         Hp = MaxHp;
         AudioEvents.Play(Sfx.Shrink, transform.position, owner: gameObject);
         Shake(tuning.tierUpShake);
+
+        // Give the run room to be recovered from. The clock keeps running, so the
+        // boss still arrives on time — you lose ground toward it, not the ending.
+        if (WaveDirector.Instance != null) WaveDirector.Instance.BeginRecovery();
     }
 
     /// <summary>Lets attacks shake the camera without each of them finding the rig.</summary>

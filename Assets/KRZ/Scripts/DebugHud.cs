@@ -139,7 +139,9 @@ public class DebugHud : MonoBehaviour
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
             $"enemies  {Enemy.All.Count} / {tuning.maxEnemiesAlive}" +
             $"{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
-            $"run  {RunClock()}   wave  {(WaveDirector.Instance != null ? WaveDirector.Instance.CurrentLabel : "-")}\n" +
+            $"run  {RunClock()}   wave  {(WaveDirector.Instance != null ? WaveDirector.Instance.CurrentLabel : "-")}" +
+            $"   resist  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.Resistance : 0f):0}" +
+            $"{(WaveDirector.Instance != null && WaveDirector.Instance.Recovering ? $"   <b>RECOVERING {WaveDirector.Instance.RecoverySecondsLeft:0}s</b>" : "")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
             $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F8</b> dropship (+shift scav)   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>. ,</b> skip time   <b>[ ]</b> speed" +
             $"\n<b>Space / E / pad A</b> blast";
