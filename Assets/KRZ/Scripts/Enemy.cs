@@ -25,6 +25,11 @@ public class Enemy : Damageable
     float nextVolleyAt;
     float volleyEndsAt;
     bool volleyWinding;
+    bool dying;
+    float destroyAt;
+
+    public EnemyArt art;
+    public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
 
     Rigidbody2D body;
     SpriteRenderer sr;
@@ -70,6 +75,19 @@ public class Enemy : Damageable
         e.sr = bsr;
         e.baseColour = type.colour;
 
+        // Delivered art replaces the greybox capsule when the type points at a folder.
+        var art2 = go.AddComponent<EnemyArt>();
+        art2.owner = e;
+        art2.target = bsr;
+        art2.type = type;
+        if (art2.Available)
+        {
+            e.art = art2;
+            e.baseColour = Color.white;          // sprites carry their own colour
+            bsr.color = Color.white;
+            bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / 512f);
+        }
+
         e.nextVolleyAt = Time.time + type.specialCooldown;
 
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
@@ -82,6 +100,15 @@ public class Enemy : Damageable
 
     void Update()
     {
+        // Corpses keep existing until their destruction clip finishes, so a kill reads
+        // as an event rather than the object blinking out. No AI while dying.
+        if (dying)
+        {
+            body.linearVelocity = Vector2.zero;
+            if (Time.time >= destroyAt) Destroy(gameObject);
+            return;
+        }
+
         var progress = PlayerProgress.Instance;
         if (progress == null || progress.IsDead) { body.linearVelocity = Vector2.zero; return; }
 
@@ -128,6 +155,7 @@ public class Enemy : Damageable
                 winding = false;
                 nextAttackAt = Time.time + type.attackCooldown;
                 AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
+                if (art != null) art.Play("attack", true);
                 Strike(progress);
             }
         }
@@ -267,6 +295,7 @@ public class Enemy : Damageable
         }
 
         hp -= dealt;
+        if (art != null && hp > 0f) art.Play("hit", true);
         AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
         Popups.Add(transform.position, $"{dealt:0}", Color.white);
@@ -289,6 +318,19 @@ public class Enemy : Damageable
         if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
             UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
                                 transform.position, tuning.pixelsPerUnit);
+
+        // With a destruction clip, the corpse lingers just long enough to play it.
+        // Collision goes immediately so a dying enemy never blocks or shoves.
+        if (art != null && sound != Sfx.Squish && type.deathFrames > 0)
+        {
+            dying = true;
+            destroyAt = Time.time + type.deathFrames / DirectionalArt.Fps + 0.15f;
+            art.Play("destruction", true);
+
+            foreach (var c in GetComponents<Collider2D>()) c.enabled = false;
+            body.linearVelocity = Vector2.zero;
+            return;
+        }
 
         Destroy(gameObject);
     }

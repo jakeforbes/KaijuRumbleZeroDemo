@@ -100,7 +100,9 @@ public class Tuning : ScriptableObject
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
-                        bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+                        bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 192,
+                        artFrameDigits = 4, artFirstFrame = 1 },
 
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
         // so it replaces the cut Barracks with something mobile and killable. Ignoring

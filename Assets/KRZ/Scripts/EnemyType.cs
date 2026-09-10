@@ -94,8 +94,35 @@ public class EnemyType
              "one ignored Dropship cannot flood the arena.")]
     public int deployMaxAlive = 24;
 
-    [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
+    [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju. " +
+             "With delivered art this is only the collider and shadow size — the " +
+             "sprite's own scale comes from artDisplayPx.")]
     public int bodyPx = 64;
+
+    [Header("Delivered art (blank = greybox)")]
+    [Tooltip("Resources folder holding the frames, e.g. \"Mech\".")]
+    public string artFolder = "";
+
+    [Tooltip("Filename stem, e.g. \"mech\" for mech_walk_se_0001.png.")]
+    public string artPrefix = "";
+
+    [Tooltip("On-screen height in pixels. Frames are authored at 512, so this scales " +
+             "them down the same way the kaiju's canvas scale does.")]
+    public int artDisplayPx = 192;
+
+    [Tooltip("Uries ships south/southeast; the Mech ships s/se. Off means short names.")]
+    public bool artLongDirectionNames;
+
+    [Tooltip("Digits in the frame number, and what the first frame is called. " +
+             "Uries uses 2 digits from 00, the Mech 4 digits from 0001.")]
+    public int artFrameDigits = 4;
+    public int artFirstFrame = 1;
+
+    public int idleFrames = 4;
+    public int walkFrames = 8;
+    public int attackFrames = 6;
+    public int hitFrames = 3;
+    public int deathFrames = 5;
 
     public Color colour = new Color(0.85f, 0.45f, 0.35f);
 }
