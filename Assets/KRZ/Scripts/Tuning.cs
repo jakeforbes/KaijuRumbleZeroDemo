@@ -55,13 +55,17 @@ public class Tuning : ScriptableObject
     public int randomSeed = 1337;
 
     [Header("Growth")]
-    [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
-             "Roughly geometric rather than arithmetic: income accelerates hard as you " +
-             "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
-             "so a flat +50 per gate meant later tiers arrived faster than earlier ones. " +
-             "Size and power are separate curves: if the run feels underpowered, that is " +
-             "power-up frequency (Lab weights) rather than these gates.")]
-    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
+    [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes.\n\n" +
+             "Each gate is roughly triple the last, because income does not just grow " +
+             "with size, it compounds: a wider pickup field, faster kills, more upgrades, " +
+             "and whole building classes turning from walls into food. A gate that only " +
+             "doubles gets swallowed by that and the late sizes blur past.\n\n" +
+             "Aim: size 5 arriving around 2:30, just before the boss at 2:40. If you are " +
+             "hitting it far early, raise the last two entries — they are where the run " +
+             "is decided.\n\n" +
+             "Size and power are separate curves: if the run feels underpowered rather " +
+             "than under-sized, that is power-up frequency (Lab weights), not these.")]
+    public float[] foodPerTier = { 80f, 320f, 1100f, 3200f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length." +
@@ -199,10 +203,15 @@ public class Tuning : ScriptableObject
              "interval repeats until its end time; without one it fires once.")]
     public WaveEntry[] waves =
     {
-        // First contact at 0:10: three squads of three, two seconds apart, each from a
+        // First contact at 0:05: three squads of three, two seconds apart, each from a
         // different side. Small enough to be a lesson rather than a threat.
-        new WaveEntry { label = "first contact", startTime = 10f, endTime = 14f, interval = 2f,
+        new WaveEntry { label = "first contact", startTime = 5f, endTime = 9f, interval = 2f,
                         enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
+
+        // A second, slightly bigger probe at 0:15, before the real line forms. Keeps
+        // the opening minute moving rather than leaving a ten-second gap.
+        new WaveEntry { label = "probe", startTime = 15f, endTime = 19f, interval = 2f,
+                        enemyType = "Grunt", count = 4, shape = SpawnShape.Clump },
 
         // The real infantry line. A Commander leads the first squad and every third
         // after — a rhythm you can learn rather than a roll you cannot read.
