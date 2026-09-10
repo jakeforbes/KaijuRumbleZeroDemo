@@ -282,14 +282,15 @@ public class Tuning : ScriptableObject
     public float blastCooldown = 6f;
     public float blastRange = 14f;
 
-    [Tooltip("Full width of the beam in world units. A ground tile is 2 wide, so 1.0 " +
-             "is half a tile.")]
-    public float blastWidth = 1f;
+    [Tooltip("Beam thickness as a fraction of the kaiju's height, so it grows with you. " +
+             "Applies to the damage band as well as the drawing, so what you see is what " +
+             "it hits.")]
+    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.8f;
 
-    [Tooltip("Height the beam is drawn from, in world units at size 1, scaling with the " +
-             "kaiju. The body is 1.0 tall, so 0.8 is about mouth height. Visual only — " +
-             "hits stay on the ground plane where the footprints are.")]
-    public float blastOriginHeight = 0.8f;
+    [Tooltip("Height the beam is centred on, as a fraction of the kaiju's height. 0.5 " +
+             "is mid-body. Firing from the head looked disconnected from a damage band " +
+             "that sits on the ground, and the gap widened as the kaiju grew.")]
+    [Range(0f, 1f)] public float blastOriginFraction = 0.5f;
 
     [Header("Stomp — granted by the upgrade")]
     [Tooltip("Damage at one stack, deliberately half of blastDamage. Extra stacks " +

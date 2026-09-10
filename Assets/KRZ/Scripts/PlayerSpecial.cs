@@ -60,8 +60,15 @@ public class PlayerSpecial : MonoBehaviour
     {
         float power = upgrades.BlastPowerMul;
         float range = tuning.blastRange * power;
-        float halfWidth = tuning.blastWidth * 0.5f;
         float damage = tuning.blastDamage * power * progress.DamageMultiplier;
+
+        // The kaiju's drawn height is exactly Scale in world units: a 512 px sprite at
+        // 128 PPU is 4 units, times the 0.25 canvas scale, times Scale. So beam
+        // thickness and height are both simple fractions of Scale, and the damage band
+        // is the same width as the drawing rather than a fixed number beside it.
+        float bodyHeight = progress.Scale;
+        float width = tuning.blastWidthFraction * bodyHeight;
+        float halfWidth = width * 0.5f;
 
         BlastCooldownTotal = tuning.blastCooldown * upgrades.BlastCooldownMul;
         BlastCooldownRemaining = BlastCooldownTotal;
@@ -75,13 +82,13 @@ public class PlayerSpecial : MonoBehaviour
 
         AudioEvents.Play(Sfx.Blast, origin);
         if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Blast);
-        // Fired from roughly mouth height. The offset is visual only: hit detection
-        // stays on the ground plane, because that is where every footprint lives and
-        // a raised hit band would damage things the beam is not drawn over.
-        Vector3 muzzle = (Vector3)origin + Vector3.up * (tuning.blastOriginHeight * progress.Scale);
+        // Centred on the body rather than fired from the head. Hit detection still runs
+        // on the ground plane where every footprint lives, so a beam as thick as most
+        // of the kaiju visually covers the strip it damages instead of floating above it.
+        Vector3 muzzle = (Vector3)origin + Vector3.up * (tuning.blastOriginFraction * bodyHeight);
 
         HitFx.Line(muzzle, muzzle + (Vector3)(aim * range), new Color(0.55f, 0.9f, 1f),
-                   tuning.pixelsPerUnit, 0.22f, tuning.blastWidth);
+                   tuning.pixelsPerUnit, 0.22f, width);
         progress.ShakeExternal(tuning.hitShake * 1.4f);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
