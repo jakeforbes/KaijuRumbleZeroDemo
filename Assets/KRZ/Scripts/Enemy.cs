@@ -496,19 +496,28 @@ public class Enemy : Damageable
         progress.TakeDamage(type.contactDamage);
     }
 
-    public override void TakeDamage(float amount, Vector2 from)
+    public override void TakeDamage(float amount, Vector2 from) => TakeDamage(amount, from, false);
+
+    /// <summary>
+    /// <paramref name="ignoreArmour"/> is for damage that is not a strike. Poison is
+    /// the case that needs it: at 1.6 a tick it is under every heavy's armour value,
+    /// so a flat subtraction deletes it entirely and the upgrade quietly stops
+    /// existing against exactly the enemies it was bought to handle.
+    /// </summary>
+    public void TakeDamage(float amount, Vector2 from, bool ignoreArmour)
     {
         if (!IsAlive) return;
 
         // Armour is flat subtraction, so chip damage genuinely bounces off heavies.
-        float dealt = Mathf.Max(0f, amount - type.armour);
+        float dealt = ignoreArmour ? amount : Mathf.Max(0f, amount - type.armour);
 
         if (dealt <= 0f)
         {
-            // Says "your weapon is wrong" rather than looking like a missed hit.
+            // Still flashes and still makes its sound — the hit reads as landing and
+            // doing nothing. The word was doing the same job as the flash and the
+            // sound, three times over, on every chip against every heavy on screen.
             flashUntil = Time.time + 0.06f;
             AudioEvents.Play(Sfx.EnemyBlocked, transform.position, owner: gameObject);
-            Popups.Add(transform.position, "<b>BLOCKED</b>", new Color(0.65f, 0.7f, 0.8f));
             return;
         }
 

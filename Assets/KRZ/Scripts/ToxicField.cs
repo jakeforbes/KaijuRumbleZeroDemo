@@ -101,7 +101,12 @@ public class ToxicField : MonoBehaviour
             var e = Enemy.All[i];
             if (e == null || !e.IsAlive) continue;
 
-            if (Inside(e.transform.position)) e.TakeDamage(damage, e.transform.position);
+            // Ignores armour. A tick is a fraction of any heavy's armour value, so a
+            // flat subtraction wipes it out completely — the cloud would be lethal to
+            // grunts and literally nothing to a Tank, a Mech or the boss, which is
+            // backwards for an upgrade whose whole shape is attrition on whatever is
+            // still following you late in a run.
+            if (Inside(e.transform.position)) e.TakeDamage(damage, e.transform.position, true);
         }
     }
 
