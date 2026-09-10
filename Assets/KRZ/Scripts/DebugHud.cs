@@ -66,7 +66,8 @@ public class DebugHud : MonoBehaviour
 
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
         if (kb.f12Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
-        if (kb.f10Key.wasPressedThisFrame) GameBootstrap.Restart();
+        if (kb.f10Key.wasPressedThisFrame) { GameBootstrap.Restart(); return; }
+        if (CameraRig.IsBossIntroductionPlaying) return;
 
         var progress = PlayerProgress.Instance;
         if (progress != null)
@@ -96,6 +97,7 @@ public class DebugHud : MonoBehaviour
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
         }
 
+        if (CameraRig.IsBossIntroductionPlaying) return;
         if (kb.leftBracketKey.wasPressedThisFrame)
             Time.timeScale = Mathf.Max(0.1f, Time.timeScale - 0.25f);
         if (kb.rightBracketKey.wasPressedThisFrame)

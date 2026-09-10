@@ -11,6 +11,8 @@ public class EnemyType
     public SoundPlayer sounds;
 
     public string name = "Grunt";
+    [Tooltip("Controls boss music. The existing Abomination is also recognized automatically.")]
+    public bool isBoss;
 
     [Tooltip("Squishable once the kaiju's size is above this. 0 is size 1.")]
     [Range(0, 4)] public int sizeClass;

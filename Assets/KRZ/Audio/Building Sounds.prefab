@@ -51,34 +51,4 @@ MonoBehaviour:
   maxDistance: 40
   maxVoices: 8
   footstepInterval: 0.35
-  actions:
-  - action: 1
-    enabled: 1
-    clips: []
-    volume: 1
-    randomizePitch: 0
-    pitch: 1
-    pitchRange: {x: 0.9, y: 1.1}
-    size: 0
-    echo: 0
-    echoDelay: 150
-    echoDecay: 0.35
-    echoWet: 0.3
-    reverb: 0
-    reverbPreset: 2
-    cooldown: 0
-  - action: 2
-    enabled: 1
-    clips: []
-    volume: 1
-    randomizePitch: 0
-    pitch: 1
-    pitchRange: {x: 0.9, y: 1.1}
-    size: 0
-    echo: 0
-    echoDelay: 150
-    echoDecay: 0.35
-    echoWet: 0.3
-    reverb: 0
-    reverbPreset: 2
-    cooldown: 0
+  actions: []

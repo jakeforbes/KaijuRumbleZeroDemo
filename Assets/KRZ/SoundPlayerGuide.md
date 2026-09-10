@@ -1,5 +1,17 @@
 # Sound Player
 
+## Background music
+
+Open **KRZ > Audio > Background Music**. Assign Default Game, Boss Approaching, and Boss Fight clips, their individual volumes, master music volume, crossfade duration, and optional mixer output. Boss Approaching and Boss Fight are linked to the matching files in Assets/Music; Default Game still needs a clip. All music loops.
+
+Play creates a separate **Background Music Player** with two AudioSources for crossfades. Normal play uses Default Game. Bosses spawn on clear ground near the generated playfield perimeter, choosing a far edge away from the player rather than the old nearby spawn ring. Boss spawning starts Boss Approaching music while the camera pans to the boss, follows its brief approach, then returns to the player. Gameplay continues during the reveal, and the player is invulnerable while the camera is away. Music continues using real time. Tuning exposes Boss Intro Pan Seconds, Boss Intro Hold Seconds, and Boss Intro Return Seconds (defaults: 1.25, 2, 1.25 seconds). Game speed stays unchanged, and the player camera is restored, including on cancellation or restart. Multiple simultaneous introductions are queued.
+
+After the reveal, Boss Fight starts only when both the player and boss gameplay positions enter the gameplay camera, using Boss Fight Screen Margin in Music Settings. Large sprites, shadows, and transparent padding no longer prevent the trigger. Attacking from off-screen does not trigger it, and the cinematic camera cannot trigger it early. Once active, the fight stays active if either character leaves the frame; defeating/removing the boss returns to the appropriate music for any remaining bosses or to Default Game. Abomination is recognized automatically; enable Is Boss on other enemy types.
+
+The player exposes **PlayDefaultGame**, **PlayBossApproaching**, **PlayBossFight**, and **ResumeAutomaticMusic** methods for UnityEvents/scripted encounters, plus an **On Music State Changed** UnityEvent. Manual events hold their selected state until another event, Resume Automatic Music, or a real boss introduction. They are also available in the runtime component's context menu for testing. A future pre-spawn warning can call PlayBossApproaching, then ResumeAutomaticMusic when the boss spawns. Currently the automatic approach phase starts when a boss actually exists in the scene.
+
+Unassigned boss tracks fall back to Default Game. An unassigned Default Game means silence during normal play. Editing the Music Settings asset updates playback during Play and saves the settings for future runs.
+
 ## Start here: edit sounds before Play
 
 Choose **KRZ > Audio > Player Sounds** (or Enemy Sounds, Building Sounds, Food Sounds) from Unity's top menu. These ready-made templates live in **Assets/KRZ/Audio** and are already assigned on the Tuning asset. Select one, expand an action, and add clips from Assets/Sounds. There is no need to place anything in the scene. Press Play after configuring the template; the generated objects receive a copy automatically. All clip slots start empty for you to choose sounds.
@@ -65,3 +77,5 @@ public class CustomAttacker : MonoBehaviour
 ```
 
 Add new action identifiers at the end of the Sfx enum to preserve existing serialized values. For UnityEvents or animation events, call SoundPlayer.PlayAction with the exact enum name, such as EnemyAttack, and add the corresponding manual action row. Keep one row per action.
+
+The **KRZ > Audio > Check Boss Encounter (Play mode)** regression check requires a fresh Play session. It spawns a temporary stationary test boss at the edge, verifies unchanged gameplay speed and player invulnerability during the introduction, then moves that test boss into the camera to verify the fight-state transition and audio output. It removes its test boss afterward. Results are written to Temp/SoundPlayerValidation/boss-encounter-result.txt.
