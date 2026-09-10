@@ -96,7 +96,7 @@ public class EnemyType
     [Header("Special: missile volley")]
     public int volleyCount = 8;
     public float missileDamage = 12f;
-    public float missileSpeed = 14f;
+    public float missileSpeed = 11f;
 
     [Tooltip("How hard a missile can change direction. Low turns wide and is dodgeable; " +
              "high tracks you around corners.")]
