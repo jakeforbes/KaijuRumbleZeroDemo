@@ -16,6 +16,7 @@ public class GameBootstrap : MonoBehaviour
     OccluderFade fade;
     Rect playfieldBounds;
     Rect landBounds;
+    Sprite[] waterFrames;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
@@ -207,12 +208,8 @@ public class GameBootstrap : MonoBehaviour
                 float y = centre.y + (r - rows * 0.5f) * tileH * 0.5f;
 
                 bool even = (r + c) % 2 == 0;
-                Sprite sprite = a;
-
-                if (shallowA != null && !landBounds.Contains(new Vector2(x, y)))
-                    sprite = even ? shallowA : shallowB;
-                else
-                    sprite = even ? a : b;
+                bool water = shallowA != null && !landBounds.Contains(new Vector2(x, y));
+                Sprite sprite = water ? (even ? shallowA : shallowB) : (even ? a : b);
 
                 var go = new GameObject("t");
                 go.transform.SetParent(root, false);
@@ -220,6 +217,11 @@ public class GameBootstrap : MonoBehaviour
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = sprite;
                 sr.sortingOrder = -100;   // always behind everything that sorts by Y
+
+                // Shallows are the same lattice let half way through to the moving
+                // water underneath, so the coast is where the ripple starts showing
+                // rather than a ring of flat blue diamonds sitting on top of it.
+                if (water) sr.color = new Color(1f, 1f, 1f, tuning.shallowOpacity);
             }
     }
 
@@ -241,11 +243,14 @@ public class GameBootstrap : MonoBehaviour
 
         var seaGo = new GameObject("Ocean");
         seaGo.transform.position = landBounds.center;
-        var sea = seaGo.AddComponent<SpriteRenderer>();
-        sea.sprite = GreyboxArt.Solid(64, 64, new Color(0.05f, 0.13f, 0.22f), ppu);
-        sea.sortingOrder = -110;   // under the ground lattice, which draws at -100
-        seaGo.transform.localScale = new Vector3((landBounds.width + w * 2f) * ppu / 64f,
-                                                 (landBounds.height + w * 2f) * ppu / 64f, 1f);
+
+        waterFrames ??= WaterArt.Build(tuning.waterFrames, tuning.waterTilePx,
+                                       tuning.waterCells, tuning.waterChunkPx, ppu);
+
+        // One tiled renderer, sized to the whole sea. Under the ground lattice at -100.
+        WaterSurface.Attach(seaGo, waterFrames,
+                            new Vector2(landBounds.width + w * 2f, landBounds.height + w * 2f),
+                            tuning.deepWaterTint, -110, tuning.waterFps);
 
         var walls = new GameObject("Shore").transform;
         walls.position = Vector3.zero;

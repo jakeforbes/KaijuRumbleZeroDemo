@@ -131,9 +131,37 @@ public class Tuning : ScriptableObject
              "ocean would cost more objects than the city does.")]
     public float shallowBand = 7f;
 
-    [Tooltip("How far the flat deep water extends past the shore. Only has to reach " +
-             "beyond the far edge of the screen at maximum zoom.")]
+    [Tooltip("How far the deep water extends past the shore. Only has to reach beyond " +
+             "the far edge of the screen at maximum zoom.")]
     public float oceanWidth = 40f;
+
+    [Tooltip("Frames in the water loop. Every blob completes exactly one orbit across " +
+             "them, so the cycle closes seamlessly however many there are.")]
+    [Range(2, 24)] public int waterFrames = 8;
+
+    [Tooltip("Playback rate. Slow is the point — water that hurries reads as lava.")]
+    public float waterFps = 7f;
+
+    [Tooltip("Tile size in pixels. At 128 PPU, 256 makes the pattern repeat every two " +
+             "world units.")]
+    public int waterTilePx = 256;
+
+    [Tooltip("Blobs across the tile. Fewer and larger reads as open sea; more and " +
+             "smaller reads as chop.")]
+    [Range(3, 12)] public int waterCells = 6;
+
+    [Tooltip("Size of one drawn pixel, in texture pixels. This is the chunkiness: the " +
+             "pattern is generated at a quarter scale and point-upscaled, which is " +
+             "what keeps it pixel art rather than a soft gradient.")]
+    [Range(1, 8)] public int waterChunkPx = 4;
+
+    [Tooltip("Deep water tint over the generated tile, which is authored bright so it " +
+             "can be darkened here.")]
+    public Color deepWaterTint = new Color(0.42f, 0.58f, 0.78f);
+
+    [Tooltip("How solid the shallow lattice sits over the moving water. Below 1 the " +
+             "ripple shows through at the coast, which is where it should start.")]
+    [Range(0f, 1f)] public float shallowOpacity = 0.55f;
 
     [Header("Growth")]
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes.\n\n" +
