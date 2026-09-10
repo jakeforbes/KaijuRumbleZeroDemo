@@ -144,6 +144,25 @@ public class Tuning : ScriptableObject
     public int hamburgerPx = 96;
 
     [Header("City floor")]
+    [Tooltip("Lay the delivered slab tiles instead of the generated concrete quad. " +
+             "Off falls back to the flat ground, which is one object against roughly " +
+             "nine thousand — worth knowing if load time becomes the problem.")]
+    public bool useGroundArt = true;
+
+    [Tooltip("Pixels per unit for the slab tiles.\n\n" +
+             "173.5 is the narrowest tile's top diamond divided by two, deliberately " +
+             "rather than the average. Sized to the narrowest, every tile covers at " +
+             "least a full lattice cell and the widest overlap by a tenth of a unit — " +
+             "and overlap between opaque tiles is invisible, where a gap is a seam.")]
+    public float groundTilePpu = 173.5f;
+
+    [Tooltip("Where the tile's top surface centre sits up its canvas. The slabs are " +
+             "drawn with side walls below, so this is not the middle of the image.")]
+    public float groundTilePivotY = 0.5245f;
+
+    [Tooltip("Tint on the slab tiles. White leaves the artist's colour alone.")]
+    public Color groundArtTint = Color.white;
+
     [Tooltip("Paint roads, kerbs and lot markings on the ground.\n\n" +
              "Off, and deliberately. Every line on the floor competes with the things " +
              "that have to be read instantly — where an enemy is, where a gem landed, " +

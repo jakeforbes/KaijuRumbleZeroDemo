@@ -17,6 +17,7 @@ public class GameBootstrap : MonoBehaviour
     Rect playfieldBounds;
     Rect landBounds;
     Sprite[] waterFrames;
+    Sprite[] groundTiles;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
@@ -190,7 +191,12 @@ public class GameBootstrap : MonoBehaviour
 
         var root = new GameObject("Ground").transform;
 
-        if (!tuning.drawStreets)
+        // Delivered slab tiles, laid on the same lattice the greybox used. They are
+        // opaque and overlap slightly, so nothing shows through and there is no quad
+        // underneath to pay for.
+        if (tuning.useGroundArt) groundTiles = LoadGroundTiles();
+
+        if (!tuning.drawStreets && (groundTiles == null || groundTiles.Length == 0))
         {
             // Flat ground is one quad. With no seams, no markings and no kerbs there
             // is nothing for a lattice to express, and drawing thirteen thousand
@@ -217,8 +223,41 @@ public class GameBootstrap : MonoBehaviour
             lsr.size = new Vector2(landBounds.width, landBounds.height);
         }
 
+        // With slab art the whole land is tiled; without it, only the coast is, and
+        // the flat quad above covers the rest.
+        bool coastOnly = !tuning.drawStreets && (groundTiles == null || groundTiles.Length == 0);
+
         LayGround(root, landBounds.center, cols, rows,
-                  tileW, tileH, null, null, shallowA, shallowB, !tuning.drawStreets);
+                  tileW, tileH, null, null, shallowA, shallowB, coastOnly);
+    }
+
+    /// <summary>
+    /// The delivered slab tiles, sized so each one's top surface covers a lattice cell.
+    ///
+    /// A single pixels-per-unit for all twelve, taken from the narrowest tile rather
+    /// than the average: at that size every tile covers at least a full cell and the
+    /// wider ones overlap by about a tenth of a unit. Overlap between opaque tiles is
+    /// invisible — they sort by ground position like everything else, so the nearer
+    /// one simply wins — whereas a gap is a seam, and this is a floor.
+    /// </summary>
+    Sprite[] LoadGroundTiles()
+    {
+        var found = new System.Collections.Generic.List<Sprite>();
+        var pivot = new Vector2(0.5f, tuning.groundTilePivotY);
+
+        for (int i = 1; i <= 12; i++)
+        {
+            var tex = Resources.Load<Texture2D>($"Ground/ground_tile_{i:00}");
+            if (tex == null) continue;
+
+            var s = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), pivot,
+                                  Mathf.Max(1f, tuning.groundTilePpu), 0, SpriteMeshType.FullRect);
+            s.name = $"ground_tile_{i:00}";
+            found.Add(s);
+        }
+
+        if (found.Count == 0) Debug.LogWarning("KRZ: no ground tiles found, using the flat quad.");
+        return found.ToArray();
     }
 
     /// <summary>
@@ -247,9 +286,18 @@ public class GameBootstrap : MonoBehaviour
                 // only laid where it is doing something: softening the coastline.
                 if (waterOnly && !water) continue;
 
-                Sprite sprite = water ? (even ? shallowA : shallowB)
-                              : a != null ? (even ? a : b)
-                              : CityTile(x, y);
+                Sprite sprite;
+                if (water) sprite = even ? shallowA : shallowB;
+                else if (a != null) sprite = even ? a : b;
+                else if (groundTiles != null && groundTiles.Length > 0)
+                {
+                    // Hashed off the cell rather than rolled, so the floor is identical
+                    // every run and a tile never lands beside a copy of itself by luck
+                    // of the draw ordering.
+                    int h = Mathf.Abs(c * 73856093 ^ r * 19349663);
+                    sprite = groundTiles[h % groundTiles.Length];
+                }
+                else sprite = CityTile(x, y);
 
                 var go = new GameObject("t");
                 go.transform.SetParent(root, false);
@@ -262,6 +310,7 @@ public class GameBootstrap : MonoBehaviour
                 // water underneath, so the coast is where the ripple starts showing
                 // rather than a ring of flat blue diamonds sitting on top of it.
                 if (water) sr.color = new Color(1f, 1f, 1f, tuning.shallowOpacity);
+                else if (groundTiles != null && groundTiles.Length > 0) sr.color = tuning.groundArtTint;
             }
     }
 

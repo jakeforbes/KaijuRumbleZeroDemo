@@ -68,3 +68,6 @@ crashlytics-build.properties
 # Environment sprite pack: 87MB of building damage states
 /Assets/KRZ/Resources/Buildings/
 /Assets/KRZ/Resources/Ground/
+
+# Modular ground tile pack
+/Assets/KRZ/Resources/Ground/
