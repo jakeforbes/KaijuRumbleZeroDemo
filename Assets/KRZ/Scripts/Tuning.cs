@@ -905,12 +905,14 @@ public class Tuning : ScriptableObject
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6, foodScatter = 2.5f, weight = 15f,
                            artSprite = "Buildings/cantilever_1x1_low", artScale = 0.87f,
+                           artDestroyedSprite = "Buildings/ruin_1x1_a", artDestroyedScale = 0.52f,
                            colour = new Color(0.24f, 0.27f, 0.36f) },
 
         new BuildingType { name = "Cantilever 1x1 High", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 200, maxHeightPx = 280, hp = 30f,
                            foodDrops = 6, foodScatter = 2.5f, weight = 14f,
                            artSprite = "Buildings/cantilever_1x1_high", artScale = 0.72f,
+                           artDestroyedSprite = "Buildings/ruin_1x1_b", artDestroyedScale = 0.52f,
                            colour = new Color(0.27f, 0.30f, 0.39f) },
 
         // The base is the right size for a 1x2 and simply is not drawn in the middle
@@ -948,6 +950,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 22, foodScatter = 5.2f, weight = 5f,
                            artSprite = "Buildings/cantilever_1x2_low",
                            artScale = 1.60f, artPivotOffsetX = 4f,
+                           artDestroyedSprite = "Buildings/ruin_2x2", artDestroyedScale = 0.71f, artDestroyedOffsetX = 10f,
                            colour = new Color(0.20f, 0.29f, 0.37f) },
 
         new BuildingType { name = "Cantilever 2x2 High", sizeClass = 3, tilesX = 2, tilesY = 2,
@@ -955,6 +958,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 22, foodScatter = 5.2f, weight = 5f,
                            artSprite = "Buildings/cantilever_1x2_high",
                            artScale = 1.47f, artPivotOffsetX = 8f,
+                           artDestroyedSprite = "Buildings/ruin_1x2", artDestroyedScale = 0.84f, artDestroyedOffsetX = 54f,
                            colour = new Color(0.24f, 0.33f, 0.41f) },
 
         // Civilian 3x3 is gone — its art never sat on the grid at any scale. The two
@@ -966,6 +970,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 34, foodScatter = 7f, weight = 4f,
                            artSprite = "Buildings/cantilever_2x2_low",
                            artScale = 1.92f, artPivotOffsetX = 11f,
+                           artDestroyedSprite = "Buildings/ruin_2x2", artDestroyedScale = 1.06f, artDestroyedOffsetX = 10f,
                            colour = new Color(0.29f, 0.28f, 0.33f) },
 
         new BuildingType { name = "Cantilever 3x3 High", sizeClass = 4, tilesX = 3, tilesY = 3,
@@ -973,6 +978,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 34, foodScatter = 7f, weight = 4f,
                            artSprite = "Buildings/cantilever_2x2_high",
                            artScale = 1.58f, artPivotOffsetX = 5f,
+                           artDestroyedSprite = "Buildings/ruin_1x2", artDestroyedScale = 1.27f, artDestroyedOffsetX = 54f,
                            colour = new Color(0.33f, 0.32f, 0.37f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to

@@ -72,16 +72,25 @@ public static class BuildingArt
     /// All four states for one type in one rotation, any of which may be null. Index
     /// with the Pristine / Damaged1 / Damaged2 / Destroyed constants.
     /// </summary>
-    public static Sprite[] LoadStages(string basePath, int direction, int tilesX, int tilesY,
-                                      float ppu, float artScale, float offsetXPx, float offsetYPx)
+    public static Sprite[] LoadStages(BuildingType type, int direction, float ppu)
     {
         var stages = new Sprite[StageCount];
-        if (string.IsNullOrEmpty(basePath)) return stages;
+        if (type == null || string.IsNullOrEmpty(type.artSprite)) return stages;
 
         string dir = Directions[Mathf.Clamp(direction, 0, DirectionCount - 1)];
         for (int i = 0; i < StageCount; i++)
-            stages[i] = Load($"{basePath}_{Suffix[i]}_{dir}", tilesX, tilesY,
-                             ppu, artScale, offsetXPx, offsetYPx);
+            stages[i] = Load($"{type.artSprite}_{Suffix[i]}_{dir}", type.tilesX, type.tilesY,
+                             ppu, type.artScale, type.artPivotOffsetX, type.artPivotOffsetY);
+
+        // A shared ruin standing in for a final state that does not read as wreckage.
+        // Loaded by its own full path with its own scale, because one debris pile is
+        // reused across footprints and cannot inherit the building's numbers.
+        if (!string.IsNullOrEmpty(type.artDestroyedSprite))
+        {
+            var ruin = Load(type.artDestroyedSprite, type.tilesX, type.tilesY, ppu,
+                            type.artDestroyedScale, type.artDestroyedOffsetX, 0f);
+            if (ruin != null) stages[Destroyed] = ruin;
+        }
 
         return stages;
     }

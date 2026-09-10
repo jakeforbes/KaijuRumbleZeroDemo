@@ -126,6 +126,17 @@ public class BuildingType
              "it only hides the real fault.")]
     public float artPivotOffsetY;
 
+    [Tooltip("Optional replacement for the destroyed state only — a full Resources " +
+             "path, with no state or direction suffix. For buildings whose own final " +
+             "state does not read as wreckage.\n\n" +
+             "The generic ruins are shared across footprints, so this needs its own " +
+             "scale and offset rather than borrowing the building's: the same debris " +
+             "pile serves a 1x1 and a 3x3 at very different sizes.")]
+    public string artDestroyedSprite = "";
+
+    [Range(0.2f, 2.5f)] public float artDestroyedScale = 1f;
+    public float artDestroyedOffsetX;
+
     [Tooltip("How dark the sprite goes at the last damage step when only a pristine " +
              "render exists. Ignored once real damage states are delivered.")]
     [Range(0f, 1f)] public float damagedTint = 0.55f;

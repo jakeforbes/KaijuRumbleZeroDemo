@@ -458,8 +458,7 @@ public class GameBootstrap : MonoBehaviour
         foreach (var t in tuning.buildingTypes)
         {
             if (t == null) continue;
-            var probe = BuildingArt.LoadStages(t.artSprite, 0, t.tilesX, t.tilesY,
-                                               tuning.pixelsPerUnit, t.artScale, t.artPivotOffsetX, t.artPivotOffsetY);
+            var probe = BuildingArt.LoadStages(t, 0, tuning.pixelsPerUnit);
             if (probe[BuildingArt.Pristine] != null) found++;
             else missing.Add(string.IsNullOrEmpty(t.artSprite) ? $"{t.name} (no path set)" : t.artSprite);
         }
