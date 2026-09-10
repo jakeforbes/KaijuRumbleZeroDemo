@@ -117,9 +117,9 @@ public class EnemyType
              "one ignored Dropship cannot flood the arena.")]
     public int deployMaxAlive = 24;
 
-    [Tooltip("Collider width as a fraction of bodyPx. Greybox capsules fill their box, " .
-             "but delivered art is a figure inside a square canvas and is far narrower, " .
-             "so art types want a much smaller value. Err small: clipping reads better " .
+    [Tooltip("Collider width as a fraction of bodyPx. Greybox capsules fill their box, " +
+             "but delivered art is a figure inside a square canvas and is far narrower, " +
+             "so art types want a much smaller value. Err small: clipping reads better " +
              "than an invisible wall.")]
     [Range(0.1f, 1f)] public float footprintFraction = 0.8f;
 
