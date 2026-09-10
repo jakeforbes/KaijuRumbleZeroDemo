@@ -95,7 +95,13 @@ public class DebugHud : MonoBehaviour
             // modifier rather than another key, so the F-row stays learnable.
             bool brawler = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             if (kb.f11Key.wasPressedThisFrame)
-                GameBootstrap.Instance.SpawnOne(brawler ? "Bruiser" : heavy ? "Mech" : "Commander");
+            {
+                // Unmodified F11 spawns whoever is carrying power-ups right now, so
+                // the key keeps meaning "give me the prize target" as the run moves on.
+                var carrier = GameBootstrap.Instance.FindUpgradeCarrier();
+                GameBootstrap.Instance.SpawnOne(
+                    brawler ? "Bruiser" : heavy ? "Mech" : carrier != null ? carrier.name : "Commander");
+            }
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
             if (kb.f8Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Scavenger" : "Dropship");

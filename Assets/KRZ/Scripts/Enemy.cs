@@ -118,7 +118,11 @@ public class Enemy : Damageable
         if (type.electrified)
         {
             float drawn = (e.art != null ? type.artDisplayPx : type.bodyPx) / ppu;
-            ElectricFx.Attach(go, drawn, drawn * 0.30f, ppu, new Color(0.75f, 1f, 1f));
+
+            // Arcs take the unit's own tint pushed toward white, so an electrified
+            // enemy reads as that enemy overcharged rather than as a generic effect.
+            var arc = Color.Lerp(e.baseColour, Color.white, 0.6f);
+            ElectricFx.Attach(go, drawn, drawn * 0.30f, ppu, arc);
         }
 
         e.nextVolleyAt = Time.time + type.specialCooldown;

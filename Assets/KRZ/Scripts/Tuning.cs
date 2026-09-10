@@ -178,6 +178,33 @@ public class Tuning : ScriptableObject
                         hitFrames = 3, deathFrames = 4,
                         artDisplayPx = 256, footprintFraction = 0.75f },
 
+        // Elite Tank. Takes the Commander's job — the enemy worth stopping for —
+        // from size 3 onward, because by then a Commander dies in passing and a prize
+        // you collect without deciding to is not a prize.
+        //
+        // Class 2, so unlike the Commander it never becomes squishable. The power-up
+        // dispenser should stay something you have to actually kill for the whole run,
+        // rather than turning into something you absorb by walking through it.
+        //
+        // Electrified and gold so it is findable in a swarm. Everything about this
+        // unit is "the one to shoot"; if it does not read at a glance it has failed
+        // whatever its stats say.
+        new EnemyType { name = "Elite Tank", sizeClass = 2, hp = 200f, armour = 14f,
+                        contactDamage = 26f, moveSpeed = 1.5f, attackRange = 4.5f, ranged = true,
+                        attackCooldown = 2f, attackWindup = 0.5f,
+                        dropsUpgrade = true, foodDrops = 16, foodScatter = 3.5f,
+                        bodyPx = 150, electrified = true,
+                        colour = new Color(1f, 0.82f, 0.30f),
+                        artFolder = "GroundTank", artPrefix = "GroundTank",
+                        artPathFormat = "{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Drive", "AttackBlast", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 3, deathFrames = 4,
+                        artDisplayPx = 310, footprintFraction = 0.75f,
+                        artTint = new Color(1f, 0.84f, 0.42f) },
+
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
@@ -299,6 +326,18 @@ public class Tuning : ScriptableObject
     [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
     public int commanderPerMin = 25;
     public int commanderPerMax = 50;
+
+    [Header("Who carries the power-ups")]
+    [Tooltip("The enemy that leads a squad and leaves an upgrade, early on.")]
+    public string upgradeCarrierType = "Commander";
+
+    [Tooltip("Takes that job over once the player is big enough. A Commander stops " +
+             "being a decision worth making the moment you can kill one in passing, " +
+             "so the prize moves to something that still costs you a stop.")]
+    public string eliteCarrierType = "Elite Tank";
+
+    [Tooltip("Tier index at which the elite takes over, 0-based. 2 is size 3.")]
+    public int eliteCarrierFromTier = 2;
 
     [Header("The run")]
     [Tooltip("Free power-ups placed around the map at the start, evenly spaced.")]

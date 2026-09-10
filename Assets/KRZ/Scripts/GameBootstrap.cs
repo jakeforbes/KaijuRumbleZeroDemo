@@ -255,6 +255,26 @@ public class GameBootstrap : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Whichever enemy is currently the one worth stopping for. The Commander early,
+    /// the Elite Tank once the kaiju is big enough that a Commander dies in passing —
+    /// a prize you collect by walking over it has stopped being a decision.
+    ///
+    /// One lookup for both spawn paths, so the timeline and the debug swarm can never
+    /// disagree about who is carrying.
+    /// </summary>
+    public EnemyType FindUpgradeCarrier()
+    {
+        var progress = PlayerProgress.Instance;
+        if (progress != null && progress.Tier >= tuning.eliteCarrierFromTier)
+        {
+            var elite = FindType(tuning.eliteCarrierType);
+            if (elite != null) return elite;
+        }
+
+        return FindType(tuning.upgradeCarrierType);
+    }
+
     public bool TryFindBossSpawn(EnemyType type, out Vector3 position)
     {
         position = default;
@@ -486,7 +506,7 @@ public class GameBootstrap : MonoBehaviour
         }
 
         var type = tuning.enemyTypes[Mathf.Clamp(typeIndex, 0, tuning.enemyTypes.Length - 1)];
-        var commander = FindType("Commander");
+        var commander = FindUpgradeCarrier();
         bool rollCommanders = type != commander && commander != null;
         int spawned = 0;
 
