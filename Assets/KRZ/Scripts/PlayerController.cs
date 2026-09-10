@@ -23,6 +23,14 @@ public class PlayerController : MonoBehaviour
 
     public Vector2 Velocity => body.linearVelocity;
 
+    /// <summary>
+    /// Whether the player is asking to move, as opposed to being shoved. Animation
+    /// state reads this rather than rigidbody velocity: a crowd of enemies pushing
+    /// against you produces velocity you did not ask for, which flickered the walk
+    /// and idle loops against each other and restarted them every frame.
+    /// </summary>
+    public bool IsMoving => desired.sqrMagnitude > 0.0025f;
+
     /// <summary>Stick movement below this is treated as drift, not intent.</summary>
     const float DeadZone = 0.2f;
 

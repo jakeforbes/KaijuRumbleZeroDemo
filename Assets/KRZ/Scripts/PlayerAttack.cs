@@ -39,7 +39,10 @@ public class PlayerAttack : MonoBehaviour
         {
             pendingHits--;
             nextHitAt = Time.time + tuning.swipeBurstInterval;
-            Swipe();
+            // Later hits of a burst deal damage but do not restart the animation:
+            // at 0.13s apart they retriggered it faster than it could play, so the
+            // swing never got past its opening frames.
+            Swipe(playAnimation: false);
         }
 
         CooldownRemaining -= Time.deltaTime;
@@ -48,16 +51,16 @@ public class PlayerAttack : MonoBehaviour
         var up = PlayerUpgrades.Instance;
         CooldownRemaining = tuning.swipeCooldown * (up != null ? up.SwipeCooldownMul : 1f);
 
-        Swipe();
+        Swipe(playAnimation: true);
         pendingHits = up != null ? up.SwipeExtraHits : 0;
         nextHitAt = Time.time + tuning.swipeBurstInterval;
     }
 
-    void Swipe()
+    void Swipe(bool playAnimation)
     {
         LastSwipeAt = Time.time;
         AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f, owner: gameObject);
-        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
+        if (playAnimation && UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
 
         var upgrades = PlayerUpgrades.Instance;
         float range = tuning.swipeRange * player.Scale *

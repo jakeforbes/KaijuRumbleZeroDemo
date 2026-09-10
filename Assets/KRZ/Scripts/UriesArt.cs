@@ -97,16 +97,24 @@ public class UriesArt : MonoBehaviour
 
         if (oneShot && index >= frames.Length)
         {
+            // Hand back to whichever loop is actually correct now, rather than always
+            // idle and then switching to walk on the same frame — two resets in one
+            // frame showed up as a stutter at the end of every swipe.
             oneShot = false;
-            current = Clip.Idle;
+            current = player.IsMoving ? Clip.Walk : Clip.Idle;
             clipStartedAt = Time.time;
             index = 0;
+
+            frames = Load(level, current, DirFolder[facing]);
+            if (frames == null || frames.Length == 0) return;
         }
 
         if (!oneShot)
         {
-            // Idle and walk loop, chosen by whether the kaiju is actually moving.
-            var wanted = player.Velocity.sqrMagnitude > 0.4f ? Clip.Walk : Clip.Idle;
+            // Driven by input intent, not velocity. Being jostled by a crowd produced
+            // velocity the player never asked for, oscillating across the threshold and
+            // resetting the loop to frame 0 every time it crossed.
+            var wanted = player.IsMoving ? Clip.Walk : Clip.Idle;
             if (wanted != current)
             {
                 current = wanted;
