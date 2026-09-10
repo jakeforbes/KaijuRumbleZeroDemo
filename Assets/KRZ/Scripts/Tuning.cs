@@ -15,7 +15,7 @@ public class Tuning : ScriptableObject
     public SoundPlayer foodSounds;
 
     [Header("Movement")]
-    public float moveSpeed = 3.5f;
+    public float moveSpeed = 2.6f;
     public float acceleration = 70f;
     public float deceleration = 90f;
 
@@ -34,7 +34,7 @@ public class Tuning : ScriptableObject
 
     [Tooltip("Seconds for the camera to catch up. This is the only source of trailing — " +
              "higher is looser and calmer, lower is tighter and busier.")]
-    public float followLag = 0.28f;
+    public float followLag = 0.34f;
 
     [Tooltip("Hard cap on how far from centre the player can ever get, as a fraction of " +
              "the half-screen. Smoothing alone lets a fast kaiju drift further the faster " +
@@ -112,7 +112,7 @@ public class Tuning : ScriptableObject
     public EnemyType[] enemyTypes =
     {
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
-                        contactDamage = 6f,  moveSpeed = 1.28f, attackRange = 0.9f,
+                        contactDamage = 6f,  moveSpeed = 0.96f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
@@ -121,7 +121,7 @@ public class Tuning : ScriptableObject
         // outrun. It exists because Grunt to Tank was a cliff: 5x health, 3x damage
         // and armour all at once.
         new EnemyType { name = "Trooper", sizeClass = 0, hp = 24f, armour = 0f,
-                        contactDamage = 10f, moveSpeed = 1.28f,
+                        contactDamage = 10f, moveSpeed = 0.96f,
                         attackRange = 3f, ranged = true,
                         attackCooldown = 1.6f, attackWindup = 0.45f,
                         foodDrops = 3, foodScatter = 1.6f,
@@ -134,17 +134,17 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Scavenger", sizeClass = 0, hp = 36f, armour = 0f,
                         contactDamage = 0f, attacks = false,
                         movement = MovementMode.Flee, wanderRate = 3.2f, fleeRadius = 10f,
-                        moveSpeed = 3.2f, attackRange = 0f,
+                        moveSpeed = 2.4f, attackRange = 0f,
                         foodDrops = 26, foodScatter = 9f,
                         bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
 
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
-                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
+                        contactDamage = 18f, moveSpeed = 1.35f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
                         bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
-                        contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
+                        contactDamage = 26f, moveSpeed = 1.95f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
@@ -157,7 +157,7 @@ public class Tuning : ScriptableObject
         // by choice instead of by damage.
         new EnemyType { name = "Dropship", sizeClass = 1, hp = 85f, armour = 2f,
                         contactDamage = 0f, attacks = false,
-                        moveSpeed = 2.4f, attackRange = 6f,
+                        moveSpeed = 1.8f, attackRange = 6f,
                         special = SpecialAction.DeployTroops,
                         specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
                         deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
@@ -168,7 +168,7 @@ public class Tuning : ScriptableObject
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
         // Ranged, so it stays dangerous even though you outrun it five to one.
         new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
-                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f, ranged = true,
+                        contactDamage = 12f, moveSpeed = 0.96f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
                         foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
                         bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
@@ -177,7 +177,7 @@ public class Tuning : ScriptableObject
         // one thing in the game you can never walk over. Armour is set so the swipe
         // still contributes but the Blast is what actually fells it.
         new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
-                        contactDamage = 45f, moveSpeed = 2.2f, attackRange = 3f,
+                        contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
                         foodDrops = 0, foodScatter = 4f,
                         bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
@@ -307,8 +307,8 @@ public class Tuning : ScriptableObject
     public float playerMass = 25f;
 
     [Header("Swipe — the auto attack")]
-    public float swipeDamage = 10f;
-    public float swipeCooldown = 2f;
+    public float swipeDamage = 13f;
+    public float swipeCooldown = 1.3f;
 
     [Tooltip("Reach in world units at size 1, measured from the kaiju's edge outward. " +
              "Deliberately short: melee should mean getting close, with reach coming " +
