@@ -56,8 +56,9 @@ public class Tuning : ScriptableObject
              "Roughly geometric rather than arithmetic: income accelerates hard as you " +
              "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
              "so a flat +50 per gate meant later tiers arrived faster than earlier ones. " +
-             "Pulled back from 75/200/500/1150, which over-corrected into a grind.")]
-    public float[] foodPerTier = { 75f, 170f, 340f, 680f };
+             "Size and power are separate curves: if the run feels underpowered, that is " +
+             "power-up frequency (Lab weights) rather than these gates.")]
+    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length.")]
