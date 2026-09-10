@@ -58,3 +58,6 @@ crashlytics-build.properties
 
 # Mech art package: 29MB, gitignored alongside the Uries frames
 /Assets/KRZ/Resources/Mech/
+
+# FlyingTank art package
+/Assets/KRZ/Resources/FlyingTank/

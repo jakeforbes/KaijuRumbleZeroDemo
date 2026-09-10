@@ -111,10 +111,23 @@ public class Tuning : ScriptableObject
     [Header("Enemies")]
     public EnemyType[] enemyTypes =
     {
+        // Grunt, Trooper, Commander and Dropship all share the FlyingTank model,
+        // separated by size and tint. One delivery covering four roles was a
+        // deliberate trade against the clock — they read apart because their
+        // silhouette scale and colour differ, not because they are different art.
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
                         contactDamage = 6f,  moveSpeed = 0.96f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
-                        bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
+                        bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 84, footprintFraction = 0.4f,
+                        artTint = new Color(1f, 0.72f, 0.62f) },
 
         // Trooper: the missing rung. Twice a Grunt's health and a short gun, but the
         // same class and speed — so it is still squishable at size 3 and still
@@ -125,7 +138,16 @@ public class Tuning : ScriptableObject
                         attackRange = 3f, ranged = true,
                         attackCooldown = 1.6f, attackWindup = 0.45f,
                         foodDrops = 3, foodScatter = 1.6f,
-                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f) },
+                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 100, footprintFraction = 0.4f,
+                        artTint = new Color(1f, 0.52f, 0.60f) },
 
         // Scavenger. Grunt-sized, three times the health, fast and skittish, and it
         // never fights back. It is a chase: catching one pays out a huge scattered
@@ -162,7 +184,16 @@ public class Tuning : ScriptableObject
                         specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
                         deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
                         foodDrops = 7, foodScatter = 2.5f,
-                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f) },
+                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 210, footprintFraction = 0.34f,
+                        artTint = new Color(0.62f, 0.88f, 1f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
@@ -171,7 +202,16 @@ public class Tuning : ScriptableObject
                         contactDamage = 12f, moveSpeed = 0.96f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
                         foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
-                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
+                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 104, footprintFraction = 0.4f,
+                        artTint = new Color(0.78f, 0.55f, 1f) },
 
         // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
         // one thing in the game you can never walk over. Armour is set so the swipe

@@ -139,8 +139,30 @@ public class EnemyType
              "them down the same way the kaiju's canvas scale does.")]
     public int artDisplayPx = 192;
 
-    [Tooltip("Uries ships south/southeast; the Mech ships s/se. Off means short names.")]
-    public bool artLongDirectionNames;
+    [Tooltip("How this package names directions. Uries uses south/southeast, the Mech " +
+             "s/se, the FlyingTank S/SE.")]
+    public DirectionStyle artDirectionStyle = DirectionStyle.ShortLower;
+
+    [Tooltip("Where the frames sit. Tokens: {root} {prefix} {clip} {dir} {frame}.\n" +
+             "Mech:       {root}/{clip}/{prefix}_{clip}_{dir}_{frame}\n" +
+             "FlyingTank: {root}/{dir}/{prefix}_{dir}_{clip}_{frame}")]
+    public string artPathFormat = "{root}/{clip}/{prefix}_{clip}_{dir}_{frame}";
+
+    [Tooltip("Clip folder/file names in order: idle, walk, attack, hit, death. " +
+             "Packages disagree — one says walk, another says Move.")]
+    public string[] artClipNames = { "idle", "walk", "attack", "hit", "destruction" };
+
+    [Tooltip("Five rendered directions with the rest mirrored, or all eight rendered. " +
+             "The FlyingTank ships all eight, so nothing is flipped.")]
+    public bool artMirrored = true;
+
+    [Tooltip("Source frame size in pixels. Display scale is artDisplayPx / this, so a " +
+             "192px package and a 512px one can sit side by side.")]
+    public int artFrameSize = 512;
+
+    [Tooltip("Multiplied over the sprite. One model can serve several roles by being " +
+             "recoloured — keep tints pale or the art turns to mud.")]
+    public Color artTint = Color.white;
 
     [Tooltip("Digits in the frame number, and what the first frame is called. " +
              "Uries uses 2 digits from 00, the Mech 4 digits from 0001.")]

@@ -16,7 +16,7 @@ public class EnemyArt : MonoBehaviour
 
     public bool Available { get; private set; }
 
-    string current = "idle";
+    int current = Idle;
     float clipStartedAt;
     bool oneShot;
     int facing;
@@ -33,25 +33,42 @@ public class EnemyArt : MonoBehaviour
         type = enemyType;
 
         Available = type != null && !string.IsNullOrEmpty(type.artFolder) &&
-                    Frames("idle", 0) != null;
+                    Frames(Idle, 0) != null;
         return Available;
     }
 
-    Sprite[] Frames(string clip, int face) =>
-        DirectionalArt.Load(type.artFolder, type.artPrefix, clip, face,
-                            FrameCount(clip), type.artLongDirectionNames,
-                            type.artFrameDigits, type.artFirstFrame);
+    /// <summary>Clip slots, in the order artClipNames lists them.</summary>
+    public const int Idle = 0, Walk = 1, Attack = 2, Hit = 3, Death = 4;
 
-    int FrameCount(string clip) => clip switch
+    ArtConfig Config => new()
     {
-        "walk" => type.walkFrames,
-        "attack" => type.attackFrames,
-        "hit" => type.hitFrames,
-        "destruction" => type.deathFrames,
+        folder = type.artFolder,
+        prefix = type.artPrefix,
+        pathFormat = type.artPathFormat,
+        frameDigits = type.artFrameDigits,
+        firstFrame = type.artFirstFrame,
+        style = type.artDirectionStyle,
+        mirrored = type.artMirrored,
+    };
+
+    string ClipName(int slot) =>
+        type.artClipNames != null && slot < type.artClipNames.Length
+            ? type.artClipNames[slot]
+            : "idle";
+
+    Sprite[] Frames(int slot, int face) =>
+        DirectionalArt.Load(Config, ClipName(slot), face, FrameCount(slot));
+
+    int FrameCount(int slot) => slot switch
+    {
+        Walk => type.walkFrames,
+        Attack => type.attackFrames,
+        Hit => type.hitFrames,
+        Death => type.deathFrames,
         _ => type.idleFrames,
     };
 
-    public void Play(string clip, bool once)
+    public void Play(int clip, bool once)
     {
         if (!Available) return;
         current = clip;
@@ -78,11 +95,11 @@ public class EnemyArt : MonoBehaviour
             // Death holds its final pose; other one-shots hand back to a loop.
             if (index >= frames.Length)
             {
-                if (current == "destruction") index = frames.Length - 1;
+                if (current == Death) index = frames.Length - 1;
                 else
                 {
                     oneShot = false;
-                    current = owner.Velocity.sqrMagnitude > 0.05f ? "walk" : "idle";
+                    current = owner.Velocity.sqrMagnitude > 0.05f ? Walk : Idle;
                     clipStartedAt = Time.time;
                     index = 0;
                     frames = Frames(current, facing);
@@ -92,7 +109,7 @@ public class EnemyArt : MonoBehaviour
         }
         else
         {
-            var wanted = owner.Velocity.sqrMagnitude > 0.05f ? "walk" : "idle";
+            var wanted = owner.Velocity.sqrMagnitude > 0.05f ? Walk : Idle;
             if (wanted != current)
             {
                 current = wanted;
@@ -105,7 +122,7 @@ public class EnemyArt : MonoBehaviour
         }
 
         target.sprite = frames[Mathf.Clamp(index, 0, frames.Length - 1)];
-        target.flipX = DirectionalArt.Mirrored[facing];
+        target.flipX = DirectionalArt.IsFlipped(Config, facing);
     }
 
     static int FacingFrom(Vector2 v)
