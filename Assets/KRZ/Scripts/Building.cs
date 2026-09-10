@@ -63,7 +63,11 @@ public class Building : Damageable
 
         // The art is authored for the type's declared footprint, so it is loaded
         // against those tiles rather than the swapped ones the collider uses.
-        stages = BuildingArt.LoadStages(type.artSprite, direction, type.tilesX, type.tilesY, ppu);
+        // Scale rides on pixels-per-unit rather than the transform: a sprite built at
+        // a lower PPU simply draws bigger, about its own pivot, and the collider on
+        // this same object is left exactly where the tile grid put it.
+        float artPpu = ppu / Mathf.Max(0.05f, type.artScale);
+        stages = BuildingArt.LoadStages(type.artSprite, direction, type.tilesX, type.tilesY, artPpu);
         usingArt = stages[BuildingArt.Pristine] != null;
         if (usingArt) ApplyStage();
 

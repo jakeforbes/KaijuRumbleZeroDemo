@@ -817,7 +817,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 44f,
                            artSprite = "Buildings/civilian_1x1",
-                           artDirections = 5,
+                           artDirections = 1, artScale = 0.72f,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
         // Non-square types are declared in the orientation the art is authored in.
@@ -827,19 +827,21 @@ public class Tuning : ScriptableObject
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
                            foodDrops = 9,  foodScatter = 3.2f, weight = 34f,
                            artSprite = "Buildings/civilian_1x2",
+                           artDirections = 1, artScale = 0.86f,
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
         new BuildingType { name = "Civilian 1x3", sizeClass = 2, tilesX = 1, tilesY = 3,
                            minHeightPx = 400, maxHeightPx = 560, hp = 47f,
                            foodDrops = 14, foodScatter = 4.2f, weight = 20f,
                            artSprite = "Buildings/civilian_1x3",
+                           artDirections = 1, artScale = 0.79f,
                            colour = new Color(0.29f, 0.27f, 0.37f) },
 
         new BuildingType { name = "Civilian 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 15f,
                            artSprite = "Buildings/civilian_2x2",
-                           artDirections = 5,
+                           artDirections = 1, artScale = 0.85f,
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
         // The largest civilian, and the only one that is a genuine size-5 job outside
@@ -864,7 +866,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            artSprite = "Buildings/laboratory_2x2",
-                           artDirections = 5,
+                           artDirections = 1, artScale = 0.82f,
                            // Finer, faster, wider chips than the rest of the city —
                            // Samson's calibration against the delivered lab art, moved
                            // here from the Tuning asset so it is not a stray override.
@@ -883,7 +885,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
                            artSprite = "Buildings/reactor_1x1",
-                           artDirections = 5,
+                           artDirections = 1, artScale = 0.71f,
                            colour = new Color(0.92f, 0.62f, 0.20f) },
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
@@ -910,7 +912,7 @@ public class Tuning : ScriptableObject
                            weight = 0f, isReactor = true, unique = true,
                            pulseDamage = 300f, pulseRadius = 40f,
                            artSprite = "Buildings/reactor_3x3",
-                           artDirections = 5,
+                           artDirections = 1, artScale = 0.89f,
                            colour = new Color(1f, 0.30f, 0.22f) },
     };
 

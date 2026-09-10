@@ -103,6 +103,15 @@ public class BuildingType
              "flip already gives those two orientations.")]
     [Range(1, 5)] public int artDirections = 1;
 
+    [Tooltip("Uniform scale on the delivered sprite, to sit its base plate on the " +
+             "collider's tile diamond. The art is drawn with a wider ground plate than " +
+             "the tile maths gives — by a different amount per building, so this is one " +
+             "number each rather than a single projection fix.\n\n" +
+             "Applied through the sprite's pixels-per-unit, so it scales about the " +
+             "pivot and never touches the collider. Check it with the F12 overlay: the " +
+             "drawn base should sit just outside the diamond, never inside it.")]
+    [Range(0.4f, 1.6f)] public float artScale = 1f;
+
     [Tooltip("How dark the sprite goes at the last damage step when only a pristine " +
              "render exists. Ignored once real damage states are delivered.")]
     [Range(0f, 1f)] public float damagedTint = 0.55f;
