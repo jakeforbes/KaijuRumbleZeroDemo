@@ -34,6 +34,9 @@ public class PlayerController : MonoBehaviour
     /// <summary>Stick movement below this is treated as drift, not intent.</summary>
     const float DeadZone = 0.2f;
 
+    /// <summary>Extra degrees past a facing boundary before the sprite direction changes.</summary>
+    const float FacingHysteresis = 8f;
+
     static readonly string[] FacingNames = { "s", "se", "e", "ne", "n", "nw", "w", "sw" };
     public string FacingName => FacingNames[Facing];
 
@@ -65,7 +68,7 @@ public class PlayerController : MonoBehaviour
 
         if (raw.sqrMagnitude > 0.04f)
         {
-            Facing = FacingFromInput(raw);
+            Facing = FacingFromInput(raw, Facing);
             AimDir = desired.normalized;
         }
     }
@@ -125,11 +128,24 @@ public class PlayerController : MonoBehaviour
         return pad.sqrMagnitude > keys.sqrMagnitude ? pad : keys;
     }
 
-    /// <summary>Snaps any input direction to one of eight facings for sprite selection.</summary>
-    static int FacingFromInput(Vector2 v)
+    /// <summary>
+    /// Snaps any input direction to one of eight facings, with hysteresis: the aim has
+    /// to clear the boundary by a margin before the facing changes.
+    ///
+    /// Without it, an input sitting on a boundary — a diagonal on the keys, or a stick
+    /// wavering — alternates between two adjacent renders every frame. Three of the
+    /// eight facings are horizontal mirrors, so that alternation also flips the sprite,
+    /// which reads as the character rocking violently in place.
+    /// </summary>
+    static int FacingFromInput(Vector2 v, int currentFacing)
     {
         float deg = Mathf.Atan2(v.x, -v.y) * Mathf.Rad2Deg;   // 0 = south, clockwise
         if (deg < 0f) deg += 360f;
-        return Mathf.RoundToInt(deg / 45f) % 8;
+
+        int candidate = Mathf.RoundToInt(deg / 45f) % 8;
+        if (candidate == currentFacing) return currentFacing;
+
+        float offCentre = Mathf.Abs(Mathf.DeltaAngle(deg, currentFacing * 45f));
+        return offCentre > 22.5f + FacingHysteresis ? candidate : currentFacing;
     }
 }

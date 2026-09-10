@@ -60,7 +60,6 @@ public class PlayerAttack : MonoBehaviour
     {
         LastSwipeAt = Time.time;
         AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f, owner: gameObject);
-        if (playAnimation && UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
 
         var upgrades = PlayerUpgrades.Instance;
         float range = tuning.swipeRange * player.Scale *
@@ -107,6 +106,13 @@ public class PlayerAttack : MonoBehaviour
             else if (target is Building) hitBuilding = true;
             else hitOther = true;
         }
+
+        // The swing animation only plays when the swipe actually connects. The attack
+        // is automatic and fires on a cooldown forever, so animating every one meant a
+        // kaiju standing alone in an empty street swiped at nothing every two seconds,
+        // interrupting idle over and over.
+        if (playAnimation && (hitEnemy || hitBuilding || hitOther) && UriesArt.Instance != null)
+            UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
 
         // Once per target kind per swipe, even when several targets are hit.
         // A mixed swipe plays both impact sounds, using the player's size settings.
