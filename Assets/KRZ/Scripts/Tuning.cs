@@ -554,7 +554,7 @@ public class Tuning : ScriptableObject
         // after — a rhythm you can learn rather than a roll you cannot read.
         new WaveEntry { label = "infantry", startTime = 25f, endTime = 155f, interval = 10f,
                         enemyType = "Grunt", count = 9, shape = SpawnShape.Clump,
-                        commanderEvery = 3,
+                        commanderEvery = 2,
                         veteranType = "Trooper", veteranFromFire = 2,
                         veteranStartFraction = 0.3f, veteranRampPerFire = 0.07f },
 
@@ -564,21 +564,33 @@ public class Tuning : ScriptableObject
                         enemyType = "Scavenger", count = 2, shape = SpawnShape.Ring },
 
         // First Dropship: a grunt source you can switch off by killing it.
-        new WaveEntry { label = "dropship", startTime = 45f,
+        // Dropships were three one-shots with fifty-second holes between them, which
+        // is most of why the middle of the run went quiet. Sustained now, so there is
+        // always one either arriving or being dealt with.
+        new WaveEntry { label = "dropships", startTime = 40f, endTime = 155f, interval = 20f,
                         enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
 
         // Armour arrives. The swipe stops being enough and the Blast earns its place.
-        new WaveEntry { label = "armour", startTime = 60f,
+        new WaveEntry { label = "armour", startTime = 55f,
                         enemyType = "Tank", count = 3, shape = SpawnShape.Ring },
 
-        new WaveEntry { label = "armour", startTime = 65f, endTime = 155f, interval = 25f,
-                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump },
-
-        new WaveEntry { label = "dropships", startTime = 80f,
-                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
+        // Armour runs all the way to the boss rather than thinning out once mechs
+        // arrive, and at 16 seconds instead of 25. Every second clump is led by
+        // whoever is carrying power-ups, which from size 3 is the Elite Tank — so the
+        // prize target keeps turning up through the emptiest stretch of the run
+        // instead of only ever riding with infantry.
+        new WaveEntry { label = "armour", startTime = 60f, endTime = 155f, interval = 16f,
+                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump,
+                        commanderEvery = 2 },
 
         // Mechs: the volley threat, and the first thing that punishes standing still.
-        new WaveEntry { label = "mechs", startTime = 90f, endTime = 155f, interval = 35f,
+        //
+        // Thirty seconds earlier, as asked, and this is the sharpest change in the
+        // pass. A Mech at 1:00 meets a size-2 or size-3 kaiju where it used to meet a
+        // size-4 — 140 health behind 12 armour, against a swipe that has not grown
+        // much yet. If the middle of the run goes from slow to punishing, this line
+        // is the reason before any of the others.
+        new WaveEntry { label = "mechs", startTime = 60f, endTime = 155f, interval = 30f,
                         enemyType = "Mech", count = 1, shape = SpawnShape.Clump },
 
         // Late push. Ahead means it lands in front of wherever you are running.
