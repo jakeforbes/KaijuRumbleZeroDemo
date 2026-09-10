@@ -1,5 +1,13 @@
 using UnityEngine;
 
+/// <summary>Periodic behaviours an enemy can have on top of its basic attack.</summary>
+public enum SpecialAction
+{
+    None,
+    MissileVolley,
+    DeployTroops,
+}
+
 /// <summary>
 /// One enemy species. sizeClass drives squishing: once your size exceeds it, you
 /// kill this thing by walking over it. That threshold is the payoff for growing —
@@ -46,19 +54,25 @@ public class EnemyType
              "rather than walk away from it.")]
     public bool dropsUpgrade;
 
-    [Header("Missile volley")]
-    [Tooltip("Periodically stops, telegraphs, then fires a cluster of homing missiles.")]
-    public bool volley;
+    [Tooltip("Whether it attacks at all. A Dropship keeps its distance and deploys " +
+             "instead of ever striking.")]
+    public bool attacks = true;
 
-    public float volleyCooldown = 5f;
+    [Header("Special action")]
+    [Tooltip("A periodic behaviour that plants the enemy, telegraphs, then fires. One " +
+             "mechanism for every special so each new one is data rather than code.")]
+    public SpecialAction special = SpecialAction.None;
 
-    [Tooltip("How long it stands still before firing. This is the tell — long enough " +
-             "to see it coming and break line of sight or close the distance.")]
-    public float volleyWindup = 1f;
+    public float specialCooldown = 5f;
 
-    [Tooltip("Will not fire from further than this, so off-screen enemies stay quiet.")]
-    public float volleyRange = 18f;
+    [Tooltip("How long it stands still first. This is the tell — long enough to see it " +
+             "coming and break away or close the distance.")]
+    public float specialWindup = 1f;
 
+    [Tooltip("Will not trigger from further than this, so off-screen enemies stay quiet.")]
+    public float specialRange = 18f;
+
+    [Header("Special: missile volley")]
     public int volleyCount = 8;
     public float missileDamage = 12f;
     public float missileSpeed = 14f;
@@ -69,8 +83,48 @@ public class EnemyType
 
     public float missileLife = 4f;
 
-    [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju.")]
+    [Header("Special: deploy troops")]
+    [Tooltip("Name of the enemy type to deploy, matched against Tuning.enemyTypes.")]
+    public string deployType = "Grunt";
+
+    public int deployCount = 4;
+
+    [Tooltip("How far from the dropship they land.")]
+    public float deploySpread = 2.5f;
+
+    [Tooltip("Stops deploying once this many of its own troops are already alive, so " +
+             "one ignored Dropship cannot flood the arena.")]
+    public int deployMaxAlive = 24;
+
+    [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju. " +
+             "With delivered art this is only the collider and shadow size — the " +
+             "sprite's own scale comes from artDisplayPx.")]
     public int bodyPx = 64;
+
+    [Header("Delivered art (blank = greybox)")]
+    [Tooltip("Resources folder holding the frames, e.g. \"Mech\".")]
+    public string artFolder = "";
+
+    [Tooltip("Filename stem, e.g. \"mech\" for mech_walk_se_0001.png.")]
+    public string artPrefix = "";
+
+    [Tooltip("On-screen height in pixels. Frames are authored at 512, so this scales " +
+             "them down the same way the kaiju's canvas scale does.")]
+    public int artDisplayPx = 192;
+
+    [Tooltip("Uries ships south/southeast; the Mech ships s/se. Off means short names.")]
+    public bool artLongDirectionNames;
+
+    [Tooltip("Digits in the frame number, and what the first frame is called. " +
+             "Uries uses 2 digits from 00, the Mech 4 digits from 0001.")]
+    public int artFrameDigits = 4;
+    public int artFirstFrame = 1;
+
+    public int idleFrames = 4;
+    public int walkFrames = 8;
+    public int attackFrames = 6;
+    public int hitFrames = 3;
+    public int deathFrames = 5;
 
     public Color colour = new Color(0.85f, 0.45f, 0.35f);
 }

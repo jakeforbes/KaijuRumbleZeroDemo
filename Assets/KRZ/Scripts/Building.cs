@@ -6,7 +6,7 @@ using UnityEngine;
 /// a couple of seconds, one above is a real fight, two above is a wall you come back
 /// to. Three visual states — pristine, damaged, rubble — with rubble walkable.
 /// </summary>
-[SoundActions(Sfx.BuildingHit, Sfx.BuildingDestroyed)]
+[SoundActions(Sfx.BuildingHit, Sfx.BuildingDestroyed, Sfx.ReactorPulse)]
 public class Building : Damageable
 {
     /// <summary>Above the ground tiles at -100, below everything that sorts by Y at 0.</summary>
@@ -125,6 +125,31 @@ public class Building : Damageable
         }
     }
 
+    /// <summary>
+    /// Reactor detonation. Enemies only — buildings and the player are untouched, so
+    /// felling one is always a reward and never a risk. Iterated backwards because
+    /// a kill removes the enemy from the list mid-loop.
+    /// </summary>
+    void Pulse()
+    {
+        AudioEvents.Play(Sfx.ReactorPulse, transform.position, owner: gameObject);
+        HitFx.Burst(transform.position, new Color(1f, 0.85f, 0.35f),
+                    type.pulseRadius * 0.85f, ppu, 0.45f);
+
+        if (PlayerProgress.Instance != null)
+            PlayerProgress.Instance.ShakeExternal(tuning.tierUpShake);
+
+        for (int i = Enemy.All.Count - 1; i >= 0; i--)
+        {
+            var e = Enemy.All[i];
+            if (e == null || !e.IsAlive) continue;
+
+            Vector2 d = (Vector2)e.transform.position - (Vector2)transform.position;
+            float flat = new Vector2(d.x, d.y / tuning.isoSquash).magnitude;
+            if (flat <= type.pulseRadius) e.TakeDamage(type.pulseDamage, transform.position);
+        }
+    }
+
     void Collapse()
     {
         hp = 0f;
@@ -147,5 +172,6 @@ public class Building : Damageable
 
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, ppu);
         DropUpgrades();
+        if (type.pulseDamage > 0f) Pulse();
     }
 }

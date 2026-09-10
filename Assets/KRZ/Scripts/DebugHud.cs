@@ -95,6 +95,15 @@ public class DebugHud : MonoBehaviour
             if (kb.f11Key.wasPressedThisFrame)
                 GameBootstrap.Instance.SpawnOne(heavy ? "Mech" : "Commander");
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
+            if (kb.f8Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Dropship");
+        }
+
+        // Timeline scrub. Testing the boss should not require playing three minutes.
+        var wd = WaveDirector.Instance;
+        if (wd != null)
+        {
+            if (kb.periodKey.wasPressedThisFrame) wd.Skip(30f);
+            if (kb.commaKey.wasPressedThisFrame) wd.Skip(-15f);
         }
 
         if (CameraRig.IsBossIntroductionPlaying) return;
@@ -127,9 +136,11 @@ public class DebugHud : MonoBehaviour
             $"/{(PlayerProgress.Instance != null ? PlayerProgress.Instance.MaxHp : 0f):0}" +
             $"   food  {(PlayerProgress.Instance != null ? PlayerProgress.Instance.FoodTotal : 0f):0} total\n" +
             $"scale  {player.Scale:0.00}×   zoom  {(cam != null ? cam.orthographicSize : 0f):0.00}\n" +
-            $"enemies  {Enemy.All.Count}{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
+            $"enemies  {Enemy.All.Count} / {tuning.maxEnemiesAlive}" +
+            $"{(PlayerProgress.Instance != null && PlayerProgress.Instance.godMode ? "   <b>GOD</b>" : "")}\n" +
+            $"run  {RunClock()}   wave  {(WaveDirector.Instance != null ? WaveDirector.Instance.CurrentLabel : "-")}\n" +
             $"\n<b>F1</b> hud   <b>F2/F3</b> size ±   <b>F4</b> swarm (+shift heavy)   <b>F5</b> kill all" +
-            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>[ ]</b> time" +
+            $"\n<b>F6</b> god   <b>F7</b> upgrade   <b>F10</b> restart   <b>F8</b> dropship   <b>F9</b> boss   <b>F11</b> cmdr (+shift mech)   <b>F12</b> colliders   <b>. ,</b> skip time   <b>[ ]</b> speed" +
             $"\n<b>Space / E / pad A</b> blast";
 
         var size = style.CalcSize(new GUIContent(text));
@@ -139,6 +150,12 @@ public class DebugHud : MonoBehaviour
         GUI.DrawTexture(rect, Texture2D.whiteTexture);
         GUI.color = Color.white;
         GUI.Label(rect, text, style);
+    }
+
+    static string RunClock()
+    {
+        float t = WaveDirector.Instance != null ? WaveDirector.Instance.Clock : 0f;
+        return $"{Mathf.FloorToInt(t / 60f)}:{Mathf.FloorToInt(t % 60f):00}";
     }
 
     /// <summary>

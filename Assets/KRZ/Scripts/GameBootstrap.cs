@@ -78,6 +78,10 @@ public class GameBootstrap : MonoBehaviour
 
         gameObject.AddComponent<Popups>();
 
+        var director = gameObject.AddComponent<WaveDirector>();
+        director.tuning = tuning;
+        director.player = player.transform;
+
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
         hud.player = player;
@@ -154,13 +158,20 @@ public class GameBootstrap : MonoBehaviour
         float totalWeight = 0f;
         foreach (var t in tuning.buildingTypes) totalWeight += Mathf.Max(0f, t.weight);
 
+        // Reactors are placed before anything else and spaced apart, rather than rolled
+        // from the weight table. Random weights would happily put two side by side, and
+        // two pulses in one screen is a very different thing from one.
+        var reactorSlots = PickReactorSlots(rng);
+
         for (int by = 0; by < tuning.blocksY; by++)
             for (int bx = 0; bx < tuning.blocksX; bx++)
             {
                 // Leave the centre clear so the player has room to start.
                 if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 && Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
 
-                var type = PickType(tuning.buildingTypes, totalWeight, rng);
+                var type = reactorSlots.TryGetValue((bx, by), out var reactor)
+                    ? reactor
+                    : PickType(tuning.buildingTypes, totalWeight, rng);
                 if (type == null) continue;
 
                 // Flip non-square footprints so the grid does not read as one repeated shape.
@@ -277,6 +288,55 @@ public class GameBootstrap : MonoBehaviour
         Debug.LogWarning($"KRZ: no clear ground for {type.name}. Move somewhere more open.");
     }
 
+    /// <summary>
+    /// Chooses which block slots become reactors, greedily accepting candidates that
+    /// are far enough from every reactor already placed. Alternates the two sizes so
+    /// a run always contains both.
+    /// </summary>
+    System.Collections.Generic.Dictionary<(int, int), BuildingType> PickReactorSlots(System.Random rng)
+    {
+        var chosen = new System.Collections.Generic.Dictionary<(int, int), BuildingType>();
+
+        var reactors = new System.Collections.Generic.List<BuildingType>();
+        foreach (var t in tuning.buildingTypes)
+            if (t.isReactor) reactors.Add(t);
+        if (reactors.Count == 0 || tuning.reactorCount <= 0) return chosen;
+
+        // Every slot outside the clear starting area, shuffled.
+        var slots = new System.Collections.Generic.List<(int bx, int by)>();
+        for (int by = 0; by < tuning.blocksY; by++)
+            for (int bx = 0; bx < tuning.blocksX; bx++)
+            {
+                if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 && Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
+                slots.Add((bx, by));
+            }
+
+        for (int i = slots.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (slots[i], slots[j]) = (slots[j], slots[i]);
+        }
+
+        var placed = new System.Collections.Generic.List<Vector2>();
+        foreach (var (bx, by) in slots)
+        {
+            if (chosen.Count >= tuning.reactorCount) break;
+
+            var world = new Vector2((bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX,
+                                    (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY);
+
+            bool tooClose = false;
+            foreach (var p in placed)
+                if (Vector2.Distance(p, world) < tuning.reactorMinSpacing) { tooClose = true; break; }
+            if (tooClose) continue;
+
+            chosen[(bx, by)] = reactors[chosen.Count % reactors.Count];
+            placed.Add(world);
+        }
+
+        return chosen;
+    }
+
     static BuildingType PickType(BuildingType[] types, float totalWeight, System.Random rng)
     {
         if (types == null || types.Length == 0 || totalWeight <= 0f) return null;
@@ -284,10 +344,17 @@ public class GameBootstrap : MonoBehaviour
         float roll = (float)rng.NextDouble() * totalWeight;
         foreach (var t in types)
         {
-            roll -= Mathf.Max(0f, t.weight);
+            if (t.weight <= 0f) continue;
+            roll -= t.weight;
             if (roll <= 0f) return t;
         }
-        return types[types.Length - 1];
+
+        // Fall back to the last *weighted* type. Returning types[^1] would hand back a
+        // zero-weight reactor on a floating-point edge, placing one outside the spacing
+        // pass that exists to keep two off the same screen.
+        for (int i = types.Length - 1; i >= 0; i--)
+            if (types[i].weight > 0f) return types[i];
+        return null;
     }
 
     PlayerController BuildPlayer()

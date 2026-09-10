@@ -26,6 +26,12 @@ public class Enemy : Damageable
     float nextVolleyAt;
     float volleyEndsAt;
     bool volleyWinding;
+    bool dying;
+    float destroyAt;
+    HealthBar bar;
+
+    public EnemyArt art;
+    public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
 
     Rigidbody2D body;
     SpriteRenderer sr;
@@ -50,6 +56,11 @@ public class Enemy : Damageable
         var rb = go.AddComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.freezeRotation = true;
+
+        // Mass by body size. The kaiju's mass scales with its own growth, so infantry
+        // are brushed aside while a Mech still has real presence at size 1 — and by
+        // size 5 nothing short of the boss can move you.
+        rb.mass = Mathf.Max(0.2f, type.bodyPx / 64f);
 
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
@@ -79,7 +90,17 @@ public class Enemy : Damageable
         e.sr = bsr;
         e.baseColour = type.colour;
 
-        e.nextVolleyAt = Time.time + type.volleyCooldown;
+        // Delivered art replaces the greybox capsule when the type points at a folder.
+        var art2 = go.AddComponent<EnemyArt>();
+        if (art2.Init(e, bsr, type))
+        {
+            e.art = art2;
+            e.baseColour = Color.white;          // sprites carry their own colour
+            bsr.color = Color.white;
+            bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / 512f);
+        }
+
+        e.nextVolleyAt = Time.time + type.specialCooldown;
 
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
@@ -94,6 +115,15 @@ public class Enemy : Damageable
 
     void Update()
     {
+        // Corpses keep existing until their destruction clip finishes, so a kill reads
+        // as an event rather than the object blinking out. No AI while dying.
+        if (dying)
+        {
+            body.linearVelocity = Vector2.zero;
+            if (Time.time >= destroyAt) Destroy(gameObject);
+            return;
+        }
+
         var progress = PlayerProgress.Instance;
         if (progress == null || progress.IsDead) { body.linearVelocity = Vector2.zero; return; }
 
@@ -113,9 +143,16 @@ public class Enemy : Damageable
         // The volley takes priority over everything: it plants the Mech, telegraphs,
         // then fires. Handled before movement so the stop is absolute rather than a
         // Mech that keeps walking while it winds up.
-        if (type.volley && HandleVolley(progress, flat)) return;
+        if (type.special != SpecialAction.None && HandleSpecial(progress, flat)) return;
 
-        if (flat > type.attackRange)
+        // Ranges are measured from the kaiju's edge, not its centre. Measuring to the
+        // centre meant an enemy had to bulldoze its way through the player's footprint
+        // before it would stop pressing — which is what shoved the player around, and
+        // why it got worse the bigger the kaiju grew.
+        float playerRadius = tuning.playerFootprint.x * 0.5f * progress.Scale;
+        float stopAt = type.attackRange + playerRadius;
+
+        if (flat > stopAt)
         {
             winding = false;
             Vector2 dir = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized;
@@ -125,6 +162,10 @@ public class Enemy : Damageable
         else
         {
             body.linearVelocity = Vector2.zero;
+
+            // A Dropship holds station at its range and never strikes — its whole
+            // threat is what it unloads, so ignoring it costs you the swarm, not health.
+            if (!type.attacks) { Recolour(); return; }
 
             if (!winding && Time.time >= nextAttackAt)
             {
@@ -137,10 +178,12 @@ public class Enemy : Damageable
                 winding = false;
                 nextAttackAt = Time.time + type.attackCooldown;
                 AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
+                if (art != null) art.Play("attack", true);
                 Strike(progress);
             }
         }
 
+        if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
         Recolour();
     }
 
@@ -190,8 +233,41 @@ public class Enemy : Damageable
         return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
     }
 
-    /// <summary>Returns true while the volley owns this frame.</summary>
-    bool HandleVolley(PlayerProgress progress, float flat)
+    /// <summary>Whether the kaiju has outgrown this enemy's class.</summary>
+    public bool Squishable
+    {
+        get
+        {
+            var p = PlayerProgress.Instance;
+            if (p == null) return false;
+            return p.Tier >= tuning.squishFirstTier + type.sizeClass * tuning.squishTiersPerClass;
+        }
+    }
+
+    /// <summary>
+    /// Appears on first damage, like a building's. Removed once the kaiju has outgrown
+    /// the class: something you kill by walking over is not worth tracking, and sixty
+    /// bars over things that die on contact is noise rather than feedback.
+    /// </summary>
+    void ShowBar()
+    {
+        if (!tuning.showEnemyHealthBars || Squishable)
+        {
+            if (bar != null) { Destroy(bar.gameObject); bar = null; }
+            return;
+        }
+
+        float displayPx = art != null ? type.artDisplayPx : type.bodyPx;
+        float top = displayPx / tuning.pixelsPerUnit;
+
+        if (bar == null)
+            bar = HealthBar.Attach(transform, top * 0.55f, top, tuning.pixelsPerUnit);
+
+        bar.Set(hp / type.hp);
+    }
+
+    /// <summary>Returns true while the special owns this frame.</summary>
+    bool HandleSpecial(PlayerProgress progress, float flat)
     {
         if (volleyWinding)
         {
@@ -199,23 +275,72 @@ public class Enemy : Damageable
             if (Time.time >= volleyEndsAt)
             {
                 volleyWinding = false;
-                nextVolleyAt = Time.time + type.volleyCooldown;
-                Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
+                nextVolleyAt = Time.time + type.specialCooldown;
+                FireSpecial();
             }
             Recolour();
             return true;
         }
 
-        if (Time.time >= nextVolleyAt && flat <= type.volleyRange)
+        if (Time.time >= nextVolleyAt && flat <= type.specialRange && CanFireSpecial())
         {
             volleyWinding = true;
-            volleyEndsAt = Time.time + type.volleyWindup;
+            volleyEndsAt = Time.time + type.specialWindup;
             body.linearVelocity = Vector2.zero;
             Recolour();
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>Lets a special decline to start, rather than telegraphing and doing nothing.</summary>
+    bool CanFireSpecial()
+    {
+        if (type.special != SpecialAction.DeployTroops) return true;
+
+        int mine = 0;
+        foreach (var e in All)
+            if (e != null && e.type != null && e.type.name == type.deployType) mine++;
+        return mine < type.deployMaxAlive;
+    }
+
+    void FireSpecial()
+    {
+        switch (type.special)
+        {
+            case SpecialAction.MissileVolley:
+                Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
+                break;
+
+            case SpecialAction.DeployTroops:
+                Deploy();
+                break;
+        }
+    }
+
+    void Deploy()
+    {
+        var spawnType = GameBootstrap.Instance != null
+            ? GameBootstrap.Instance.FindType(type.deployType)
+            : null;
+        if (spawnType == null) return;
+
+        AudioEvents.Play(Sfx.EnemyDeploy, transform.position, owner: gameObject);
+
+        for (int i = 0; i < type.deployCount; i++)
+        {
+            float angle = i / (float)type.deployCount * Mathf.PI * 2f + Random.value;
+            var at = transform.position + new Vector3(
+                Mathf.Cos(angle) * type.deploySpread,
+                Mathf.Sin(angle) * type.deploySpread * tuning.isoSquash, 0f);
+
+            // Skip blocked ground rather than dropping troops inside a building,
+            // where the solver would fling them across the map.
+            if (Physics2D.OverlapCircle(at, 0.4f) != null) continue;
+
+            Enemy.Spawn(tuning, spawnType, at, tuning.pixelsPerUnit);
+        }
     }
 
     void Recolour()
@@ -225,7 +350,7 @@ public class Enemy : Damageable
         if (volleyWinding)
         {
             // A faster, hotter pulse than the melee tell, so the two read differently.
-            float t = 1f - Mathf.Clamp01((volleyEndsAt - Time.time) / Mathf.Max(0.01f, type.volleyWindup));
+            float t = 1f - Mathf.Clamp01((volleyEndsAt - Time.time) / Mathf.Max(0.01f, type.specialWindup));
             sr.color = Color.Lerp(baseColour, new Color(1f, 0.45f, 0.2f),
                                   Mathf.PingPong(t * 6f, 1f) * 0.5f + t * 0.5f);
             return;
@@ -273,6 +398,8 @@ public class Enemy : Damageable
         }
 
         hp -= dealt;
+        if (art != null && hp > 0f) art.Play("hit", true);
+        if (hp > 0f) ShowBar();
         AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
         Popups.Add(transform.position, $"{dealt:0}", Color.white);
@@ -289,12 +416,26 @@ public class Enemy : Damageable
     void Die(Sfx sound)
     {
         hp = 0f;
+        if (bar != null) { Destroy(bar.gameObject); bar = null; }
         if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f, owner: gameObject);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);
 
         if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
             UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
                                 transform.position, tuning.pixelsPerUnit);
+
+        // With a destruction clip, the corpse lingers just long enough to play it.
+        // Collision goes immediately so a dying enemy never blocks or shoves.
+        if (art != null && sound != Sfx.Squish && type.deathFrames > 0)
+        {
+            dying = true;
+            destroyAt = Time.time + type.deathFrames / DirectionalArt.Fps + 0.15f;
+            art.Play("destruction", true);
+
+            foreach (var c in GetComponents<Collider2D>()) c.enabled = false;
+            body.linearVelocity = Vector2.zero;
+            return;
+        }
 
         Destroy(gameObject);
     }

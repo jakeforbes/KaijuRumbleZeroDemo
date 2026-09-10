@@ -33,7 +33,11 @@ public enum Sfx
     EnemyPushed,
     SwipeHitEnemy,
     SwipeHitBuilding,
-    Collect
+    Collect,
+    // New entries go at the end: these values are serialized into the Sound Player
+    // templates, so inserting mid-enum would silently repoint every clip assignment.
+    EnemyDeploy,
+    ReactorPulse
 }
 
 public static class AudioEvents

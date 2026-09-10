@@ -58,12 +58,16 @@ public class Tuning : ScriptableObject
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
              "Roughly geometric rather than arithmetic: income accelerates hard as you " +
              "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
-             "so a flat +50 per gate meant later tiers arrived faster than earlier ones.")]
+             "so a flat +50 per gate meant later tiers arrived faster than earlier ones. " +
+             "Size and power are separate curves: if the run feels underpowered, that is " +
+             "power-up frequency (Lab weights) rather than these gates.")]
     public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
-             "sizes exist — everything else derives from this array's length.")]
-    public float[] tierScale = { 1f, 1.75f, 2.5f, 3.25f, 4f };
+             "sizes exist — everything else derives from this array's length." +
+             " Camera zoom is relative to the first entry, so raising every value makes " +
+             "the kaiju read bigger on screen rather than just pulling the camera back.")]
+    public float[] tierScale = { 1.5f, 2.625f, 3.75f, 4.875f, 6f };
 
     [Tooltip("Health cap at each tier. Reaching a tier heals you to its cap.")]
     public float[] tierMaxHp = { 100f, 140f, 175f, 210f, 250f };
@@ -94,6 +98,17 @@ public class Tuning : ScriptableObject
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
 
+        // Trooper: the missing rung. Twice a Grunt's health and a short gun, but the
+        // same class and speed — so it is still squishable at size 3 and still
+        // outrun. It exists because Grunt to Tank was a cliff: 5x health, 3x damage
+        // and armour all at once.
+        new EnemyType { name = "Trooper", sizeClass = 0, hp = 24f, armour = 0f,
+                        contactDamage = 10f, moveSpeed = 1.28f,
+                        attackRange = 3f, ranged = true,
+                        attackCooldown = 1.6f, attackWindup = 0.45f,
+                        foodDrops = 3, foodScatter = 1.6f,
+                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f) },
+
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
                         contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
@@ -101,8 +116,24 @@ public class Tuning : ScriptableObject
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
-                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f, volley = true,
-                        bodyPx = 192, colour = new Color(0.72f, 0.35f, 0.55f) },
+                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        special = SpecialAction.MissileVolley,
+                        bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384,
+                        artFrameDigits = 4, artFirstFrame = 1 },
+
+        // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
+        // so it replaces the cut Barracks with something mobile and killable. Ignoring
+        // it costs you the swarm rather than health, which makes it a priority target
+        // by choice instead of by damage.
+        new EnemyType { name = "Dropship", sizeClass = 1, hp = 85f, armour = 2f,
+                        contactDamage = 0f, attacks = false,
+                        moveSpeed = 2.4f, attackRange = 6f,
+                        special = SpecialAction.DeployTroops,
+                        specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
+                        deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
+                        foodDrops = 7, foodScatter = 2.5f,
+                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
@@ -126,6 +157,63 @@ public class Tuning : ScriptableObject
     [Tooltip("One Commander per this many Grunts, rolled per spawn within the range.")]
     public int commanderPerMin = 25;
     public int commanderPerMax = 50;
+
+    [Header("The run")]
+    [Tooltip("Hard ceiling on living enemies. The timeline is written to push against " +
+             "this rather than to stay under it, so the cap is what actually sets the " +
+             "peak crowd — and protects the framerate.")]
+    public int maxEnemiesAlive = 60;
+
+    [Tooltip("The whole arc, as data. Times are seconds into the run. A beat with an " +
+             "interval repeats until its end time; without one it fires once.")]
+    public WaveEntry[] waves =
+    {
+        // First contact at 0:10: three squads of three, two seconds apart, each from a
+        // different side. Small enough to be a lesson rather than a threat.
+        new WaveEntry { label = "first contact", startTime = 10f, endTime = 14f, interval = 2f,
+                        enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
+
+        // The real infantry line. A Commander leads the first squad and every third
+        // after — a rhythm you can learn rather than a roll you cannot read.
+        new WaveEntry { label = "infantry", startTime = 25f, endTime = 155f, interval = 10f,
+                        enemyType = "Grunt", count = 9, shape = SpawnShape.Clump,
+                        commanderEvery = 3,
+                        veteranType = "Trooper", veteranFromFire = 2,
+                        veteranStartFraction = 0.3f, veteranRampPerFire = 0.07f },
+
+        // First Dropship: a grunt source you can switch off by killing it.
+        new WaveEntry { label = "dropship", startTime = 45f,
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
+
+        // Armour arrives. The swipe stops being enough and the Blast earns its place.
+        new WaveEntry { label = "armour", startTime = 60f,
+                        enemyType = "Tank", count = 3, shape = SpawnShape.Ring },
+
+        new WaveEntry { label = "armour", startTime = 65f, endTime = 155f, interval = 25f,
+                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump },
+
+        new WaveEntry { label = "dropships", startTime = 80f,
+                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
+
+        // Mechs: the volley threat, and the first thing that punishes standing still.
+        new WaveEntry { label = "mechs", startTime = 90f, endTime = 155f, interval = 35f,
+                        enemyType = "Mech", count = 1, shape = SpawnShape.Clump },
+
+        // Late push. Ahead means it lands in front of wherever you are running.
+        new WaveEntry { label = "push", startTime = 120f,
+                        enemyType = "Grunt", count = 12, shape = SpawnShape.Ahead,
+                        commanderEvery = 1 },
+
+        new WaveEntry { label = "push", startTime = 130f,
+                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump },
+
+        new WaveEntry { label = "push", startTime = 145f,
+                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
+
+        // The finale.
+        new WaveEntry { label = "BOSS", startTime = 160f,
+                        enemyType = "Abomination", count = 1, shape = SpawnShape.Clump },
+    };
 
     [Header("Survival")]
     [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]
@@ -164,6 +252,10 @@ public class Tuning : ScriptableObject
     [Tooltip("Player collision ellipse in world units, at size 1. Tile is 2 x 1.")]
     public Vector2 playerFootprint = new Vector2(1.1f, 0.55f);
 
+    [Tooltip("Kaiju mass at size 1, against enemy masses of roughly 1 to 9. Scales with " +
+             "the square of size, so infantry never shove you and the gap widens as you grow.")]
+    public float playerMass = 25f;
+
     [Header("Swipe — the auto attack")]
     public float swipeDamage = 10f;
     public float swipeCooldown = 2f;
@@ -193,14 +285,15 @@ public class Tuning : ScriptableObject
     public float blastCooldown = 6f;
     public float blastRange = 14f;
 
-    [Tooltip("Full width of the beam in world units. A ground tile is 2 wide, so 1.0 " +
-             "is half a tile.")]
-    public float blastWidth = 1f;
+    [Tooltip("Beam thickness as a fraction of the kaiju's height, so it grows with you. " +
+             "Applies to the damage band as well as the drawing, so what you see is what " +
+             "it hits.")]
+    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.8f;
 
-    [Tooltip("Height the beam is drawn from, in world units at size 1, scaling with the " +
-             "kaiju. The body is 1.0 tall, so 0.8 is about mouth height. Visual only — " +
-             "hits stay on the ground plane where the footprints are.")]
-    public float blastOriginHeight = 0.8f;
+    [Tooltip("Height the beam is centred on, as a fraction of the kaiju's height. 0.5 " +
+             "is mid-body. Firing from the head looked disconnected from a damage band " +
+             "that sits on the ground, and the gap widened as the kaiju grew.")]
+    [Range(0f, 1f)] public float blastOriginFraction = 0.5f;
 
     [Header("Stomp — granted by the upgrade")]
     [Tooltip("Damage at one stack, deliberately half of blastDamage. Extra stacks " +
@@ -297,19 +390,49 @@ public class Tuning : ScriptableObject
         // filler block uses — silhouette and colour are all greybox has to work with.
         new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
-                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 7f,
+                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
-                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 5f,
+                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            colour = new Color(0.24f, 0.72f, 0.68f) },
+
+        // Reactors. Twice the health of the ordinary building at their footprint, and
+        // on death a pulse that only hurts enemies. Placed deliberately and spaced so
+        // two are never on screen together — weight is unused for these.
+        //
+        // Small pulse at 20 clears Grunts (12 hp) outright and cannot finish anything
+        // else: a Tank takes 14 through 6 armour, a Commander 20 of 120.
+        new BuildingType { name = "Reactor Small", sizeClass = 0, tilesX = 1, tilesY = 1,
+                           minHeightPx = 170, maxHeightPx = 220, hp = 60f,
+                           foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
+                           pulseDamage = 20f, pulseRadius = 24f,
+                           colour = new Color(0.92f, 0.62f, 0.20f) },
+
+        // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
+        // Commander all fall — while a Mech survives on 140 hp behind 12 armour.
+        new BuildingType { name = "Reactor Large", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 300, maxHeightPx = 400, hp = 118f,
+                           foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
+                           pulseDamage = 130f, pulseRadius = 32f,
+                           colour = new Color(0.96f, 0.45f, 0.18f) },
     };
+
+    [Tooltip("How many reactors to scatter through the arena.")]
+    public int reactorCount = 4;
+
+    [Tooltip("Minimum distance between reactors in world units. 26 is wider than the " +
+             "screen diagonal at maximum zoom-out, so two can never be visible at once.")]
+    public float reactorMinSpacing = 26f;
 
     [Tooltip("Damage multiplier by (your size - the building's class), from -4 to +4. " +
              "The middle entry is your own class and is always 1. Left of it is the wall: " +
              "each step up in class roughly triples the work. Right of it is the payoff.")]
     public float[] damageVsBuildingByDelta = { 0.025f, 0.05f, 0.125f, 0.33f, 1f, 2f, 3f, 4f, 5f };
+
+    [Tooltip("Progress bar over enemies you have damaged. Vanishes once you outgrow them.")]
+    public bool showEnemyHealthBars = true;
 
     [Tooltip("Progress bar over buildings you have damaged. Intact ones show nothing.")]
     public bool showBuildingHealthBars = true;
