@@ -18,8 +18,11 @@ public class PlayerController : MonoBehaviour
     /// <summary>Size multiplier. Growth takes this over in Stage 3.</summary>
     public float Scale { get; private set; } = 1f;
 
-    /// <summary>Last direction moved, on the squashed ground plane. Attacks aim along it.</summary>
+    /// <summary>Where attacks point, on the squashed ground plane.</summary>
     public Vector2 AimDir { get; private set; } = Vector2.down;
+
+    /// <summary>True while the right stick is steering the aim rather than movement.</summary>
+    public bool Aiming { get; private set; }
 
     public Vector2 Velocity => body.linearVelocity;
 
@@ -96,18 +99,51 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         var state = PlayerProgress.Instance;
-        bool locked = (state != null && state.IsDead) || BeingKnockedBack;
+        bool dead = state != null && state.IsDead;
+        bool locked = dead || BeingKnockedBack;
         Vector2 raw = locked ? Vector2.zero : ReadInput();
 
         // Squash the vertical component so movement matches the isometric projection.
         desired = new Vector2(raw.x, raw.y * tuning.isoSquash);
         if (desired.sqrMagnitude > 1f) desired.Normalize();
 
-        if (raw.sqrMagnitude > 0.04f)
+        // The right stick aims independently. Read even while being thrown, because
+        // aiming is not moving and losing your aim mid-knockback would compound a
+        // hit you already could not avoid.
+        Vector2 aim = dead ? Vector2.zero : ReadAim();
+        Aiming = aim.sqrMagnitude > 0.0001f;
+
+        if (Aiming)
+        {
+            // Squashed the same way movement is, so a stick held right and a key held
+            // right point at the same piece of ground. Everything downstream unsquashes
+            // again to get back to the flat plane.
+            AimDir = new Vector2(aim.x, aim.y * tuning.isoSquash).normalized;
+            Facing = FacingFromInput(aim, Facing);
+        }
+        else if (raw.sqrMagnitude > 0.04f)
         {
             Facing = FacingFromInput(raw, Facing);
             AimDir = desired.normalized;
         }
+    }
+
+    /// <summary>
+    /// The right stick, past a deliberately large dead zone.
+    ///
+    /// Larger than the movement dead zone because this one latches: a stick resting
+    /// a little off centre would otherwise pin the kaiju's aim and facing to a
+    /// direction the player never chose, and unlike drifting movement that does not
+    /// announce itself. Below the threshold this returns zero and aim falls back to
+    /// the direction of travel, which is what a keyboard player always gets.
+    /// </summary>
+    Vector2 ReadAim()
+    {
+        var pad = Gamepad.current;
+        if (pad == null) return Vector2.zero;
+
+        var v = pad.rightStick.ReadValue();
+        return v.sqrMagnitude < tuning.aimDeadZone * tuning.aimDeadZone ? Vector2.zero : v;
     }
 
     /// <summary>

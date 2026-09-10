@@ -54,9 +54,15 @@ as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 | WASD or arrows | Move, 8-way |
 | Left stick | Move, analog |
 | D-pad | Move, 8-way — identical to WASD |
+| Right stick | Aim, independently of where you are moving |
 | Space or E | Blast |
 | A button or right trigger | Blast |
 | — | The swipe fires automatically on a cooldown |
+
+On a pad the right stick aims: the swipe and the Blast both fire along it, and the
+kaiju turns to face it, so you can back away from something while hitting it. Let go
+and aim falls back to the direction of travel. A keyboard player is always in that
+fallback, so nothing about the keyboard scheme changed.
 
 Keyboard and pad are live at the same time and never need switching between:
 whichever of keys, stick or d-pad is pushed hardest is the one that steers. They

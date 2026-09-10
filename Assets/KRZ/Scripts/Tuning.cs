@@ -36,6 +36,14 @@ public class Tuning : ScriptableObject
              "1.0 makes it feel like a flat top-down game.")]
     [Range(0.2f, 1f)] public float isoSquash = 0.5f;
 
+    [Tooltip("How far the right stick must be pushed before it takes over aiming.\n\n" +
+             "Deliberately larger than the movement dead zone, because aim latches: a " +
+             "stick resting slightly off centre would pin the kaiju's facing to a " +
+             "direction nobody chose, and unlike drifting movement that does not " +
+             "announce itself. Below this the aim follows the direction of travel, " +
+             "which is what a keyboard player always gets.")]
+    [Range(0.1f, 0.9f)] public float aimDeadZone = 0.35f;
+
     [Header("The kaiju's colour")]
     [Tooltip("Multiplied over the delivered frames. The model is drawn almost entirely " +
              "in white and pale grey, so this lands on it cleanly: white becomes the " +
