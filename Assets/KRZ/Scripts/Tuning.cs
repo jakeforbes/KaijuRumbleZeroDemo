@@ -15,7 +15,7 @@ public class Tuning : ScriptableObject
     public SoundPlayer foodSounds;
 
     [Header("Movement")]
-    public float moveSpeed = 3.5f;
+    public float moveSpeed = 2.1f;
     public float acceleration = 70f;
     public float deceleration = 90f;
 
@@ -34,7 +34,7 @@ public class Tuning : ScriptableObject
 
     [Tooltip("Seconds for the camera to catch up. This is the only source of trailing — " +
              "higher is looser and calmer, lower is tighter and busier.")]
-    public float followLag = 0.28f;
+    public float followLag = 0.34f;
 
     [Tooltip("Hard cap on how far from centre the player can ever get, as a fraction of " +
              "the half-screen. Smoothing alone lets a fast kaiju drift further the faster " +
@@ -55,13 +55,17 @@ public class Tuning : ScriptableObject
     public int randomSeed = 1337;
 
     [Header("Growth")]
-    [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
-             "Roughly geometric rather than arithmetic: income accelerates hard as you " +
-             "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
-             "so a flat +50 per gate meant later tiers arrived faster than earlier ones. " +
-             "Size and power are separate curves: if the run feels underpowered, that is " +
-             "power-up frequency (Lab weights) rather than these gates.")]
-    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
+    [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes.\n\n" +
+             "Each gate is roughly triple the last, because income does not just grow " +
+             "with size, it compounds: a wider pickup field, faster kills, more upgrades, " +
+             "and whole building classes turning from walls into food. A gate that only " +
+             "doubles gets swallowed by that and the late sizes blur past.\n\n" +
+             "Aim: size 5 arriving around 2:30, just before the boss at 2:40. If you are " +
+             "hitting it far early, raise the last two entries — they are where the run " +
+             "is decided.\n\n" +
+             "Size and power are separate curves: if the run feels underpowered rather " +
+             "than under-sized, that is power-up frequency (Lab weights), not these.")]
+    public float[] foodPerTier = { 80f, 320f, 1100f, 3200f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length." +
@@ -107,21 +111,43 @@ public class Tuning : ScriptableObject
     [Header("Enemies")]
     public EnemyType[] enemyTypes =
     {
+        // Grunt, Trooper, Commander and Dropship all share the FlyingTank model,
+        // separated by size and tint. One delivery covering four roles was a
+        // deliberate trade against the clock — they read apart because their
+        // silhouette scale and colour differ, not because they are different art.
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
-                        contactDamage = 6f,  moveSpeed = 1.28f, attackRange = 0.9f,
+                        contactDamage = 6f,  moveSpeed = 0.96f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
-                        bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
+                        bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 84, footprintFraction = 0.4f,
+                        artTint = new Color(1f, 0.72f, 0.62f) },
 
         // Trooper: the missing rung. Twice a Grunt's health and a short gun, but the
         // same class and speed — so it is still squishable at size 3 and still
         // outrun. It exists because Grunt to Tank was a cliff: 5x health, 3x damage
         // and armour all at once.
         new EnemyType { name = "Trooper", sizeClass = 0, hp = 24f, armour = 0f,
-                        contactDamage = 10f, moveSpeed = 1.28f,
+                        contactDamage = 10f, moveSpeed = 0.96f,
                         attackRange = 3f, ranged = true,
                         attackCooldown = 1.6f, attackWindup = 0.45f,
                         foodDrops = 3, foodScatter = 1.6f,
-                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f) },
+                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 100, footprintFraction = 0.4f,
+                        artTint = new Color(1f, 0.52f, 0.60f) },
 
         // Scavenger. Grunt-sized, three times the health, fast and skittish, and it
         // never fights back. It is a chase: catching one pays out a huge scattered
@@ -130,21 +156,34 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Scavenger", sizeClass = 0, hp = 36f, armour = 0f,
                         contactDamage = 0f, attacks = false,
                         movement = MovementMode.Flee, wanderRate = 3.2f, fleeRadius = 10f,
-                        moveSpeed = 3.2f, attackRange = 0f,
+                        moveSpeed = 1.85f, attackRange = 0f,
                         foodDrops = 26, foodScatter = 9f,
                         bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
 
+        // The one enemy with its own ground vehicle art. Drawn a little under a
+        // size-1 kaiju's height and half again as wide, so it reads as armour rather
+        // than as a large soldier. Body and footprint went up with the silhouette,
+        // but the footprint stays under the drawn width — clipping a track corner is
+        // better than being stopped by air.
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
-                        contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
+                        contactDamage = 18f, moveSpeed = 1.35f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
-                        bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
+                        bodyPx = 128, colour = new Color(0.80f, 0.60f, 0.25f),
+                        artFolder = "GroundTank", artPrefix = "GroundTank",
+                        artPathFormat = "{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Drive", "AttackBlast", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 3, deathFrames = 4,
+                        artDisplayPx = 256, footprintFraction = 0.75f },
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
-                        contactDamage = 26f, moveSpeed = 2.6f, attackRange = 1.6f,
+                        contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,
                         attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
-                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384,
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
         // Dropship. A Tank hull that never fires: it holds station and unloads Grunts,
@@ -153,27 +192,45 @@ public class Tuning : ScriptableObject
         // by choice instead of by damage.
         new EnemyType { name = "Dropship", sizeClass = 1, hp = 85f, armour = 2f,
                         contactDamage = 0f, attacks = false,
-                        moveSpeed = 2.4f, attackRange = 6f,
+                        moveSpeed = 1.8f, attackRange = 6f,
                         special = SpecialAction.DeployTroops,
                         specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
                         deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
                         foodDrops = 7, foodScatter = 2.5f,
-                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f) },
+                        bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 210, footprintFraction = 0.34f,
+                        artTint = new Color(0.62f, 0.88f, 1f) },
 
         // Elite grunt. Same silhouette and speed, ten times the health, double the
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
         // Ranged, so it stays dangerous even though you outrun it five to one.
         new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
-                        contactDamage = 12f, moveSpeed = 1.28f, attackRange = 4.5f, ranged = true,
+                        contactDamage = 12f, moveSpeed = 0.96f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
                         foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
-                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f) },
+                        bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 104, footprintFraction = 0.4f,
+                        artTint = new Color(0.78f, 0.55f, 1f) },
 
         // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
         // one thing in the game you can never walk over. Armour is set so the swipe
         // still contributes but the Blast is what actually fells it.
         new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
-                        contactDamage = 45f, moveSpeed = 2.2f, attackRange = 3f,
+                        contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
                         foodDrops = 0, foodScatter = 4f,
                         bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
@@ -199,10 +256,15 @@ public class Tuning : ScriptableObject
              "interval repeats until its end time; without one it fires once.")]
     public WaveEntry[] waves =
     {
-        // First contact at 0:10: three squads of three, two seconds apart, each from a
+        // First contact at 0:05: three squads of three, two seconds apart, each from a
         // different side. Small enough to be a lesson rather than a threat.
-        new WaveEntry { label = "first contact", startTime = 10f, endTime = 14f, interval = 2f,
+        new WaveEntry { label = "first contact", startTime = 5f, endTime = 9f, interval = 2f,
                         enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
+
+        // A second, slightly bigger probe at 0:15, before the real line forms. Keeps
+        // the opening minute moving rather than leaving a ten-second gap.
+        new WaveEntry { label = "probe", startTime = 15f, endTime = 19f, interval = 2f,
+                        enemyType = "Grunt", count = 4, shape = SpawnShape.Clump },
 
         // The real infantry line. A Commander leads the first squad and every third
         // after — a rhythm you can learn rather than a roll you cannot read.
@@ -285,16 +347,21 @@ public class Tuning : ScriptableObject
              "1.0 matches the art exactly. Below 1.0 lets the player creep onto the base.")]
     [Range(0.5f, 1.2f)] public float buildingFootprint = 1f;
 
-    [Tooltip("Player collision ellipse in world units, at size 1. Tile is 2 x 1.")]
-    public Vector2 playerFootprint = new Vector2(1.1f, 0.55f);
+    [Tooltip("Kaiju collision ellipse as a fraction of its own height, so it tracks " +
+             "growth instead of being a fixed number the art outgrows.\n\n" +
+             "Deliberately near the feet rather than the body: clipping a shoulder " +
+             "through a tower reads as a big monster in a tight street, while being " +
+             "stopped by a gap you can see through reads as a broken game. When in " +
+             "doubt, smaller.")]
+    public Vector2 playerFootprintFraction = new Vector2(0.30f, 0.15f);
 
     [Tooltip("Kaiju mass at size 1, against enemy masses of roughly 1 to 9. Scales with " +
              "the square of size, so infantry never shove you and the gap widens as you grow.")]
     public float playerMass = 25f;
 
     [Header("Swipe — the auto attack")]
-    public float swipeDamage = 10f;
-    public float swipeCooldown = 2f;
+    public float swipeDamage = 13f;
+    public float swipeCooldown = 1.3f;
 
     [Tooltip("Reach in world units at size 1, measured from the kaiju's edge outward. " +
              "Deliberately short: melee should mean getting close, with reach coming " +
@@ -304,13 +371,15 @@ public class Tuning : ScriptableObject
     [Tooltip("Width of the hit arc in degrees, centred on facing.")]
     [Range(30f, 360f)] public float swipeArc = 130f;
 
-    [Tooltip("Ceiling on the cone once Claws has widened it. 180 is a half circle — " +
-             "everything in front of the kaiju.")]
-    [Range(30f, 360f)] public float swipeArcMax = 180f;
-
     [Tooltip("Gap between the hits of a multi-hit swipe. Short enough to read as one " +
              "flurry, long enough that each hit is visible.")]
     public float swipeBurstInterval = 0.13f;
+
+    [Tooltip("Delay between the swing starting and its damage landing, so the hit lands " +
+             "on the contact frame instead of before the arm has moved. The swipe clip " +
+             "is 6 frames at 12 fps, so 0.20 is roughly frame 3. Retime this if the art " +
+             "changes where contact happens.")]
+    [Range(0f, 0.5f)] public float swipeContactDelay = 0.20f;
 
     [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
     public bool showSwipeArc = true;
@@ -361,10 +430,13 @@ public class Tuning : ScriptableObject
                           perStack = 1f, extraHitsPerStack = 1, maxStacks = 4,
                           weight = 1f, colour = new Color(1f, 0.55f, 0.35f) },
 
-        // Claws changes the shape: longer and wider, up to a 180 degree half circle.
-        new UpgradeType { id = UpgradeId.Claws,   displayName = "Claws",
-                          effect = "Swipe reaches 25% further and 12 degrees wider",
-                          perStack = 1.25f, arcPerStack = 12.5f, maxStacks = 4,
+        // Prism splits the Blast: 1 beam, then 2 opposed, then a cross, then an
+        // eight-point star. It replaced a swipe reach-and-cone upgrade, which was
+        // almost impossible to read in play — a wider cone looks like nothing, while
+        // suddenly firing behind yourself is unmistakable.
+        new UpgradeType { id = UpgradeId.Prism,   displayName = "Prism",
+                          effect = "Blast splits: behind you, then a cross, then a star",
+                          perStack = 1f, maxStacks = 3,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
         new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",
@@ -432,6 +504,7 @@ public class Tuning : ScriptableObject
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
+                           artSprite = "Buildings/laboratory",
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and
@@ -444,6 +517,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 170, maxHeightPx = 220, hp = 60f,
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
+                           artSprite = "Buildings/reactor_1x1",
                            colour = new Color(0.92f, 0.62f, 0.20f) },
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
@@ -452,6 +526,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 300, maxHeightPx = 400, hp = 118f,
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
+                           artSprite = "Buildings/reactor_2x2",
                            colour = new Color(0.96f, 0.45f, 0.18f) },
 
         // The Core. One per run, and the only building that is genuinely a size-5 job.
@@ -467,6 +542,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 40, foodScatter = 9f,
                            weight = 0f, isReactor = true, unique = true,
                            pulseDamage = 300f, pulseRadius = 40f,
+                           artSprite = "Buildings/reactor_3x3",
                            colour = new Color(1f, 0.30f, 0.22f) },
     };
 

@@ -97,7 +97,7 @@ public class EnemyType
     [Header("Special: missile volley")]
     public int volleyCount = 8;
     public float missileDamage = 12f;
-    public float missileSpeed = 14f;
+    public float missileSpeed = 11f;
 
     [Tooltip("How hard a missile can change direction. Low turns wide and is dodgeable; " +
              "high tracks you around corners.")]
@@ -118,6 +118,12 @@ public class EnemyType
              "one ignored Dropship cannot flood the arena.")]
     public int deployMaxAlive = 24;
 
+    [Tooltip("Collider width as a fraction of bodyPx. Greybox capsules fill their box, " +
+             "but delivered art is a figure inside a square canvas and is far narrower, " +
+             "so art types want a much smaller value. Err small: clipping reads better " +
+             "than an invisible wall.")]
+    [Range(0.1f, 1f)] public float footprintFraction = 0.8f;
+
     [Tooltip("Body height in pixels at 128 PPU. 64 is roughly half a size-1 kaiju. " +
              "With delivered art this is only the collider and shadow size — the " +
              "sprite's own scale comes from artDisplayPx.")]
@@ -134,8 +140,30 @@ public class EnemyType
              "them down the same way the kaiju's canvas scale does.")]
     public int artDisplayPx = 192;
 
-    [Tooltip("Uries ships south/southeast; the Mech ships s/se. Off means short names.")]
-    public bool artLongDirectionNames;
+    [Tooltip("How this package names directions. Uries uses south/southeast, the Mech " +
+             "s/se, the FlyingTank S/SE.")]
+    public DirectionStyle artDirectionStyle = DirectionStyle.ShortLower;
+
+    [Tooltip("Where the frames sit. Tokens: {root} {prefix} {clip} {dir} {frame}.\n" +
+             "Mech:       {root}/{clip}/{prefix}_{clip}_{dir}_{frame}\n" +
+             "FlyingTank: {root}/{dir}/{prefix}_{dir}_{clip}_{frame}")]
+    public string artPathFormat = "{root}/{clip}/{prefix}_{clip}_{dir}_{frame}";
+
+    [Tooltip("Clip folder/file names in order: idle, walk, attack, hit, death. " +
+             "Packages disagree — one says walk, another says Move.")]
+    public string[] artClipNames = { "idle", "walk", "attack", "hit", "destruction" };
+
+    [Tooltip("Five rendered directions with the rest mirrored, or all eight rendered. " +
+             "The FlyingTank ships all eight, so nothing is flipped.")]
+    public bool artMirrored = true;
+
+    [Tooltip("Source frame size in pixels. Display scale is artDisplayPx / this, so a " +
+             "192px package and a 512px one can sit side by side.")]
+    public int artFrameSize = 512;
+
+    [Tooltip("Multiplied over the sprite. One model can serve several roles by being " +
+             "recoloured — keep tints pale or the art turns to mud.")]
+    public Color artTint = Color.white;
 
     [Tooltip("Digits in the frame number, and what the first frame is called. " +
              "Uries uses 2 digits from 00, the Mech 4 digits from 0001.")]

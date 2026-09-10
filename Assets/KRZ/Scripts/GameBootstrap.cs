@@ -415,7 +415,7 @@ public class GameBootstrap : MonoBehaviour
         // caches the footprint, so it has to exist by then.
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
-        col.size = tuning.playerFootprint;
+        col.size = tuning.playerFootprintFraction;   // scaled up immediately by SetScale
 
         var pc = go.AddComponent<PlayerController>();
         pc.tuning = tuning;

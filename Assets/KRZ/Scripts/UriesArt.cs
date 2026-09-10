@@ -70,6 +70,12 @@ public class UriesArt : MonoBehaviour
     /// <summary>Plays a clip once, falling back to idle or walk when it finishes.</summary>
     public void PlayOnce(Clip clip)
     {
+        // A clip already playing is left alone rather than restarted. Being hit twice
+        // inside a quarter of a second would otherwise reset the recoil to frame 0
+        // each time and the character would never move past its first pose.
+        if (oneShot && current == clip &&
+            Time.time - clipStartedAt < FrameCounts[clip] / Fps) return;
+
         current = clip;
         clipStartedAt = Time.time;
         oneShot = true;

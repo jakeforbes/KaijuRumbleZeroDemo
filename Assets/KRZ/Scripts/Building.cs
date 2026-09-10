@@ -24,6 +24,7 @@ public class Building : Damageable
     float hp;
     float maxHp;
     bool damagedShown;
+    bool usingArt;
 
     SpriteRenderer sr;
     PolygonCollider2D footprint;
@@ -41,6 +42,16 @@ public class Building : Damageable
 
         sr = GetComponent<SpriteRenderer>();
         footprint = GetComponent<PolygonCollider2D>();
+
+        // Delivered art replaces the greybox box. Authored at 256x128 per tile, which
+        // is this project's own scale at 128 PPU, so it drops straight in at 1:1.
+        var sprite = BuildingArt.Load(type.artSprite, tilesX, tilesY, ppu);
+        if (sprite != null)
+        {
+            sr.sprite = sprite;
+            sr.color = Color.white;
+            usingArt = true;
+        }
 
         maxHp = type.hp;
         hp = maxHp;
@@ -78,6 +89,17 @@ public class Building : Damageable
     void ShowDamaged()
     {
         damagedShown = true;
+
+        // Only a pristine render was delivered, so an art building darkens in place
+        // rather than swapping to a second sprite. Keeping the silhouette also keeps
+        // the footprint honest — a shorter box would stop matching its collider.
+        if (usingArt)
+        {
+            float t = type.damagedTint;
+            sr.color = new Color(t, t, t, sr.color.a);
+            return;
+        }
+
         // Slumped and drained of colour, so the state reads at a glance in greybox.
         var faded = Color.Lerp(type.colour, new Color(0.30f, 0.30f, 0.33f), 0.45f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY,
@@ -158,9 +180,13 @@ public class Building : Damageable
 
         if (bar != null) Destroy(bar.gameObject);
 
+        // No rubble render was delivered, so every building — art or greybox — falls
+        // back to the greybox debris box. Its colour is baked into the sprite, so the
+        // damaged tint has to come back off the renderer or the debris reads black.
         var rubble = new Color(0.20f, 0.20f, 0.23f);
         int rubbleHeight = Mathf.RoundToInt(GreyboxArt.TileH * 0.5f * (tilesX + tilesY) * 0.22f);
         sr.sprite = GreyboxArt.IsoBox(tilesX, tilesY, rubbleHeight, rubble, ppu);
+        sr.color = new Color(1f, 1f, 1f, sr.color.a);
 
         // Taken off the Y-sort entirely. Rubble is walkable, so the player can stand
         // north of it, and Y-sorting would then draw debris over them. Anything you

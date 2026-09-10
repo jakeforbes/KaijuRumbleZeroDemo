@@ -16,21 +16,3 @@ MonoBehaviour:
   enemySounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4202, type: 3}
   buildingSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4203, type: 3}
   foodSounds: {fileID: 11400000, guid: c02baf5e028d4ac393f20cbaf38d4204, type: 3}
-  moveSpeed: 7
-  acceleration: 70
-  deceleration: 90
-  isoSquash: 0.5
-  pixelsPerUnit: 128
-  baseOrthoSize: 4.21875
-  deadZoneX: 0.2
-  deadZoneY: 0.16
-  followLag: 0.18
-  zoomExponent: 0.5
-  blocksX: 8
-  blocksY: 8
-  blockSpacingX: 7
-  blockSpacingY: 3.5
-  randomSeed: 1337
-  previewScale: 1
-  showDebugHud: 1
-  enableCheatKeys: 1

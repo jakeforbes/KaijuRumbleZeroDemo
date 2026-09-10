@@ -18,8 +18,7 @@ public class SwipeFx : MonoBehaviour
         if (!tuning.showSwipeArc) return;
 
         // The wedge is drawn at a fixed pixel radius and scaled, so it is only
-        // regenerated when the arc angle itself changes — which now happens as
-        // Claws widens the cone, not just when the base value is retuned.
+        // regenerated when the arc angle itself changes.
         if (cached == null || !Mathf.Approximately(cachedArc, arc))
         {
             cached = GreyboxArt.Wedge(128, arc, new Color(1f, 0.95f, 0.7f, 0.5f), ppu);

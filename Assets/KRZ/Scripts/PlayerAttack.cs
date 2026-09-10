@@ -18,6 +18,8 @@ public class PlayerAttack : MonoBehaviour
     ContactFilter2D filter;
     int pendingHits;
     float nextHitAt;
+    bool strikePending;
+    float strikeAt;
 
     void Awake()
     {
@@ -32,48 +34,83 @@ public class PlayerAttack : MonoBehaviour
     {
         if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsDead) return;
 
-        // Land any remaining hits of the current burst. Claws turns one activation
-        // into several in quick succession, so the rhythm changes rather than the
-        // numbers: X...X...X becomes XX...XX...XX.
+        var up = PlayerUpgrades.Instance;
+
+        // The swing was started earlier; this is the frame its contact lands on.
+        if (strikePending && Time.time >= strikeAt)
+        {
+            strikePending = false;
+            Swipe();
+            pendingHits = up != null ? up.SwipeExtraHits : 0;
+            nextHitAt = Time.time + tuning.swipeBurstInterval;
+        }
+
+        // Remaining hits of a Brawler burst. Multi-hit changes the rhythm
+        // rather than the numbers: X...X...X becomes XX...XX...XX. These land damage
+        // without restarting the animation, which at 0.13s apart would retrigger it
+        // faster than it could play.
         if (pendingHits > 0 && Time.time >= nextHitAt)
         {
             pendingHits--;
             nextHitAt = Time.time + tuning.swipeBurstInterval;
-            // Later hits of a burst deal damage but do not restart the animation:
-            // at 0.13s apart they retriggered it faster than it could play, so the
-            // swing never got past its opening frames.
-            Swipe(playAnimation: false);
+            Swipe();
         }
 
         CooldownRemaining -= Time.deltaTime;
-        if (CooldownRemaining > 0f || pendingHits > 0) return;
+        if (CooldownRemaining > 0f || strikePending || pendingHits > 0) return;
 
-        var up = PlayerUpgrades.Instance;
+        // Swings on its rhythm whether or not anything is in reach. This is an
+        // auto-attack: the swing is the readout for attack speed, so hiding it when
+        // you miss would misreport the one thing Brawler and cooldown upgrades change.
         CooldownRemaining = tuning.swipeCooldown * (up != null ? up.SwipeCooldownMul : 1f);
 
-        Swipe(playAnimation: true);
-        pendingHits = up != null ? up.SwipeExtraHits : 0;
-        nextHitAt = Time.time + tuning.swipeBurstInterval;
+        // Animation first, damage on the contact frame. Landing damage on frame 0 put
+        // the hit before the arm had moved.
+        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
+        strikePending = true;
+        strikeAt = Time.time + tuning.swipeContactDelay;
     }
 
-    void Swipe(bool playAnimation)
+    void GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc)
+    {
+        // Reach and cone scale with the kaiju alone now. No upgrade widens them:
+        // a bigger cone is nearly impossible to read in play, which is why that
+        // upgrade became Prism and moved onto the Blast, where extra beams are
+        // unmistakable.
+        range = tuning.swipeRange * player.Scale;
+        cosHalfArc = Mathf.Cos(tuning.swipeArc * 0.5f * Mathf.Deg2Rad);
+
+        origin = transform.position;
+        Vector2 aim = player.AimDir;
+        aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
+    }
+
+    /// <summary>
+    /// Measured to the nearest point on the collider, not the object's centre. A tower's
+    /// centre can be metres from the face you are standing against, so centre-based
+    /// angles reject hits that visibly connect.
+    /// </summary>
+    bool InArc(Collider2D col, Vector2 origin, Vector2 aimFlat, float cosHalfArc)
+    {
+        Vector2 delta = col.ClosestPoint(origin) - origin;
+
+        // Origin inside the collider: you are standing in it, so it is a hit.
+        if (delta.sqrMagnitude <= 0.0001f) return true;
+
+        Vector2 flat = new Vector2(delta.x, delta.y / tuning.isoSquash).normalized;
+        return Vector2.Dot(flat, aimFlat) >= cosHalfArc;
+    }
+
+    /// <summary>The contact itself: the moment the swing connects and damage lands.</summary>
+    void Swipe()
     {
         LastSwipeAt = Time.time;
         AudioEvents.Play(Sfx.Swipe, transform.position, 0.4f, owner: gameObject);
-        if (playAnimation && UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
 
-        var upgrades = PlayerUpgrades.Instance;
-        float range = tuning.swipeRange * player.Scale *
-                      (upgrades != null ? upgrades.SwipeRangeMul : 1f);
-        Vector2 origin = transform.position;
-        Vector2 aim = player.AimDir;
+        GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc);
 
-        // Claws widens the cone as well as lengthening it, up to the cap.
-        float arc = Mathf.Min(tuning.swipeArcMax,
-                              tuning.swipeArc + (upgrades != null ? upgrades.SwipeArcBonus : 0f));
-
-        SwipeFx.Show(tuning, transform.position, aim, range, arc, tuning.pixelsPerUnit);
-        float cosHalfArc = Mathf.Cos(arc * 0.5f * Mathf.Deg2Rad);
+        SwipeFx.Show(tuning, transform.position, player.AimDir, range, tuning.swipeArc,
+                     tuning.pixelsPerUnit);
 
         int count = Physics2D.OverlapCircle(origin, range, filter, hits);
         bool hitEnemy = false;
@@ -84,22 +121,7 @@ public class PlayerAttack : MonoBehaviour
         {
             var target = hits[i].GetComponentInParent<Damageable>();
             if (target == null || !target.IsAlive) continue;
-
-            // Aim at the nearest point on the collider, not the object's centre. A
-            // tower's centre can be metres from the face you are standing against, so
-            // centre-based angles reject hits that visibly connect — which only shows
-            // up once the range is short.
-            Vector2 delta = hits[i].ClosestPoint(origin) - origin;
-
-            // Origin inside the collider: you are standing in it, so it is a hit.
-            if (delta.sqrMagnitude > 0.0001f)
-            {
-                // Unsquash before measuring the angle, so the arc is the shape it looks
-                // like on the ground rather than a squashed version of itself.
-                Vector2 flat = new Vector2(delta.x, delta.y / tuning.isoSquash).normalized;
-                Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
-                if (Vector2.Dot(flat, aimFlat) < cosHalfArc) continue;
-            }
+            if (!InArc(hits[i], origin, aimFlat, cosHalfArc)) continue;
 
             float mul = PlayerProgress.Instance != null ? PlayerProgress.Instance.DamageMultiplier : 1f;
             target.TakeDamage(tuning.swipeDamage * mul, origin);

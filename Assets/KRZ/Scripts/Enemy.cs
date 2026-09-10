@@ -65,7 +65,7 @@ public class Enemy : Damageable
 
         var col = go.AddComponent<CapsuleCollider2D>();
         col.direction = CapsuleDirection2D.Horizontal;
-        float w = type.bodyPx / ppu * 0.8f;
+        float w = type.bodyPx / ppu * type.footprintFraction;
         col.size = new Vector2(w, w * 0.5f);
 
         var art = new GameObject("Art").transform;
@@ -96,9 +96,17 @@ public class Enemy : Damageable
         if (art2.Init(e, bsr, type))
         {
             e.art = art2;
-            e.baseColour = Color.white;          // sprites carry their own colour
-            bsr.color = Color.white;
-            bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / 512f);
+
+            // Tint rather than replace: one delivered model can serve several roles
+            // at different sizes and colours, which is how Grunt, Trooper, Commander
+            // and Dropship all come from a single flying tank.
+            e.baseColour = type.artTint;
+            bsr.color = type.artTint;
+
+            // Scale is relative to the package's own frame size, so a 192px delivery
+            // and a 512px one sit side by side at their intended on-screen heights.
+            float frameSize = Mathf.Max(1, type.artFrameSize);
+            bodyGo.transform.localScale = Vector3.one * (type.artDisplayPx / frameSize);
         }
 
         e.nextVolleyAt = Time.time + type.specialCooldown;
@@ -161,7 +169,7 @@ public class Enemy : Damageable
         // centre meant an enemy had to bulldoze its way through the player's footprint
         // before it would stop pressing — which is what shoved the player around, and
         // why it got worse the bigger the kaiju grew.
-        float playerRadius = tuning.playerFootprint.x * 0.5f * progress.Scale;
+        float playerRadius = tuning.playerFootprintFraction.x * 0.5f * progress.Scale;
         float stopAt = type.attackRange + playerRadius;
 
         if (flat > stopAt)
@@ -190,7 +198,7 @@ public class Enemy : Damageable
                 winding = false;
                 nextAttackAt = Time.time + type.attackCooldown;
                 AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
-                if (art != null) art.Play("attack", true);
+                if (art != null) art.Play(EnemyArt.Attack, true);
                 Strike(progress);
             }
         }
@@ -435,7 +443,7 @@ public class Enemy : Damageable
         }
 
         hp -= dealt;
-        if (art != null && hp > 0f) art.Play("hit", true);
+        if (art != null && hp > 0f) art.Play(EnemyArt.Hit, true);
         if (hp > 0f) ShowBar();
         AudioEvents.Play(Sfx.EnemyHit, transform.position, owner: gameObject);
         flashUntil = Time.time + 0.08f;
@@ -467,7 +475,7 @@ public class Enemy : Damageable
         {
             dying = true;
             destroyAt = Time.time + type.deathFrames / DirectionalArt.Fps + 0.15f;
-            art.Play("destruction", true);
+            art.Play(EnemyArt.Death, true);
 
             foreach (var c in GetComponents<Collider2D>()) c.enabled = false;
             body.linearVelocity = Vector2.zero;
