@@ -117,7 +117,7 @@ public class WaveDirector : MonoBehaviour
         var cam = Camera.main;
         float offScreen = cam != null ? cam.orthographicSize * cam.aspect + 2.5f : 12f;
 
-        float baseAngle = ShapeAngle(wave);
+        float baseAngle = ShapeAngle(wave, offScreen);
         wave.lastAngle = baseAngle;
 
         // One Commander leads the group when it is this beat's turn. Placed at a
@@ -161,6 +161,7 @@ public class WaveDirector : MonoBehaviour
                 float r = offScreen + spread + attempt * 1.5f;
                 var at = player.position + new Vector3(Mathf.Cos(angle) * r,
                                                        Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
+                if (!OnLandPoint(at)) continue;
                 if (Physics2D.OverlapCircle(at, clearance) != null) continue;
 
                 Enemy.Spawn(tuning, spawning, at, tuning.pixelsPerUnit);
@@ -169,7 +170,50 @@ public class WaveDirector : MonoBehaviour
         }
     }
 
-    float ShapeAngle(WaveEntry wave)
+    /// <summary>
+    /// Whether a spawn just off screen in this direction lands on ground. Nothing may
+    /// walk on water, so a wave sent seaward would simply never arrive — the player
+    /// would be pinned against a coast wondering where the pressure went.
+    /// </summary>
+    bool OnLand(float angle, float radius)
+    {
+        if (GameBootstrap.Instance == null) return true;
+
+        var land = GameBootstrap.Instance.LandBounds;
+        if (land.width <= 0f) return true;
+
+        // Inset by enough that a squad spawning shoulder to shoulder does not have
+        // half its members standing in the surf.
+        land = Rect.MinMaxRect(land.xMin + 3f, land.yMin + 3f, land.xMax - 3f, land.yMax - 3f);
+
+        var at = player.position + new Vector3(Mathf.Cos(angle) * radius,
+                                               Mathf.Sin(angle) * radius * tuning.isoSquash, 0f);
+        return land.Contains(at);
+    }
+
+    /// <summary>The same test for one placed member, since stepping outward to find
+    /// clear ground can walk the last of a squad off the coast.</summary>
+    bool OnLandPoint(Vector3 at)
+    {
+        if (GameBootstrap.Instance == null) return true;
+
+        var land = GameBootstrap.Instance.LandBounds;
+        if (land.width <= 0f) return true;
+
+        return Rect.MinMaxRect(land.xMin + 1.5f, land.yMin + 1.5f,
+                               land.xMax - 1.5f, land.yMax - 1.5f).Contains(at);
+    }
+
+    /// <summary>Straight at the middle of the map, which is land by construction.</summary>
+    float AngleToLand()
+    {
+        var centre = GameBootstrap.Instance != null ? GameBootstrap.Instance.LandBounds.center : Vector2.zero;
+        Vector2 d = centre - (Vector2)player.position;
+        if (d.sqrMagnitude < 0.001f) return Random.value * Mathf.PI * 2f;
+        return Mathf.Atan2(d.y / tuning.isoSquash, d.x);
+    }
+
+    float ShapeAngle(WaveEntry wave, float offScreen)
     {
         if (wave.shape == SpawnShape.Ahead)
         {
@@ -179,7 +223,19 @@ public class WaveDirector : MonoBehaviour
                 // Unsquash before taking the angle so "ahead" means ahead on the
                 // ground, not ahead in a vertically compressed screen space.
                 var flat = new Vector2(pc.AimDir.x, pc.AimDir.y / tuning.isoSquash);
-                return Mathf.Atan2(flat.y, flat.x);
+                float ahead = Mathf.Atan2(flat.y, flat.x);
+                if (OnLand(ahead, offScreen)) return ahead;
+
+                // Running at the coast. Swing off the heading by as little as will
+                // reach dry ground, so the group still lands broadly in your path
+                // rather than jumping to the far side of you.
+                for (int step = 1; step <= 8; step++)
+                {
+                    float turn = step * Mathf.PI / 8f;
+                    if (OnLand(ahead + turn, offScreen)) return ahead + turn;
+                    if (OnLand(ahead - turn, offScreen)) return ahead - turn;
+                }
+                return AngleToLand();
             }
         }
 
@@ -187,15 +243,24 @@ public class WaveDirector : MonoBehaviour
         // occasionally drop three groups on the same flank, which reads as one blob
         // rather than as being worked around.
         const float MinSeparation = 1.2f;   // radians, about 70 degrees
-        for (int attempt = 0; attempt < 8; attempt++)
+        for (int attempt = 0; attempt < 16; attempt++)
         {
             float angle = Random.value * Mathf.PI * 2f;
+            if (!OnLand(angle, offScreen)) continue;
             if (wave.lastAngle < -50f) return angle;
 
             float delta = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg,
                                                      wave.lastAngle * Mathf.Rad2Deg)) * Mathf.Deg2Rad;
             if (delta >= MinSeparation) return angle;
         }
-        return Random.value * Mathf.PI * 2f;
+
+        // Backed into a corner with water on two sides, so separation gives way to
+        // arriving at all. Inland is always a valid heading.
+        for (int attempt = 0; attempt < 16; attempt++)
+        {
+            float angle = Random.value * Mathf.PI * 2f;
+            if (OnLand(angle, offScreen)) return angle;
+        }
+        return AngleToLand();
     }
 }

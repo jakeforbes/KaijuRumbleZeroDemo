@@ -15,6 +15,7 @@ public class GameBootstrap : MonoBehaviour
     PlayerController player;
     OccluderFade fade;
     Rect playfieldBounds;
+    Rect landBounds;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
@@ -119,42 +120,152 @@ public class GameBootstrap : MonoBehaviour
         return cam;
     }
 
+    /// <summary>
+    /// Ground the player and every enemy can stand on. Everything outside it is water.
+    /// Derived from where the outermost blocks actually sit rather than assumed to be
+    /// centred, because an even block count puts the city half a block off origin.
+    /// </summary>
+    public Rect LandBounds => landBounds;
+
+    Rect CityLandBounds()
+    {
+        float minX = (0 - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
+        float maxX = (tuning.blocksX - 1 - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
+        float minY = (0 - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
+        float maxY = (tuning.blocksY - 1 - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
+
+        float m = tuning.shoreMargin;
+        return Rect.MinMaxRect(minX - m, minY - m, maxX + m, maxY + m);
+    }
+
     void BuildGround()
     {
         float ppu = tuning.pixelsPerUnit;
         var a = GreyboxArt.GroundTile(new Color(0.13f, 0.15f, 0.21f), new Color(0.20f, 0.23f, 0.31f), ppu);
         var b = GreyboxArt.GroundTile(new Color(0.11f, 0.13f, 0.18f), new Color(0.20f, 0.23f, 0.31f), ppu);
+        var shallowA = GreyboxArt.GroundTile(new Color(0.10f, 0.24f, 0.36f), new Color(0.16f, 0.36f, 0.50f), ppu);
+        var shallowB = GreyboxArt.GroundTile(new Color(0.08f, 0.20f, 0.31f), new Color(0.16f, 0.36f, 0.50f), ppu);
 
         float tileW = GreyboxArt.TileW / ppu;   // 2 world units
         float tileH = GreyboxArt.TileH / ppu;   // 1 world unit
 
-        float spanX = IsGym ? GymWidth() + 12f : tuning.blocksX * tuning.blockSpacingX;
-        float spanY = IsGym ? (GymTiles() + 12) * tileH * 0.5f : tuning.blocksY * tuning.blockSpacingY;
+        if (IsGym)
+        {
+            float gymSpanX = GymWidth() + 12f;
+            float gymSpanY = (GymTiles() + 12) * tileH * 0.5f;
+            int gymCols = Mathf.CeilToInt(gymSpanX / tileW) + 4;
+            int gymRows = Mathf.CeilToInt(gymSpanY / (tileH * 0.5f)) + 8;
+            gymCols += gymCols % 2;
+            gymRows += gymRows % 4 == 0 ? 0 : 4 - gymRows % 4;
+
+            playfieldBounds = Rect.MinMaxRect(-gymCols * 0.5f * tileW - tileW * 0.5f,
+                -gymRows * 0.25f * tileH - tileH * 0.5f,
+                (gymCols - gymCols * 0.5f) * tileW,
+                (gymRows - 1 - gymRows * 0.5f) * tileH * 0.5f + tileH * 0.5f);
+            landBounds = playfieldBounds;
+
+            LayGround(new GameObject("Ground").transform, Vector2.zero, gymCols, gymRows,
+                      tileW, tileH, a, b, null, null);
+            return;
+        }
+
+        landBounds = CityLandBounds();
+        playfieldBounds = landBounds;
+
+        BuildOcean();
+
+        // The lattice carries a little way into the water so the shoreline reads as
+        // the same ground rather than as a rectangle cut out of a flat colour.
+        float band = tuning.shallowBand;
+        float spanX = landBounds.width + band * 2f;
+        float spanY = landBounds.height + band * 2f;
+
         // Rows sit half a tile apart so the diamonds interlock, so this needs
         // twice the count a full-tile spacing would.
         int cols = Mathf.CeilToInt(spanX / tileW) + 4;
         int rows = Mathf.CeilToInt(spanY / (tileH * 0.5f)) + 8;
-        if (IsGym) { cols += cols % 2; rows += rows % 4 == 0 ? 0 : 4 - rows % 4; }
-        playfieldBounds = Rect.MinMaxRect(-cols * 0.5f * tileW - tileW * 0.5f,
-            -rows * 0.25f * tileH - tileH * 0.5f,
-            (cols - cols * 0.5f) * tileW,
-            (rows - 1 - rows * 0.5f) * tileH * 0.5f + tileH * 0.5f);
 
-        var root = new GameObject("Ground").transform;
+        LayGround(new GameObject("Ground").transform, landBounds.center, cols, rows,
+                  tileW, tileH, a, b, shallowA, shallowB);
+    }
+
+    /// <summary>
+    /// Lays the interlocking diamond lattice. When shallow sprites are supplied, tiles
+    /// whose centre falls outside the land are drawn as water instead of skipped, so
+    /// the coast keeps the lattice instead of ending on a straight edge.
+    /// </summary>
+    void LayGround(Transform root, Vector2 centre, int cols, int rows, float tileW, float tileH,
+                   Sprite a, Sprite b, Sprite shallowA, Sprite shallowB)
+    {
         for (int r = 0; r < rows; r++)
             for (int c = 0; c < cols; c++)
             {
                 // Offset every other row by half a tile so the diamonds interlock.
-                float x = (c - cols * 0.5f) * tileW + (r % 2 == 0 ? 0f : tileW * 0.5f);
-                float y = (r - rows * 0.5f) * tileH * 0.5f;
+                float x = centre.x + (c - cols * 0.5f) * tileW + (r % 2 == 0 ? 0f : tileW * 0.5f);
+                float y = centre.y + (r - rows * 0.5f) * tileH * 0.5f;
+
+                bool even = (r + c) % 2 == 0;
+                Sprite sprite = a;
+
+                if (shallowA != null && !landBounds.Contains(new Vector2(x, y)))
+                    sprite = even ? shallowA : shallowB;
+                else
+                    sprite = even ? a : b;
 
                 var go = new GameObject("t");
                 go.transform.SetParent(root, false);
                 go.transform.position = new Vector3(x, y, 0f);
                 var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = (r + c) % 2 == 0 ? a : b;
+                sr.sprite = sprite;
                 sr.sortingOrder = -100;   // always behind everything that sorts by Y
             }
+    }
+
+    /// <summary>
+    /// Deep water, and the walls that make it impassable.
+    ///
+    /// One flat quad rather than more lattice: the ocean only has to reach past the
+    /// screen edge, and tiling forty units of it in every direction would cost more
+    /// objects than the entire city does.
+    ///
+    /// The walls are the one place in this project where an invisible barrier is the
+    /// right answer, because it is not invisible — the water is the barrier, and the
+    /// collider sits exactly on the waterline the player can see.
+    /// </summary>
+    void BuildOcean()
+    {
+        float ppu = tuning.pixelsPerUnit;
+        float w = tuning.oceanWidth;
+
+        var seaGo = new GameObject("Ocean");
+        seaGo.transform.position = landBounds.center;
+        var sea = seaGo.AddComponent<SpriteRenderer>();
+        sea.sprite = GreyboxArt.Solid(64, 64, new Color(0.05f, 0.13f, 0.22f), ppu);
+        sea.sortingOrder = -110;   // under the ground lattice, which draws at -100
+        seaGo.transform.localScale = new Vector3((landBounds.width + w * 2f) * ppu / 64f,
+                                                 (landBounds.height + w * 2f) * ppu / 64f, 1f);
+
+        var walls = new GameObject("Shore").transform;
+        walls.position = Vector3.zero;
+
+        // Thick, so nothing crossing at knockback speed can pass through in one step.
+        const float Thickness = 20f;
+        AddWall(walls, new Vector2(landBounds.center.x, landBounds.yMin - Thickness * 0.5f),
+                new Vector2(landBounds.width + Thickness * 2f, Thickness));
+        AddWall(walls, new Vector2(landBounds.center.x, landBounds.yMax + Thickness * 0.5f),
+                new Vector2(landBounds.width + Thickness * 2f, Thickness));
+        AddWall(walls, new Vector2(landBounds.xMin - Thickness * 0.5f, landBounds.center.y),
+                new Vector2(Thickness, landBounds.height + Thickness * 2f));
+        AddWall(walls, new Vector2(landBounds.xMax + Thickness * 0.5f, landBounds.center.y),
+                new Vector2(Thickness, landBounds.height + Thickness * 2f));
+    }
+
+    static void AddWall(Transform parent, Vector2 centre, Vector2 size)
+    {
+        var go = new GameObject("shore");
+        go.transform.SetParent(parent, false);
+        go.transform.position = centre;
+        go.AddComponent<BoxCollider2D>().size = size;
     }
 
     // Both maps use this factory: art, collision, health, audio and drops stay identical.

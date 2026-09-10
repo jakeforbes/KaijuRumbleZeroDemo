@@ -57,8 +57,12 @@ public class Tuning : ScriptableObject
     [Range(0f, 1f)] public float zoomExponent = 0.5f;
 
     [Header("Arena")]
-    public int blocksX = 8;
-    public int blocksY = 8;
+    [Tooltip("City blocks each way. Doubled from 8 to give the run somewhere to go — " +
+             "at 8 the map was about two screens across at size 5, so you met the edge " +
+             "constantly. Note this is the ground tile count squared: 16 is already " +
+             "around twelve thousand tile objects, and 24 would be dear.")]
+    public int blocksX = 16;
+    public int blocksY = 16;
 
     [Tooltip("World units between block centres. Y should be about half of X to look square in iso.")]
     public float blockSpacingX = 7f;
@@ -69,6 +73,21 @@ public class Tuning : ScriptableObject
              "the block the player stands on, so the run opens with buildings on all " +
              "sides and food within reach. Raise it to open the start out again.")]
     [Range(0, 3)] public int startClearBlocks;
+
+    [Header("Ocean")]
+    [Tooltip("Walkable ground kept outside the outermost buildings, in world units. " +
+             "This is the beach: enough to fight along without the shoreline reading " +
+             "as a wall drawn through the city.")]
+    public float shoreMargin = 9f;
+
+    [Tooltip("How far the ground lattice carries on into the water past the shore. " +
+             "Beyond this the sea is a single flat quad, because tiling the whole " +
+             "ocean would cost more objects than the city does.")]
+    public float shallowBand = 7f;
+
+    [Tooltip("How far the flat deep water extends past the shore. Only has to reach " +
+             "beyond the far edge of the screen at maximum zoom.")]
+    public float oceanWidth = 40f;
 
     [Header("Growth")]
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes.\n\n" +
@@ -688,57 +707,65 @@ public class Tuning : ScriptableObject
              "about three swipes; the delta table below does the rest.")]
     public BuildingType[] buildingTypes =
     {
+        // Three kinds of building, and the name of each type is its art file.
+        //
+        //   Civilian    filler. Freely mixed, one type per delivered footprint.
+        //   Laboratory  the only thing that pays out power-ups.
+        //   Reactor     placed deliberately and spaced; detonates on death.
+        //
+        // Civilians run one per footprint, ascending, so size class and ground area
+        // agree: the bigger a thing looks, the bigger you have to be. That also gives
+        // the delivered set exactly one consumer each, which the old roster did not —
+        // it had two 2x2s sharing a render and nothing at all on the 3x3.
+        //
         // Art paths are wired ahead of the frames existing. A missing file loads as
         // null and the type stays on greybox, so the next delivery is a file drop
         // rather than another pass through here.
-        new BuildingType { name = "Shack",    sizeClass = 0, tilesX = 1, tilesY = 1,
+        new BuildingType { name = "Civilian 1x1", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 30f,
                            artSprite = "Buildings/civilian_1x1",
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
-        // Declared 1x2 rather than 2x1 to match the orientation the art is authored
-        // in. The placer still flips half of them; a flipped one mirrors the sprite,
-        // which lands exactly on the swapped footprint in this projection.
-        new BuildingType { name = "Row",      sizeClass = 1, tilesX = 1, tilesY = 2,
+        // Non-square types are declared in the orientation the art is authored in.
+        // The placer still flips half of them; a flipped one mirrors the sprite, which
+        // lands exactly on the swapped footprint in this projection.
+        new BuildingType { name = "Civilian 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
                            foodDrops = 9,  foodScatter = 3.2f, weight = 25f,
                            artSprite = "Buildings/civilian_1x2",
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
-        new BuildingType { name = "Wide Low", sizeClass = 2, tilesX = 2, tilesY = 2,
-                           minHeightPx = 190, maxHeightPx = 260, hp = 47f,
+        new BuildingType { name = "Civilian 1x3", sizeClass = 2, tilesX = 1, tilesY = 3,
+                           minHeightPx = 400, maxHeightPx = 560, hp = 47f,
                            foodDrops = 14, foodScatter = 4.2f, weight = 20f,
-                           artSprite = "Buildings/civilian_2x2",
+                           artSprite = "Buildings/civilian_1x3",
                            colour = new Color(0.29f, 0.27f, 0.37f) },
 
-        // Shares Wide Low's render, because the delivered set has one 2x2 civilian and
-        // this roster has two. In greybox they read apart by height; in art they will
-        // not. Either the artist adds a tall 2x2, or this moves to the 3x3 footprint
-        // and takes civilian_3x3 — which is currently the one delivered civilian with
-        // nothing pointing at it.
-        new BuildingType { name = "Block",    sizeClass = 3, tilesX = 2, tilesY = 2,
+        new BuildingType { name = "Civilian 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 15f,
                            artSprite = "Buildings/civilian_2x2",
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
-        new BuildingType { name = "Tower",    sizeClass = 4, tilesX = 1, tilesY = 3,
+        // The largest civilian, and the only one that is a genuine size-5 job outside
+        // the Reactor. Rare on purpose — a city of these would be a city of walls.
+        new BuildingType { name = "Civilian 3x3", sizeClass = 4, tilesX = 3, tilesY = 3,
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
-                           foodDrops = 34, foodScatter = 7f,  weight = 10f,
-                           artSprite = "Buildings/civilian_1x3",
+                           foodDrops = 34, foodScatter = 7f,  weight = 8f,
+                           artSprite = "Buildings/civilian_3x3",
                            colour = new Color(0.25f, 0.26f, 0.42f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
         // read as prizes across a crowded street. Deliberately squat and a hue no
         // filler block uses — silhouette and colour are all greybox has to work with.
-        new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
+        new BuildingType { name = "Laboratory 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
                            foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
                            artSprite = "Buildings/laboratory_1x2",
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
-        new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
+        new BuildingType { name = "Laboratory 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
                            foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            artSprite = "Buildings/laboratory_2x2",
@@ -755,7 +782,7 @@ public class Tuning : ScriptableObject
         //
         // Small pulse at 20 clears Grunts (12 hp) outright and cannot finish anything
         // else: a Tank takes 14 through 6 armour, a Commander 20 of 120.
-        new BuildingType { name = "Reactor Small", sizeClass = 0, tilesX = 1, tilesY = 1,
+        new BuildingType { name = "Reactor 1x1", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 170, maxHeightPx = 220, hp = 60f,
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
@@ -764,7 +791,7 @@ public class Tuning : ScriptableObject
 
         // Large pulse at 130 kills everything up to Tank class — Tank, Dropship and
         // Commander all fall — while a Mech survives on 140 hp behind 12 armour.
-        new BuildingType { name = "Reactor Large", sizeClass = 3, tilesX = 2, tilesY = 2,
+        new BuildingType { name = "Reactor 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 300, maxHeightPx = 400, hp = 118f,
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
@@ -779,7 +806,7 @@ public class Tuning : ScriptableObject
         // Pulse at 300 clears a Mech outright through its 12 armour, and takes roughly
         // a quarter off the Abomination — so felling it before the boss lands is a real
         // strategic play rather than just more damage.
-        new BuildingType { name = "Reactor Core", sizeClass = 4, tilesX = 3, tilesY = 3,
+        new BuildingType { name = "Reactor 3x3", sizeClass = 4, tilesX = 3, tilesY = 3,
                            minHeightPx = 520, maxHeightPx = 660, hp = 700f,
                            foodDrops = 40, foodScatter = 9f,
                            weight = 0f, isReactor = true, unique = true,
