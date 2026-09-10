@@ -152,7 +152,8 @@ public class DebugHud : MonoBehaviour
                 // the key keeps meaning "give me the prize target" as the run moves on.
                 var carrier = GameBootstrap.Instance.FindUpgradeCarrier();
                 GameBootstrap.Instance.SpawnOne(
-                    brawler ? "Bruiser" : heavy ? "Mech" : carrier != null ? carrier.name : "Commander");
+                    brawler ? (heavy ? "Goliath" : "Bruiser")
+                    : heavy ? "Mech" : carrier != null ? carrier.name : "Commander");
             }
             if (kb.f9Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnOne("Abomination");
             if (kb.f8Key.wasPressedThisFrame)

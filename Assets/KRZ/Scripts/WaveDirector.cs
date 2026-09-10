@@ -198,7 +198,11 @@ public class WaveDirector : MonoBehaviour
                 var at = player.position + new Vector3(Mathf.Cos(angle) * r,
                                                        Mathf.Sin(angle) * r * tuning.isoSquash, 0f);
                 if (!OnLandPoint(at)) continue;
-                if (Physics2D.OverlapCircle(at, clearance) != null) continue;
+
+                // Something that walks through buildings only needs ground. Holding it
+                // to a clear circle as well would fail six attempts out of six in a
+                // dense city and drop it silently — which is how the boss went missing.
+                if (!spawning.ignoresBuildings && Physics2D.OverlapCircle(at, clearance) != null) continue;
 
                 Enemy.Spawn(tuning, spawning, at, tuning.pixelsPerUnit);
                 break;

@@ -25,7 +25,7 @@ public class Missile : MonoBehaviour
     public static void Volley(Tuning tuning, EnemyType type, Vector3 from, float ppu)
     {
         if (root == null) root = new GameObject("Missiles").transform;
-        if (sprite == null) sprite = GreyboxArt.Pickup(18, Color.white, ppu);
+        if (sprite == null) sprite = GreyboxArt.Pickup(Mathf.Max(4, tuning.missilePx), Color.white, ppu);
 
         for (int i = 0; i < type.volleyCount; i++)
         {

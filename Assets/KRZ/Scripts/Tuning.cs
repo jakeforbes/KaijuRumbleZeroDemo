@@ -443,6 +443,31 @@ public class Tuning : ScriptableObject
                         artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
+        // Goliath. One per run, arriving just ahead of the boss — the last thing the
+        // army has left before the thing that is not an army at all.
+        //
+        // The Mech chassis at half again the size, three times the health and a volley
+        // three times as wide. Twenty-four missiles will not out-damage eight, because
+        // the half-second of grace after any hit swallows most of a volley either way;
+        // what it does is fill the screen, which is the whole point of a unit that
+        // exists to make the run-up to the boss feel like the end of something.
+        //
+        // Walks through buildings, like the Abomination and for the same reason: at
+        // bodyPx 576 its collider is wider than the streets, and a unique unit that
+        // spawns once and then stands still in an alley is worse than no unit.
+        new EnemyType { name = "Goliath", sizeClass = 2, hp = 420f, armour = 12f,
+                        contactDamage = 32f, moveSpeed = 1.55f, attackRange = 1.8f,
+                        attackCooldown = 1.6f,
+                        special = SpecialAction.MissileVolley,
+                        volleyCount = 24, specialCooldown = 6f, specialWindup = 1.2f,
+                        foodDrops = 12, foodScatter = 4f,
+                        bodyPx = 576, mass = 600f,
+                        electrified = true, ignoresBuildings = true,
+                        colour = new Color(0.72f, 0.35f, 0.55f),
+                        artFolder = "Mech", artPrefix = "mech", artDisplayPx = 576,
+                        footprintFraction = 0.34f, artFrameDigits = 4, artFirstFrame = 1,
+                        artTint = new Color(0.78f, 0.80f, 1f) },
+
         // Bruiser. The same chassis a fifth larger, with the missiles taken away and a
         // punch put in — the one thing in the roster that closes on you deliberately
         // and wants to be in your face.
@@ -681,6 +706,11 @@ public class Tuning : ScriptableObject
         new WaveEntry { label = "the gathering", startTime = 122f, endTime = 158f, interval = 18f,
                         enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
 
+        // Four seconds before the boss, so it is still on its feet when the
+        // Abomination walks on and the two overlap.
+        new WaveEntry { label = "GOLIATH", startTime = 156f,
+                        enemyType = "Goliath", count = 1, shape = SpawnShape.Ahead },
+
         // Bruisers arrive after the Mech has taught you to keep moving, and ask the
         // opposite: something that wants to be close, that you have to read rather
         // than outrun. Two of them, so the second lands while the first is winding up
@@ -740,6 +770,12 @@ public class Tuning : ScriptableObject
              "a world unit — invisible against a size-5 kaiju six units tall. This is " +
              "the drawing only; damage still uses swarmHitRadius.")]
     public int swarmBoltPx = 40;
+
+    [Tooltip("Enemy missile sprite size in pixels, raised for the same reason the " +
+             "swarm particles were: at 18 a volley was a scatter of specks against a " +
+             "kaiju several units tall, and a threat you cannot see coming is not a " +
+             "telegraph. Drawing only — the hit radius is missileHitRadius.")]
+    public int missilePx = 40;
 
     [Header("Toxin — upgrade")]
     [Tooltip("Damage per tick, before size scaling. Very small on purpose: this is " +

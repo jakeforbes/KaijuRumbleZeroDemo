@@ -83,7 +83,7 @@ across the map on its own.
 | `F8` | Spawn a Dropship (`Shift+F8` for a Scavenger) |
 | `F9` | Spawn the Abomination |
 | `F10` | Restart the run |
-| `F11` | Spawn whoever currently carries power-ups — Commander below size 3, Elite Tank at or above it (`Shift+F11` Mech, `Ctrl+F11` Bruiser) |
+| `F11` | Spawn whoever currently carries power-ups — Commander below size 3, Elite Tank at or above it (`Shift+F11` Mech, `Ctrl+F11` Bruiser, `Ctrl+Shift+F11` Goliath) |
 | `F12` | Draw collision footprints |
 | `,` `.` | Scrub the wave timeline back 15s / forward 30s |
 | `[` `]` | Slow down / speed up time |
