@@ -88,19 +88,28 @@ public class Tuning : ScriptableObject
              "here and the first minute has to be food you can reach.")]
     [Range(0f, 0.8f)] public float downtownFraction = 0.34f;
 
-    [Tooltip("Extra small buildings packed into each block's leftover space. One " +
-             "building per block leaves most of a block empty at these spacings, and " +
-             "doubling the map doubled the walking without adding anything to walk " +
-             "past. Set to 0 for the old one-per-block city.")]
-    [Range(0, 4)] public int infillPerBlock = 2;
+    [Tooltip("Attempts at packing a small building into each block's leftover space. " +
+             "Attempts, not results — one that finds nowhere clear is simply dropped, " +
+             "so the real count falls off as a block fills. Set to 0 for the old " +
+             "one-building-per-block city.")]
+    [Range(0, 10)] public int infillPerBlock = 6;
 
     [Tooltip("Largest size class allowed as infill. 1 keeps filler to 1x1 and 1x2, " +
              "which is what filler should be — not a second skyline.")]
     [Range(0, 4)] public int infillMaxClass = 1;
 
-    [Tooltip("Clearance in world units left around an infill building, so streets stay " +
-             "walkable at size 5 rather than becoming a maze you clip through.")]
-    public float infillGap = 1.1f;
+    [Tooltip("Clearance in world units left around an infill building. This is the " +
+             "density knob: it is the gap between neighbours, and squaring the number " +
+             "of buildings means roughly halving it.")]
+    public float infillGap = 0.6f;
+
+    [Tooltip("How much of a block's width infill may spread across, as a fraction. " +
+             "Below 1 it keeps off the block boundaries, which is what preserves a " +
+             "street grid between blocks at any density.\n\n" +
+             "That grid is not decoration. Enemies steer by a greedy local avoidance " +
+             "that stands still when it is boxed in, and the Abomination is two and a " +
+             "half units wide — pack buildings edge to edge and the boss simply stops.")]
+    [Range(0.3f, 1f)] public float infillSpread = 0.7f;
 
     [Header("Hamburgers")]
     [Tooltip("One per district quadrant. A one-shot consumable rather than a stacking " +
@@ -864,7 +873,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 620, maxHeightPx = 820, hp = 73f,
                            foodDrops = 34, foodScatter = 7f,  weight = 8f,
                            artSprite = "Buildings/civilian_3x3",
-                           artDirections = 5,
+                           artDirections = 1,
                            colour = new Color(0.25f, 0.26f, 0.42f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
@@ -909,7 +918,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
                            artSprite = "Buildings/reactor_2x2",
-                           artDirections = 5,
+                           artDirections = 1,
                            colour = new Color(0.96f, 0.45f, 0.18f) },
 
         // The Core. One per run, and the only building that is genuinely a size-5 job.

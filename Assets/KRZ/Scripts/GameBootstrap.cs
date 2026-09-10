@@ -569,8 +569,10 @@ public class GameBootstrap : MonoBehaviour
 
             for (int attempt = 0; attempt < 8; attempt++)
             {
-                float ox = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingX;
-                float oy = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingY;
+                // Confined to the block's interior rather than its whole cell, so the
+                // corridors on the block boundaries survive however dense it gets.
+                float ox = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingX * tuning.infillSpread;
+                float oy = ((float)rng.NextDouble() - 0.5f) * tuning.blockSpacingY * tuning.infillSpread;
                 var at = new Vector3(blockX + ox, blockY + oy, 0f);
 
                 var box = Footprint(at, tilesX, tilesY);
