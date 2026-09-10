@@ -385,15 +385,20 @@ public class Tuning : ScriptableObject
     public bool showSwipeArc = true;
 
     [Header("Blast — the manual special")]
-    [Tooltip("One big number rather than chip damage: this is the answer to armour.")]
-    public float blastDamage = 45f;
+    [Tooltip("One big number rather than chip damage: this is the answer to armour.\n\n" +
+             "This is per beam, and Prism can put eight of them out at once, on top of " +
+             "the tier damage multiplier and Beam's own stack. Read any change here as " +
+             "a change to all eight.")]
+    public float blastDamage = 30f;
     public float blastCooldown = 6f;
     public float blastRange = 14f;
 
     [Tooltip("Beam thickness as a fraction of the kaiju's height, so it grows with you. " +
              "Applies to the damage band as well as the drawing, so what you see is what " +
-             "it hits.")]
-    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.8f;
+             "it hits.\n\n" +
+             "Halved from 0.8 once Prism went to eight beams: at size 5 that was eight " +
+             "bands almost five units wide, which is most of the screen and no aim.")]
+    [Range(0.1f, 1.5f)] public float blastWidthFraction = 0.4f;
 
     [Tooltip("Height the beam is centred on, as a fraction of the kaiju's height. 0.5 " +
              "is mid-body. Firing from the head looked disconnected from a damage band " +
@@ -439,8 +444,11 @@ public class Tuning : ScriptableObject
                           perStack = 1f, maxStacks = 3,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
-        new UpgradeType { id = UpgradeId.Fleet,   displayName = "Fleet",
-                          effect = "Move 12% faster", perStack = 1.12f, maxStacks = 5,
+        // 12% per stack was under the threshold where a single pickup registers —
+        // it read as "maybe". 20% is felt on the pickup, and five of them roughly
+        // two and a half times your speed, which is a whole build rather than a trim.
+        new UpgradeType { id = UpgradeId.Speed,   displayName = "Speed",
+                          effect = "Move 20% faster", perStack = 1.2f, maxStacks = 5,
                           weight = 1f, colour = new Color(0.5f, 0.9f, 0.75f) },
 
         new UpgradeType { id = UpgradeId.Stomp,   displayName = "Stomp",

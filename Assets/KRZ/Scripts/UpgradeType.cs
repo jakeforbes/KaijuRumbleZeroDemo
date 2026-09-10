@@ -4,7 +4,7 @@ public enum UpgradeId
 {
     Brawler,   // extra swipe strikes
     Prism,     // extra Blast beams, radiating outward
-    Fleet,     // faster movement
+    Speed,     // faster movement
     Stomp,     // adds an AoE around the kaiju
     Beam,      // stronger, longer special
     Furnace,   // faster special

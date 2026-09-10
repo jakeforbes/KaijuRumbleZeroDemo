@@ -49,7 +49,7 @@ public class PlayerUpgrades : MonoBehaviour
     /// beam would have been invisible by comparison.
     /// </summary>
     public int BlastBeams => 1 << Mathf.Clamp(Count(UpgradeId.Prism), 0, 3);
-    public float MoveSpeedMul => Mul(UpgradeId.Fleet);
+    public float MoveSpeedMul => Mul(UpgradeId.Speed);
     public float BlastCooldownMul => Mul(UpgradeId.Furnace);
     public float BlastPowerMul => Mul(UpgradeId.Beam);
     /// <summary>
