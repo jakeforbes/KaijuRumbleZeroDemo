@@ -24,6 +24,9 @@ public class Tuning : ScriptableObject
     [Range(0.2f, 1f)] public float isoSquash = 0.5f;
 
     [Header("Camera")]
+    [Min(0.01f)] public float bossIntroPanSeconds = 1.25f;
+    [Min(0)] public float bossIntroHoldSeconds = 2f;
+    [Min(0.01f)] public float bossIntroReturnSeconds = 1.25f;
     public float pixelsPerUnit = 128f;
 
     [Tooltip("Orthographic half-height. 4.21875 shows sprites 1:1 at 1080p with 128 PPU.")]

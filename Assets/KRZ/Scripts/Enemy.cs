@@ -16,6 +16,7 @@ public class Enemy : Damageable
     public EnemyType type;
 
     public override bool IsAlive => hp > 0f;
+    public bool IsBoss => type != null && (type.isBoss || type.name == "Abomination");
 
     float hp;
     float nextAttackAt;
@@ -37,8 +38,16 @@ public class Enemy : Damageable
     SpriteRenderer sr;
     Color baseColour;
 
+    readonly RaycastHit2D[] obstacleProbe = new RaycastHit2D[8];
+
     public static Enemy Spawn(Tuning tuning, EnemyType type, Vector3 at, float ppu)
     {
+        if ((type.isBoss || type.name == "Abomination") && GameBootstrap.Instance != null
+            && !GameBootstrap.Instance.TryFindBossSpawn(type, out at))
+        {
+            Debug.LogWarning("KRZ: no clear boss spawn at the playfield edge.");
+            return null;
+        }
         if (root == null) root = new GameObject("Enemies").transform;
 
         var go = new GameObject(type.name);
@@ -97,11 +106,14 @@ public class Enemy : Damageable
 
         SoundPlayer.Attach(go, type.sounds != null ? type.sounds : tuning.enemySounds);
         AudioEvents.Play(Sfx.EnemySpawn, at, 0.3f, go);
+        if (e.IsBoss && Camera.main != null && Camera.main.TryGetComponent<CameraRig>(out var rig))
+            rig.IntroduceBoss(e);
         return e;
     }
 
     void OnEnable() => All.Add(this);
     void OnDisable() => All.Remove(this);
+
 
     void Update()
     {
@@ -154,7 +166,8 @@ public class Enemy : Damageable
         {
             winding = false;
             Vector2 dir = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).normalized;
-            body.linearVelocity = new Vector2(dir.x, dir.y * tuning.isoSquash) * type.moveSpeed;
+            Vector2 moveDir = new Vector2(dir.x, dir.y * tuning.isoSquash).normalized;
+            body.linearVelocity = AvoidBuildings(moveDir) * type.moveSpeed;
         }
         else
         {
@@ -202,7 +215,56 @@ public class Enemy : Damageable
         float panic = Mathf.Clamp01(1f - flat / Mathf.Max(0.01f, type.fleeRadius));
         var dir = Vector2.Lerp(drift, away, panic).normalized;
 
-        body.linearVelocity = new Vector2(dir.x, dir.y * tuning.isoSquash) * type.moveSpeed;
+        // Fleeing runs through the same obstacle avoidance as chasing, or a panicking
+        // Scavenger would bolt straight into the first wall behind it.
+        Vector2 moveDir = new Vector2(dir.x, dir.y * tuning.isoSquash).normalized;
+        body.linearVelocity = AvoidBuildings(moveDir) * type.moveSpeed;
+    }
+
+    /// <summary>
+    /// Rudimentary obstacle awareness. A single wall-slide isn't enough near a corner
+    /// or a gap between two buildings — the slide direction can point straight into the
+    /// second building, so it fans outward from the desired heading, left and right in
+    /// alternation, and takes the first heading that's actually clear. Recomputed every
+    /// frame, so as soon as a clearer line to the player opens up it takes it.
+    /// </summary>
+    Vector2 AvoidBuildings(Vector2 moveDir)
+    {
+        float probeDist = Mathf.Max(1f, type.moveSpeed * 0.5f);
+        if (IsHeadingClear(moveDir, probeDist)) return moveDir;
+
+        for (int i = 1; i <= 6; i++)
+        {
+            float angle = i * 30f;
+            Vector2 toLeft = Rotate(moveDir, angle);
+            if (IsHeadingClear(toLeft, probeDist)) return toLeft;
+
+            Vector2 toRight = Rotate(moveDir, -angle);
+            if (IsHeadingClear(toRight, probeDist)) return toRight;
+        }
+
+        // Boxed in on every side. Standing still beats vibrating in place.
+        return Vector2.zero;
+    }
+
+    bool IsHeadingClear(Vector2 dir, float dist)
+    {
+        int count = body.Cast(dir, obstacleProbe, dist);
+        for (int i = 0; i < count; i++)
+        {
+            var hit = obstacleProbe[i];
+            if (hit.collider.isTrigger) continue;
+            if (hit.collider.GetComponent<Building>() == null) continue;
+            return false;
+        }
+        return true;
+    }
+
+    static Vector2 Rotate(Vector2 v, float degrees)
+    {
+        float rad = degrees * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad), sin = Mathf.Sin(rad);
+        return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
     }
 
     /// <summary>Whether the kaiju has outgrown this enemy's class.</summary>

@@ -513,12 +513,13 @@ MonoBehaviour:
         reverbPreset: 2
         cooldown: 0
   - enabled: 1
-    clips: []
-    volume: 1
-    randomizePitch: 0
+    clips:
+    - {fileID: 8300000, guid: 97b575a13f3cb7b469d8b1d6715b7246, type: 3}
+    volume: 0.209
+    randomizePitch: 1
     pitch: 1
-    pitchRange: {x: 0.9, y: 1.1}
-    size: 0
+    pitchRange: {x: 0.5, y: 1.5}
+    size: 0.73
     echo: 0
     echoDelay: 150
     echoDecay: 0.35

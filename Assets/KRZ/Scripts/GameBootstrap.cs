@@ -14,6 +14,7 @@ public class GameBootstrap : MonoBehaviour
     Tuning tuning;
     PlayerController player;
     OccluderFade fade;
+    Rect playfieldBounds;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
@@ -29,6 +30,7 @@ public class GameBootstrap : MonoBehaviour
     /// </summary>
     public static void Restart()
     {
+        CameraRig.CancelActiveIntroduction();
         Time.timeScale = 1f;
         Instance = null;
         SceneManager.sceneLoaded += OnReloaded;
@@ -61,6 +63,7 @@ public class GameBootstrap : MonoBehaviour
         ClearScene();
         var cam = BuildCamera();
         RuntimeSoundPlayer.Ensure();
+        BackgroundMusicPlayer.Create(Resources.Load<MusicSettings>("Music Settings"));
 
         // Created before the city so buildings can register as they are made.
         fade = gameObject.AddComponent<OccluderFade>();
@@ -124,6 +127,10 @@ public class GameBootstrap : MonoBehaviour
         // twice the count a full-tile spacing would.
         int cols = Mathf.CeilToInt(spanX / tileW) + 4;
         int rows = Mathf.CeilToInt(spanY / (tileH * 0.5f)) + 8;
+        playfieldBounds = Rect.MinMaxRect(-cols * 0.5f * tileW - tileW * 0.5f,
+            -rows * 0.25f * tileH - tileH * 0.5f,
+            (cols - cols * 0.5f) * tileW,
+            (rows - 1 - rows * 0.5f) * tileH * 0.5f + tileH * 0.5f);
 
         var root = new GameObject("Ground").transform;
         for (int r = 0; r < rows; r++)
@@ -211,6 +218,36 @@ public class GameBootstrap : MonoBehaviour
         return null;
     }
 
+    public bool TryFindBossSpawn(EnemyType type, out Vector3 position)
+    {
+        position = default;
+        float clearance = Mathf.Max(0.6f, type.bodyPx * 0.5f / tuning.pixelsPerUnit);
+        float inset = clearance + 0.5f;
+        var edge = Rect.MinMaxRect(playfieldBounds.xMin + inset, playfieldBounds.yMin + inset,
+            playfieldBounds.xMax - inset, playfieldBounds.yMax - inset);
+        if (edge.width <= 0 || edge.height <= 0 || player == null) return false;
+        // Search the perimeter rather than falling back to a ring around the player.
+        // The farthest clear candidate leaves room for the approach and camera reveal.
+        float best = -1;
+        for (int side = 0; side < 4; side++)
+            for (int sample = 0; sample <= 32; sample++)
+            {
+                float t = sample / 32f;
+                Vector2 at = side == 0 ? new Vector2(Mathf.Lerp(edge.xMin, edge.xMax, t), edge.yMin)
+                    : side == 1 ? new Vector2(edge.xMax, Mathf.Lerp(edge.yMin, edge.yMax, t))
+                    : side == 2 ? new Vector2(Mathf.Lerp(edge.xMin, edge.xMax, t), edge.yMax)
+                    : new Vector2(edge.xMin, Mathf.Lerp(edge.yMin, edge.yMax, t));
+                if (Physics2D.OverlapCircle(at, clearance) != null) continue;
+                var delta = at - (Vector2)player.transform.position;
+                delta.y /= Mathf.Max(0.01f, tuning.isoSquash);
+                float score = delta.sqrMagnitude;
+                if (score <= best) continue;
+                best = score;
+                position = at;
+            }
+        return best >= 0;
+    }
+
     /// <summary>Cheat spawn: one named enemy, for testing a type without waiting on the ratio.</summary>
     public void SpawnOne(string typeName)
     {
@@ -218,6 +255,14 @@ public class GameBootstrap : MonoBehaviour
         if (type == null || player == null)
         {
             Debug.LogWarning($"KRZ: no enemy type named '{typeName}'.");
+            return;
+        }
+
+        if (type.isBoss || type.name == "Abomination")
+        {
+            // Enemy.Spawn centrally selects the edge, also covering other spawn callers.
+            if (Enemy.Spawn(tuning, type, Vector3.zero, tuning.pixelsPerUnit) != null)
+                Debug.Log($"KRZ: spawned {type.name} at the playfield edge.");
             return;
         }
 

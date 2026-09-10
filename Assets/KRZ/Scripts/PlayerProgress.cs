@@ -40,7 +40,10 @@ public class PlayerProgress : MonoBehaviour
     /// <summary>Set when the kaiju dies at size 1. The run is over until F10.</summary>
     public bool IsDead { get; private set; }
 
-    public bool Invulnerable => Time.time < invulnerableUntil || godMode;
+    // Also invulnerable for the duration of a boss's camera introduction, since
+    // the player keeps moving/acting during it but shouldn't be able to be hit
+    // while the camera is off them.
+    public bool Invulnerable => Time.time < invulnerableUntil || godMode || CameraRig.IsBossIntroductionPlaying;
     public float Scale => currentScale;
 
     /// <summary>Body sprite, so damage can flash it.</summary>
