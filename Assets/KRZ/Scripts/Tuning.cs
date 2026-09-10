@@ -347,7 +347,7 @@ public class Tuning : ScriptableObject
         // silhouette scale and colour differ, not because they are different art.
         new EnemyType { name = "Grunt", sizeClass = 0, hp = 12f,  armour = 0f,
                         contactDamage = 6f,  moveSpeed = 0.96f, attackRange = 0.9f,
-                        attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
+                        attackCooldown = 1.1f, foodDrops = 1, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f),
                         artFolder = "FlyingTank", artPrefix = "FlyingTank",
                         artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
@@ -367,7 +367,7 @@ public class Tuning : ScriptableObject
                         contactDamage = 10f, moveSpeed = 0.96f,
                         attackRange = 3f, ranged = true,
                         attackCooldown = 1.6f, attackWindup = 0.45f,
-                        foodDrops = 3, foodScatter = 1.6f,
+                        foodDrops = 2, foodScatter = 1.6f,
                         bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f),
                         artFolder = "FlyingTank", artPrefix = "FlyingTank",
                         artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
@@ -387,7 +387,7 @@ public class Tuning : ScriptableObject
                         contactDamage = 0f, attacks = false,
                         movement = MovementMode.Flee, wanderRate = 3.2f, fleeRadius = 10f,
                         moveSpeed = 1.85f, attackRange = 0f,
-                        foodDrops = 26, foodScatter = 9f,
+                        foodDrops = 13, foodScatter = 9f,
                         bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
 
         // The one enemy with its own ground vehicle art. Drawn a little under a
@@ -397,7 +397,7 @@ public class Tuning : ScriptableObject
         // better than being stopped by air.
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
                         contactDamage = 18f, moveSpeed = 1.35f, attackRange = 4.5f, ranged = true,
-                        attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
+                        attackCooldown = 2.2f, foodDrops = 3, foodScatter = 2f,
                         bodyPx = 128, colour = new Color(0.80f, 0.60f, 0.25f),
                         artFolder = "GroundTank", artPrefix = "GroundTank",
                         artPathFormat = "{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}",
@@ -422,7 +422,7 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Elite Tank", sizeClass = 2, hp = 200f, armour = 14f,
                         contactDamage = 26f, moveSpeed = 1.5f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2f, attackWindup = 0.5f,
-                        dropsUpgrade = true, foodDrops = 16, foodScatter = 3.5f,
+                        dropsUpgrade = true, foodDrops = 8, foodScatter = 3.5f,
                         bodyPx = 150, electrified = true,
                         colour = new Color(1f, 0.82f, 0.30f),
                         artFolder = "GroundTank", artPrefix = "GroundTank",
@@ -437,7 +437,7 @@ public class Tuning : ScriptableObject
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,
-                        attackCooldown = 1.6f, foodDrops = 9, foodScatter = 3f,
+                        attackCooldown = 1.6f, foodDrops = 5, foodScatter = 3f,
                         special = SpecialAction.MissileVolley,
                         bodyPx = 384, colour = new Color(0.72f, 0.35f, 0.55f),
                         artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
@@ -457,7 +457,7 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Bruiser", sizeClass = 2, hp = 190f, armour = 14f,
                         contactDamage = 30f, moveSpeed = 1.55f, attackRange = 1.8f,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
-                        foodDrops = 14, foodScatter = 3.5f,
+                        foodDrops = 7, foodScatter = 3.5f,
                         special = SpecialAction.Knockback,
                         specialCooldown = 9f, specialWindup = 1.5f, specialRange = 4.5f,
                         specialDamage = 85f, specialKnockback = 7f,
@@ -477,7 +477,7 @@ public class Tuning : ScriptableObject
                         special = SpecialAction.DeployTroops,
                         specialCooldown = 6f, specialWindup = 1.2f, specialRange = 15f,
                         deployType = "Grunt", deployCount = 4, deploySpread = 2.5f,
-                        foodDrops = 7, foodScatter = 2.5f,
+                        foodDrops = 4, foodScatter = 2.5f,
                         bodyPx = 112, colour = new Color(0.45f, 0.75f, 0.85f),
                         artFolder = "FlyingTank", artPrefix = "FlyingTank",
                         artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
@@ -495,7 +495,7 @@ public class Tuning : ScriptableObject
         new EnemyType { name = "Commander", sizeClass = 1, hp = 120f, armour = 0f,
                         contactDamage = 12f, moveSpeed = 0.96f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 1.8f, attackWindup = 0.5f,
-                        foodDrops = 6, foodScatter = 2.5f, dropsUpgrade = true,
+                        foodDrops = 3, foodScatter = 2.5f, dropsUpgrade = true,
                         bodyPx = 64, colour = new Color(0.65f, 0.35f, 0.95f),
                         artFolder = "FlyingTank", artPrefix = "FlyingTank",
                         artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
@@ -577,9 +577,17 @@ public class Tuning : ScriptableObject
     public float freeUpgradeRadius = 18f;
 
     [Tooltip("Hard ceiling on living enemies. The timeline is written to push against " +
-             "this rather than to stay under it, so the cap is what actually sets the " +
-             "peak crowd — and protects the framerate.")]
-    public int maxEnemiesAlive = 60;
+             "this rather than to stay under it, so this number — not the wave counts — " +
+             "is what actually sets the size of a horde.\n\n" +
+             "Doubled alongside the waves, because leaving it at 60 would have meant " +
+             "doubling the counts and seeing no change at all: the cap is checked per " +
+             "spawn, so once infantry fills it every later wave is silently dropped, " +
+             "and the thing dropped is always the interesting enemy rather than the " +
+             "grunt that got there first.\n\n" +
+             "This is also the framerate knob. Every living enemy sweeps its own " +
+             "collider against the world each frame to steer, so if the late game " +
+             "starts to chug, come here before anywhere else.")]
+    public int maxEnemiesAlive = 120;
 
     [Tooltip("The whole arc, as data. Times are seconds into the run. A beat with an " +
              "interval repeats until its end time; without one it fires once.")]
@@ -591,17 +599,17 @@ public class Tuning : ScriptableObject
         // nothing — it just removes five seconds of an empty city at the front of a
         // run that is only three minutes long.
         new WaveEntry { label = "first contact", startTime = 0f, endTime = 4f, interval = 2f,
-                        enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
+                        enemyType = "Grunt", count = 6, shape = SpawnShape.Clump },
 
         // A second, slightly bigger probe before the real line forms. Keeps the
         // opening minute moving rather than leaving a ten-second gap.
         new WaveEntry { label = "probe", startTime = 10f, endTime = 14f, interval = 2f,
-                        enemyType = "Grunt", count = 4, shape = SpawnShape.Clump },
+                        enemyType = "Grunt", count = 8, shape = SpawnShape.Clump },
 
         // The real infantry line. A Commander leads the first squad and every third
         // after — a rhythm you can learn rather than a roll you cannot read.
         new WaveEntry { label = "infantry", startTime = 25f, endTime = 155f, interval = 10f,
-                        enemyType = "Grunt", count = 9, shape = SpawnShape.Clump,
+                        enemyType = "Grunt", count = 18, shape = SpawnShape.Clump,
                         commanderEvery = 2,
                         veteranType = "Trooper", veteranFromFire = 2,
                         veteranStartFraction = 0.3f, veteranRampPerFire = 0.07f },
@@ -609,18 +617,18 @@ public class Tuning : ScriptableObject
         // Scavengers turn up throughout. Two at a time so one getting away still
         // leaves a chase worth committing to.
         new WaveEntry { label = "scavengers", startTime = 35f, endTime = 155f, interval = 22f,
-                        enemyType = "Scavenger", count = 2, shape = SpawnShape.Ring },
+                        enemyType = "Scavenger", count = 4, shape = SpawnShape.Ring },
 
         // First Dropship: a grunt source you can switch off by killing it.
         // Dropships were three one-shots with fifty-second holes between them, which
         // is most of why the middle of the run went quiet. Sustained now, so there is
         // always one either arriving or being dealt with.
         new WaveEntry { label = "dropships", startTime = 40f, endTime = 155f, interval = 20f,
-                        enemyType = "Dropship", count = 1, shape = SpawnShape.Clump },
+                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump },
 
         // Armour arrives. The swipe stops being enough and the Blast earns its place.
         new WaveEntry { label = "armour", startTime = 55f,
-                        enemyType = "Tank", count = 3, shape = SpawnShape.Ring },
+                        enemyType = "Tank", count = 6, shape = SpawnShape.Ring },
 
         // Armour runs all the way to the boss rather than thinning out once mechs
         // arrive, and at 16 seconds instead of 25. Every second clump is led by
@@ -628,7 +636,7 @@ public class Tuning : ScriptableObject
         // prize target keeps turning up through the emptiest stretch of the run
         // instead of only ever riding with infantry.
         new WaveEntry { label = "armour", startTime = 60f, endTime = 155f, interval = 16f,
-                        enemyType = "Tank", count = 2, shape = SpawnShape.Clump,
+                        enemyType = "Tank", count = 4, shape = SpawnShape.Clump,
                         commanderEvery = 2 },
 
         // Mechs: the volley threat, and the first thing that punishes standing still.
@@ -639,18 +647,18 @@ public class Tuning : ScriptableObject
         // much yet. If the middle of the run goes from slow to punishing, this line
         // is the reason before any of the others.
         new WaveEntry { label = "mechs", startTime = 60f, endTime = 155f, interval = 30f,
-                        enemyType = "Mech", count = 1, shape = SpawnShape.Clump },
+                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
 
         // Late push. Ahead means it lands in front of wherever you are running.
         new WaveEntry { label = "push", startTime = 120f,
-                        enemyType = "Grunt", count = 12, shape = SpawnShape.Ahead,
+                        enemyType = "Grunt", count = 24, shape = SpawnShape.Ahead,
                         commanderEvery = 1 },
 
         new WaveEntry { label = "push", startTime = 130f,
-                        enemyType = "Dropship", count = 2, shape = SpawnShape.Clump },
+                        enemyType = "Dropship", count = 4, shape = SpawnShape.Clump },
 
         new WaveEntry { label = "push", startTime = 145f,
-                        enemyType = "Mech", count = 2, shape = SpawnShape.Clump },
+                        enemyType = "Mech", count = 4, shape = SpawnShape.Clump },
 
         // Bruisers arrive after the Mech has taught you to keep moving, and ask the
         // opposite: something that wants to be close, that you have to read rather
@@ -658,10 +666,10 @@ public class Tuning : ScriptableObject
         // — and Ahead puts one in your path rather than behind you, which is the only
         // placement a punch this slow can survive.
         new WaveEntry { label = "bruisers", startTime = 105f, endTime = 155f, interval = 40f,
-                        enemyType = "Bruiser", count = 1, shape = SpawnShape.Ahead },
+                        enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
 
         new WaveEntry { label = "push", startTime = 150f,
-                        enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
+                        enemyType = "Bruiser", count = 4, shape = SpawnShape.Ahead },
 
         // The finale.
         new WaveEntry { label = "BOSS", startTime = 160f,
