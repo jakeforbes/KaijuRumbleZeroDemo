@@ -160,10 +160,23 @@ public class Tuning : ScriptableObject
                         foodDrops = 26, foodScatter = 9f,
                         bodyPx = 64, colour = new Color(0.55f, 0.90f, 0.40f) },
 
+        // The one enemy with its own ground vehicle art. Drawn a little under a
+        // size-1 kaiju's height and half again as wide, so it reads as armour rather
+        // than as a large soldier. Body and footprint went up with the silhouette,
+        // but the footprint stays under the drawn width — clipping a track corner is
+        // better than being stopped by air.
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
                         contactDamage = 18f, moveSpeed = 1.35f, attackRange = 4.5f, ranged = true,
                         attackCooldown = 2.2f, foodDrops = 5, foodScatter = 2f,
-                        bodyPx = 96,  colour = new Color(0.80f, 0.60f, 0.25f) },
+                        bodyPx = 128, colour = new Color(0.80f, 0.60f, 0.25f),
+                        artFolder = "GroundTank", artPrefix = "GroundTank",
+                        artPathFormat = "{root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Drive", "AttackBlast", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 512, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 4, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 3, deathFrames = 4,
+                        artDisplayPx = 256, footprintFraction = 0.75f },
 
         new EnemyType { name = "Mech",  sizeClass = 2, hp = 140f, armour = 12f,
                         contactDamage = 26f, moveSpeed = 1.7f, attackRange = 1.6f,

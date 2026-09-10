@@ -76,6 +76,7 @@ public static class DirectionalArt
     ///   Uries       {root}/{clip}/{dir}/{prefix}_{clip}_{dir}_{frame}
     ///   Mech        {root}/{clip}/{prefix}_{clip}_{dir}_{frame}
     ///   FlyingTank  {root}/{dir}/{prefix}_{dir}_{clip}_{frame}
+    ///   GroundTank  {root}/{dir}/{clip}/{prefix}_{dir}_{clip}_{frame}
     /// </summary>
     public static Sprite[] Load(in ArtConfig cfg, string clip, int facing, int frameCount)
     {

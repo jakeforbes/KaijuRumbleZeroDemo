@@ -61,3 +61,6 @@ crashlytics-build.properties
 
 # FlyingTank art package
 /Assets/KRZ/Resources/FlyingTank/
+
+# GroundTank art package: 21MB, gitignored alongside the other frame sets
+/Assets/KRZ/Resources/GroundTank/
