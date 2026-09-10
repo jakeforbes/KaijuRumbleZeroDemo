@@ -59,11 +59,63 @@ public class DebugHud : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Dumps the render state of every building currently on screen.
+    ///
+    /// Exists because the clipping cannot be explained from the outside: the cuts are
+    /// axis-aligned straight lines, nothing is drawn over them, no source art is
+    /// cropped and every sprite is built from its full texture rect. One of those
+    /// four things must be false at runtime, and this says which.
+    /// </summary>
+    void LogVisibleBuildings()
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+
+        float halfH = cam.orthographicSize;
+        float halfW = halfH * cam.aspect;
+        var view = new Rect(cam.transform.position.x - halfW, cam.transform.position.y - halfH,
+                            halfW * 2f, halfH * 2f);
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"KRZ buildings on screen (view {view.width:0.0} x {view.height:0.0}):");
+
+        int shown = 0;
+        foreach (var b in Building.All)
+        {
+            if (b == null) continue;
+            var sr = b.GetComponent<SpriteRenderer>();
+            if (sr == null || sr.sprite == null) continue;
+
+            var wb = sr.bounds;
+            if (!view.Overlaps(new Rect(wb.min.x, wb.min.y, wb.size.x, wb.size.y))) continue;
+
+            var s = sr.sprite;
+            var tex = s.texture;
+            bool rectFitsTexture = tex != null &&
+                                   s.rect.xMax <= tex.width + 0.01f && s.rect.yMax <= tex.height + 0.01f;
+
+            sb.AppendLine(
+                $"  {b.name}\n" +
+                $"      sprite '{s.name}'  rect {s.rect.width:0}x{s.rect.height:0} at ({s.rect.x:0},{s.rect.y:0})\n" +
+                $"      texture {(tex == null ? "NULL" : $"{tex.width}x{tex.height}")}" +
+                $"  rectFitsTexture={rectFitsTexture}  ppu {s.pixelsPerUnit:0.0}\n" +
+                $"      pivot {s.pivot.x:0.0},{s.pivot.y:0.0} px   packed={s.packed}  mode={sr.drawMode}\n" +
+                $"      worldBounds centre {wb.center.x:0.00},{wb.center.y:0.00} size {wb.size.x:0.00}x{wb.size.y:0.00}\n" +
+                $"      order {sr.sortingOrder} layer '{sr.sortingLayerName}' colour {sr.color} sortPoint {sr.spriteSortPoint}");
+            shown++;
+        }
+
+        sb.AppendLine($"  ({shown} buildings)");
+        Debug.Log(sb.ToString());
+    }
+
     void ReadCheats()
     {
         var kb = Keyboard.current;
         if (kb == null) return;
 
+        if (kb.lKey.wasPressedThisFrame) LogVisibleBuildings();
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
         if (kb.f12Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
         if (kb.f10Key.wasPressedThisFrame) { GameBootstrap.Restart(); return; }
