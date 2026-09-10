@@ -59,11 +59,9 @@ public class PlayerAttack : MonoBehaviour
         CooldownRemaining -= Time.deltaTime;
         if (CooldownRemaining > 0f || strikePending || pendingHits > 0) return;
 
-        // Nothing in reach: no swing, and the cooldown is not spent. Walking up to a
-        // building then waiting out a cooldown you burned on empty air feels broken,
-        // and animating a swing at nothing is what buried the idle loop.
-        if (!AnyTargetInRange()) return;
-
+        // Swings on its rhythm whether or not anything is in reach. This is an
+        // auto-attack: the swing is the readout for attack speed, so hiding it when
+        // you miss would misreport the one thing Brawler and cooldown upgrades change.
         CooldownRemaining = tuning.swipeCooldown * (up != null ? up.SwipeCooldownMul : 1f);
 
         // Animation first, damage on the contact frame. Landing damage on frame 0 put
@@ -71,21 +69,6 @@ public class PlayerAttack : MonoBehaviour
         if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
         strikePending = true;
         strikeAt = Time.time + tuning.swipeContactDelay;
-    }
-
-    /// <summary>Is anything hittable inside the arc right now?</summary>
-    bool AnyTargetInRange()
-    {
-        GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc);
-
-        int count = Physics2D.OverlapCircle(origin, range, filter, hits);
-        for (int i = 0; i < count; i++)
-        {
-            var target = hits[i].GetComponentInParent<Damageable>();
-            if (target == null || !target.IsAlive) continue;
-            if (InArc(hits[i], origin, aimFlat, cosHalfArc)) return true;
-        }
-        return false;
     }
 
     void GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc)
