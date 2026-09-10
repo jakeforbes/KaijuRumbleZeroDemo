@@ -102,6 +102,18 @@ public class WaveDirector : MonoBehaviour
         // random index so it is not always the same member of the squad.
         bool wantsCommander = wave.IsCommanderTurn && commander != null && type != commander;
         int commanderIndex = wantsCommander ? Random.Range(0, wave.count) : -1;
+
+        // The veteran variant takes over the line gradually, so the step from light
+        // infantry to armour is a slope rather than a cliff.
+        var veteran = string.IsNullOrEmpty(wave.veteranType)
+            ? null
+            : GameBootstrap.Instance.FindType(wave.veteranType);
+
+        float veteranShare = 0f;
+        if (veteran != null && wave.fireIndex >= wave.veteranFromFire)
+            veteranShare = Mathf.Clamp01(wave.veteranStartFraction +
+                                         (wave.fireIndex - wave.veteranFromFire) * wave.veteranRampPerFire);
+
         wave.fireIndex++;
 
         for (int i = 0; i < wave.count; i++)
@@ -111,7 +123,9 @@ public class WaveDirector : MonoBehaviour
             // wave, so a big group partially lands rather than being dropped whole.
             if (Enemy.All.Count >= tuning.maxEnemiesAlive) return;
 
-            var spawning = i == commanderIndex ? commander : type;
+            var spawning = i == commanderIndex ? commander
+                         : veteranShare > 0f && Random.value < veteranShare ? veteran
+                         : type;
 
             float angle = wave.shape == SpawnShape.Ring
                 ? baseAngle + i / (float)wave.count * Mathf.PI * 2f

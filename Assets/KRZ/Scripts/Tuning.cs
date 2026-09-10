@@ -55,8 +55,9 @@ public class Tuning : ScriptableObject
     [Tooltip("Food needed to leave each tier. One fewer entry than there are sizes. " +
              "Roughly geometric rather than arithmetic: income accelerates hard as you " +
              "grow — wider pickup, faster kills, whole building classes becoming trivial — " +
-             "so a flat +50 per gate meant later tiers arrived faster than earlier ones.")]
-    public float[] foodPerTier = { 75f, 200f, 500f, 1150f };
+             "so a flat +50 per gate meant later tiers arrived faster than earlier ones. " +
+             "Pulled back from 75/200/500/1150, which over-corrected into a grind.")]
+    public float[] foodPerTier = { 75f, 170f, 340f, 680f };
 
     [Tooltip("Size at the start of each tier. Add or remove entries to change how many " +
              "sizes exist — everything else derives from this array's length.")]
@@ -90,6 +91,17 @@ public class Tuning : ScriptableObject
                         contactDamage = 6f,  moveSpeed = 1.28f, attackRange = 0.9f,
                         attackCooldown = 1.1f, foodDrops = 2, foodScatter = 1.2f,
                         bodyPx = 64,  colour = new Color(0.88f, 0.42f, 0.34f) },
+
+        // Trooper: the missing rung. Twice a Grunt's health and a short gun, but the
+        // same class and speed — so it is still squishable at size 3 and still
+        // outrun. It exists because Grunt to Tank was a cliff: 5x health, 3x damage
+        // and armour all at once.
+        new EnemyType { name = "Trooper", sizeClass = 0, hp = 24f, armour = 0f,
+                        contactDamage = 10f, moveSpeed = 1.28f,
+                        attackRange = 3f, ranged = true,
+                        attackCooldown = 1.6f, attackWindup = 0.45f,
+                        foodDrops = 3, foodScatter = 1.6f,
+                        bodyPx = 68, colour = new Color(0.78f, 0.30f, 0.42f) },
 
         new EnemyType { name = "Tank",  sizeClass = 1, hp = 60f,  armour = 6f,
                         contactDamage = 18f, moveSpeed = 1.8f, attackRange = 4.5f, ranged = true,
@@ -159,7 +171,9 @@ public class Tuning : ScriptableObject
         // after — a rhythm you can learn rather than a roll you cannot read.
         new WaveEntry { label = "infantry", startTime = 25f, endTime = 155f, interval = 10f,
                         enemyType = "Grunt", count = 9, shape = SpawnShape.Clump,
-                        commanderEvery = 3 },
+                        commanderEvery = 3,
+                        veteranType = "Trooper", veteranFromFire = 2,
+                        veteranStartFraction = 0.3f, veteranRampPerFire = 0.07f },
 
         // First Dropship: a grunt source you can switch off by killing it.
         new WaveEntry { label = "dropship", startTime = 45f,
@@ -365,12 +379,12 @@ public class Tuning : ScriptableObject
         // filler block uses — silhouette and colour are all greybox has to work with.
         new BuildingType { name = "Lab Small", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
-                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 7f,
+                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Lab Large", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
-                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 5f,
+                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
                            colour = new Color(0.24f, 0.72f, 0.68f) },
 
         // Reactors. Twice the health of the ordinary building at their footprint, and

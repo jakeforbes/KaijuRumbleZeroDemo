@@ -44,6 +44,20 @@ public class WaveEntry
              "rather than a random roll, so the rhythm is something you can learn.")]
     public int commanderEvery;
 
+    [Header("Veteran substitution")]
+    [Tooltip("A tougher variant that progressively replaces the base type as the run " +
+             "goes on, so the infantry line escalates without a new wave appearing.")]
+    public string veteranType = "";
+
+    [Tooltip("Firing index where substitution begins. 2 is the third squad.")]
+    public int veteranFromFire = 2;
+
+    [Tooltip("Fraction replaced on the first substituted squad.")]
+    [Range(0f, 1f)] public float veteranStartFraction = 0.3f;
+
+    [Tooltip("Extra fraction replaced each squad after, up to all of them.")]
+    [Range(0f, 1f)] public float veteranRampPerFire = 0.1f;
+
     [HideInInspector] public float nextFireAt = -1f;
     [HideInInspector] public bool fired;
     [HideInInspector] public int fireIndex;
