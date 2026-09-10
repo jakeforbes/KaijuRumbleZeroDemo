@@ -26,7 +26,9 @@ public class Tuning : ScriptableObject
     public SoundPlayer foodSounds;
 
     [Header("Movement")]
-    public float moveSpeed = 2.1f;
+    // 2.1 was reached while the Tuning asset was still pinning this to 7, so it was
+    // never actually played until today. First honest look said sluggish; 20% up.
+    public float moveSpeed = 2.52f;
     public float acceleration = 70f;
     public float deceleration = 90f;
 
@@ -390,14 +392,17 @@ public class Tuning : ScriptableObject
              "interval repeats until its end time; without one it fires once.")]
     public WaveEntry[] waves =
     {
-        // First contact at 0:05: three squads of three, two seconds apart, each from a
-        // different side. Small enough to be a lesson rather than a threat.
-        new WaveEntry { label = "first contact", startTime = 5f, endTime = 9f, interval = 2f,
+        // First contact on the opening frame: three squads of three, two seconds
+        // apart, each from a different side. Small enough to be a lesson rather than
+        // a threat, and they spawn off screen and walk on, so landing at 0:00 costs
+        // nothing — it just removes five seconds of an empty city at the front of a
+        // run that is only three minutes long.
+        new WaveEntry { label = "first contact", startTime = 0f, endTime = 4f, interval = 2f,
                         enemyType = "Grunt", count = 3, shape = SpawnShape.Clump },
 
-        // A second, slightly bigger probe at 0:15, before the real line forms. Keeps
-        // the opening minute moving rather than leaving a ten-second gap.
-        new WaveEntry { label = "probe", startTime = 15f, endTime = 19f, interval = 2f,
+        // A second, slightly bigger probe before the real line forms. Keeps the
+        // opening minute moving rather than leaving a ten-second gap.
+        new WaveEntry { label = "probe", startTime = 10f, endTime = 14f, interval = 2f,
                         enemyType = "Grunt", count = 4, shape = SpawnShape.Clump },
 
         // The real infantry line. A Commander leads the first squad and every third
@@ -496,6 +501,11 @@ public class Tuning : ScriptableObject
 
     [Tooltip("How close counts as a hit, on the flat plane.")]
     public float swarmHitRadius = 0.5f;
+
+    [Tooltip("Particle sprite size in pixels. Was 14, which at 128 PPU is a tenth of " +
+             "a world unit — invisible against a size-5 kaiju six units tall. This is " +
+             "the drawing only; damage still uses swarmHitRadius.")]
+    public int swarmBoltPx = 40;
 
     [Header("Toxin — upgrade")]
     [Tooltip("Damage per tick, before size scaling. Very small on purpose: this is " +

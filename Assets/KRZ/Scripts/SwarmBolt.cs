@@ -41,7 +41,7 @@ public class SwarmBolt : MonoBehaviour
     {
         if (count <= 0) return;
         if (root == null) root = new GameObject("Swarm").transform;
-        if (sprite == null) sprite = GreyboxArt.Pickup(14, Color.white, ppu);
+        if (sprite == null) sprite = GreyboxArt.Pickup(Mathf.Max(4, tuning.swarmBoltPx), Color.white, ppu);
 
         var targets = FindTargets(tuning, from.position);
         if (targets.Count == 0) return;
