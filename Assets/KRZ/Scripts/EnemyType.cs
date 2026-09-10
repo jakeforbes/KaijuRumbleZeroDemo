@@ -16,6 +16,9 @@ public enum SpecialAction
     None,
     MissileVolley,
     DeployTroops,
+
+    /// <summary>Hurls the player away, and into whatever is behind them.</summary>
+    Roar,
 }
 
 /// <summary>

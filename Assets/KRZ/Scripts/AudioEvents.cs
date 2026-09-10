@@ -38,7 +38,9 @@ public enum Sfx
     // templates, so inserting mid-enum would silently repoint every clip assignment.
     EnemyDeploy = 24,
     ReactorPulse,
-    BuildingStageChanged
+    BuildingStageChanged,
+    BossRoar,
+    KaijuImpact
 }
 
 public static class AudioEvents

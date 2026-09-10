@@ -229,9 +229,19 @@ public class Tuning : ScriptableObject
         // The boss. sizeClass 4 puts it beyond every squish threshold, so it is the
         // one thing in the game you can never walk over. Armour is set so the swipe
         // still contributes but the Blast is what actually fells it.
-        new EnemyType { name = "Abomination", sizeClass = 4, hp = 1200f, armour = 12f,
+        // The boss, and the run's end condition. 2400 health is deliberately more
+        // than the swipe alone can chew through in the time you have: it is the one
+        // fight that asks you to have built something.
+        //
+        // The roar exists because everything else in the roster can be outrun, which
+        // at size 5 turns a boss into a stationary target you circle. The knockback
+        // takes your spacing away and hands it back on the boss's terms — and points
+        // you at whatever building is behind you.
+        new EnemyType { name = "Abomination", sizeClass = 4, hp = 2400f, armour = 12f,
                         contactDamage = 45f, moveSpeed = 1.65f, attackRange = 3f,
                         ranged = true, attackCooldown = 2.5f, attackWindup = 0.8f,
+                        special = SpecialAction.Roar,
+                        specialCooldown = 7f, specialWindup = 1.1f, specialRange = 9f,
                         foodDrops = 0, foodScatter = 4f,
                         bodyPx = 560, colour = new Color(0.45f, 0.85f, 0.40f) },
     };
@@ -323,6 +333,23 @@ public class Tuning : ScriptableObject
     [Tooltip("How far the shrink shockwave reaches, scaled by your size.")]
     public float shockwaveRadius = 5f;
     public float shockwaveForce = 16f;
+
+    [Header("Boss roar knockback")]
+    [Tooltip("How far the roar throws the kaiju, in world units, if nothing is in the " +
+             "way. Roughly half the screen at the zoom you are at by the time the boss " +
+             "arrives. A building stops you early — which is the interesting outcome.")]
+    public float knockbackDistance = 12f;
+
+    [Tooltip("Seconds the throw lasts, decaying to a stop. Launch speed is derived " +
+             "from this and the distance, so shortening it makes the same throw more " +
+             "violent rather than shorter.")]
+    public float knockbackSeconds = 0.55f;
+
+    [Tooltip("Damage to a building the kaiju is thrown into. Runs through the normal " +
+             "size-versus-class table, so this is the number before that multiplier: " +
+             "at size 5 it flattens anything up to your own class and takes a real " +
+             "bite out of the Core.")]
+    public float knockbackImpactDamage = 120f;
 
     [Tooltip("How close an outgrown enemy has to be to die underfoot, scaled by size.")]
     public float squishRange = 0.85f;

@@ -5,7 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
-[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy)]
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -140,7 +140,7 @@ public class Enemy : Damageable
         }
 
         var progress = PlayerProgress.Instance;
-        if (progress == null || progress.IsDead) { body.linearVelocity = Vector2.zero; return; }
+        if (progress == null || progress.RunOver) { body.linearVelocity = Vector2.zero; return; }
 
         Vector2 toPlayer = progress.transform.position - transform.position;
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
@@ -364,7 +364,38 @@ public class Enemy : Damageable
             case SpecialAction.DeployTroops:
                 Deploy();
                 break;
+
+            case SpecialAction.Roar:
+                Roar();
+                break;
         }
+    }
+
+    /// <summary>
+    /// The Abomination's answer to being kited. Everything else in the roster can be
+    /// outrun, which at size 5 makes the boss a stationary target; this takes the
+    /// spacing away and hands it back on the boss's terms.
+    ///
+    /// The ring is drawn whether or not it connects, so the radius is something the
+    /// player can learn rather than guess at.
+    /// </summary>
+    void Roar()
+    {
+        AudioEvents.Play(Sfx.BossRoar, transform.position, owner: gameObject);
+        HitFx.Burst(transform.position, new Color(1f, 0.55f, 0.25f),
+                    type.specialRange, tuning.pixelsPerUnit, 0.5f);
+
+        var progress = PlayerProgress.Instance;
+        if (progress == null || progress.RunOver) return;
+
+        progress.ShakeExternal(tuning.tierUpShake * 1.2f);
+
+        Vector2 d = (Vector2)progress.transform.position - (Vector2)transform.position;
+        if (new Vector2(d.x, d.y / tuning.isoSquash).magnitude > type.specialRange) return;
+
+        var controller = progress.GetComponent<PlayerController>();
+        if (controller != null)
+            controller.Knockback(transform.position, tuning.knockbackDistance, tuning.knockbackSeconds);
     }
 
     void Deploy()
@@ -471,6 +502,11 @@ public class Enemy : Damageable
         if (type.dropsUpgrade && PlayerUpgrades.Instance != null)
             UpgradePickup.Spawn(tuning, PlayerUpgrades.Instance.RollDrop(),
                                 transform.position, tuning.pixelsPerUnit);
+
+        // The boss is the run's end condition. Announced here rather than from the
+        // director so it holds for any enemy flagged isBoss, however it got spawned —
+        // including the F-key cheat, which is the only way anyone tests this.
+        if (IsBoss && PlayerProgress.Instance != null) PlayerProgress.Instance.Win();
 
         // With a destruction clip, the corpse lingers just long enough to play it.
         // Collision goes immediately so a dying enemy never blocks or shoves.

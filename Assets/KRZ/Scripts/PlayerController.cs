@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 /// traces the ellipse a 2:1 isometric projection expects, instead of reading flat.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
-[SoundActions(Sfx.Footstep)]
+[SoundActions(Sfx.Footstep, Sfx.KaijuImpact)]
 public class PlayerController : MonoBehaviour
 {
     public Tuning tuning;
@@ -40,10 +40,18 @@ public class PlayerController : MonoBehaviour
     static readonly string[] FacingNames = { "s", "se", "e", "ne", "n", "nw", "w", "sw" };
     public string FacingName => FacingNames[Facing];
 
+    /// <summary>True while the Abomination's roar owns the kaiju's movement.</summary>
+    public bool BeingKnockedBack => Time.time < knockbackUntil;
+
     Rigidbody2D body;
     CapsuleCollider2D footprint;
     Transform art;
     Vector2 desired;
+
+    Vector2 knockbackDir;
+    float knockbackSpeed;
+    float knockbackFrom;
+    float knockbackUntil;
 
     void Awake()
     {
@@ -57,10 +65,39 @@ public class PlayerController : MonoBehaviour
 
     public void BindArt(Transform artRoot) => art = artRoot;
 
+    /// <summary>
+    /// A thrown kaiju hitting a building wrecks it. Only while the roar is carrying
+    /// you — walking into a wall the rest of the time has to stay free, or every
+    /// scrape along a street would level the block.
+    ///
+    /// Damage goes through the ordinary path, so the size-versus-class rule still
+    /// applies. Being flung into something two classes above you dents it; being
+    /// flung into a shack removes the shack.
+    /// </summary>
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!BeingKnockedBack) return;
+
+        var building = collision.collider.GetComponentInParent<Building>();
+        if (building == null || !building.IsAlive) return;
+
+        CancelKnockback();
+        body.linearVelocity = Vector2.zero;
+
+        Vector2 at = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+        building.TakeDamage(tuning.knockbackImpactDamage, transform.position);
+
+        AudioEvents.Play(Sfx.KaijuImpact, at, owner: gameObject);
+        HitFx.Burst(at, new Color(1f, 0.8f, 0.45f), Scale * 0.8f, tuning.pixelsPerUnit, 0.35f);
+        if (PlayerProgress.Instance != null)
+            PlayerProgress.Instance.ShakeExternal(tuning.tierUpShake * 1.5f);
+    }
+
     void Update()
     {
         var state = PlayerProgress.Instance;
-        Vector2 raw = state != null && state.IsDead ? Vector2.zero : ReadInput();
+        bool locked = (state != null && state.IsDead) || BeingKnockedBack;
+        Vector2 raw = locked ? Vector2.zero : ReadInput();
 
         // Squash the vertical component so movement matches the isometric projection.
         desired = new Vector2(raw.x, raw.y * tuning.isoSquash);
@@ -73,8 +110,45 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Thrown clear of a point, decaying to a stop over the duration. Overrides input
+    /// outright rather than adding an impulse: mass grows with the square of size, so
+    /// by the time the Abomination arrives a force large enough to move a size-5 kaiju
+    /// would launch everything else in the scene into orbit.
+    ///
+    /// Aimed on the flat ground plane and squashed back, so being hurled north-east
+    /// travels the same ground distance as being hurled east.
+    /// </summary>
+    public void Knockback(Vector2 fromPoint, float distance, float seconds)
+    {
+        Vector2 away = (Vector2)transform.position - fromPoint;
+        Vector2 flat = new Vector2(away.x, away.y / tuning.isoSquash);
+        if (flat.sqrMagnitude < 0.0001f) flat = Random.insideUnitCircle;
+        flat.Normalize();
+
+        knockbackDir = new Vector2(flat.x, flat.y * tuning.isoSquash).normalized;
+        seconds = Mathf.Max(0.05f, seconds);
+
+        // Decaying linearly from v0 to nothing covers v0 * t / 2, so this is the
+        // launch speed that lands exactly on the distance asked for.
+        knockbackSpeed = 2f * distance / seconds;
+        knockbackFrom = Time.time;
+        knockbackUntil = Time.time + seconds;
+        body.linearVelocity = knockbackDir * knockbackSpeed;
+    }
+
+    /// <summary>Called on impact, so the kaiju stops instead of grinding into a wall.</summary>
+    public void CancelKnockback() => knockbackUntil = 0f;
+
     void FixedUpdate()
     {
+        if (BeingKnockedBack)
+        {
+            float t = Mathf.InverseLerp(knockbackFrom, knockbackUntil, Time.time);
+            body.linearVelocity = knockbackDir * (knockbackSpeed * (1f - t));
+            return;
+        }
+
         // Speed compounds per tier, not with raw scale: a 4x kaiju moving 4x as fast
         // would outrun the camera and the arena. Growth should feel like an upgrade,
         // not a different game.

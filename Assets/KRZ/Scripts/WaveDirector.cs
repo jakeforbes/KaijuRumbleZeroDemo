@@ -64,7 +64,7 @@ public class WaveDirector : MonoBehaviour
     void Update()
     {
         var progress = PlayerProgress.Instance;
-        if (!Running || progress == null || progress.IsDead) return;
+        if (!Running || progress == null || progress.RunOver) return;
 
         Clock += Time.deltaTime;
 
