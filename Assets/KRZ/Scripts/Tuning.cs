@@ -856,7 +856,7 @@ public class Tuning : ScriptableObject
         // rather than another pass through here.
         new BuildingType { name = "Civilian 1x1", sizeClass = 0, tilesX = 1, tilesY = 1,
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
-                           foodDrops = 6,  foodScatter = 2.5f, weight = 44f,
+                           foodDrops = 6,  foodScatter = 2.5f, weight = 15f,
                            artSprite = "Buildings/civilian_1x1",
                            artDirections = 1, artScale = 0.72f,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
@@ -866,7 +866,7 @@ public class Tuning : ScriptableObject
         // lands exactly on the swapped footprint in this projection.
         new BuildingType { name = "Civilian 1x2", sizeClass = 1, tilesX = 1, tilesY = 2,
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
-                           foodDrops = 9,  foodScatter = 3.2f, weight = 34f,
+                           foodDrops = 9,  foodScatter = 3.2f, weight = 12f,
                            artSprite = "Buildings/civilian_1x2",
                            artDirections = 1, artScale = 0.86f,
                            colour = new Color(0.22f, 0.31f, 0.39f) },
@@ -880,7 +880,7 @@ public class Tuning : ScriptableObject
 
         new BuildingType { name = "Civilian 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
-                           foodDrops = 22, foodScatter = 5.2f, weight = 15f,
+                           foodDrops = 22, foodScatter = 5.2f, weight = 5f,
                            artSprite = "Buildings/civilian_2x2",
                            artDirections = 1, artScale = 0.85f,
                            colour = new Color(0.31f, 0.30f, 0.35f) },
@@ -893,6 +893,52 @@ public class Tuning : ScriptableObject
                            artSprite = "Buildings/civilian_3x3",
                            artDirections = 1,
                            colour = new Color(0.25f, 0.26f, 0.42f) },
+
+        // Cantilever variants. Cosmetic only — each one shares its class, health and
+        // payout with the plain civilian of the same footprint, so the size ladder is
+        // untouched and only the silhouette changes.
+        //
+        // Weights split the family total rather than adding to it: the 1x1 family
+        // still adds up to 44, the 1x2 to 34, the 2x2 to 15. Density and the mix of
+        // sizes stay exactly where they were tuned; there is simply more to look at.
+        //
+        // This matters most for infill, which is nearly all 1x1 and 1x2 and makes up
+        // more of the city than the block buildings do.
+        new BuildingType { name = "Cantilever 1x1 Low", sizeClass = 0, tilesX = 1, tilesY = 1,
+                           minHeightPx = 120, maxHeightPx = 180, hp = 30f,
+                           foodDrops = 6, foodScatter = 2.5f, weight = 15f,
+                           artSprite = "Buildings/cantilever_1x1_low", artScale = 0.85f,
+                           colour = new Color(0.24f, 0.27f, 0.36f) },
+
+        new BuildingType { name = "Cantilever 1x1 High", sizeClass = 0, tilesX = 1, tilesY = 1,
+                           minHeightPx = 200, maxHeightPx = 280, hp = 30f,
+                           foodDrops = 6, foodScatter = 2.5f, weight = 14f,
+                           artSprite = "Buildings/cantilever_1x1_high", artScale = 0.71f,
+                           colour = new Color(0.27f, 0.30f, 0.39f) },
+
+        new BuildingType { name = "Cantilever 1x2 Low", sizeClass = 1, tilesX = 1, tilesY = 2,
+                           minHeightPx = 150, maxHeightPx = 230, hp = 38f,
+                           foodDrops = 9, foodScatter = 3.2f, weight = 11f,
+                           artSprite = "Buildings/cantilever_1x2_low", artScale = 1.17f,
+                           colour = new Color(0.20f, 0.29f, 0.37f) },
+
+        new BuildingType { name = "Cantilever 1x2 High", sizeClass = 1, tilesX = 1, tilesY = 2,
+                           minHeightPx = 240, maxHeightPx = 330, hp = 38f,
+                           foodDrops = 9, foodScatter = 3.2f, weight = 11f,
+                           artSprite = "Buildings/cantilever_1x2_high", artScale = 1.06f,
+                           colour = new Color(0.24f, 0.33f, 0.41f) },
+
+        new BuildingType { name = "Cantilever 2x2 Low", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 380, maxHeightPx = 520, hp = 59f,
+                           foodDrops = 22, foodScatter = 5.2f, weight = 5f,
+                           artSprite = "Buildings/cantilever_2x2_low", artScale = 1.24f,
+                           colour = new Color(0.29f, 0.28f, 0.33f) },
+
+        new BuildingType { name = "Cantilever 2x2 High", sizeClass = 3, tilesX = 2, tilesY = 2,
+                           minHeightPx = 460, maxHeightPx = 620, hp = 59f,
+                           foodDrops = 22, foodScatter = 5.2f, weight = 5f,
+                           artSprite = "Buildings/cantilever_2x2_high", artScale = 1.03f,
+                           colour = new Color(0.33f, 0.32f, 0.37f) },
 
         // Laboratories are the only buildings that pay out power-ups, so they have to
         // read as prizes across a crowded street. Deliberately squat and a hue no
