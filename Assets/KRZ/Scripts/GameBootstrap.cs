@@ -86,7 +86,7 @@ public class GameBootstrap : MonoBehaviour
         cam.GetComponent<CameraRig>().target = player.transform;
         cam.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10f);
 
-        if (!IsGym) { PlaceFreeUpgrades(); PlaceHamburgers(); }
+        if (!IsGym) { PlaceFreeUpgrades(); PlaceHamburgers(); ReportUpgradeSupply(); }
         gameObject.AddComponent<Popups>();
 
         var director = gameObject.AddComponent<WaveDirector>();
@@ -518,6 +518,34 @@ public class GameBootstrap : MonoBehaviour
                               $"{missing.Count}: {string.Join(", ", missing)}");
     }
 
+    /// <summary>
+    /// What the city is offering against what a player can actually absorb.
+    ///
+    /// Supply is the one number in the run that cannot be read off the tuning table:
+    /// it falls out of the weight roll, the district bias and how much infill finds
+    /// room, so it has to be counted after the city exists rather than predicted.
+    /// Demand is just the sum of every upgrade's max stacks.
+    /// </summary>
+    void ReportUpgradeSupply()
+    {
+        int labs = 0, supply = 0;
+        foreach (var b in Building.All)
+        {
+            if (b == null || b.UpgradeDrops <= 0) continue;
+            labs++;
+            supply += b.UpgradeDrops;
+        }
+
+        int demand = 0, kinds = 0;
+        if (tuning.upgrades != null)
+            foreach (var u in tuning.upgrades) { demand += u.maxStacks; kinds++; }
+
+        Debug.Log($"KRZ upgrades: {Building.All.Count} buildings, {labs} of them labs, " +
+                  $"offering {supply} power-ups, plus {tuning.freeUpgradeCount} free at spawn. " +
+                  $"A player can absorb {demand} ({kinds} kinds at max stacks). " +
+                  $"Supply is {(demand > 0 ? (supply + tuning.freeUpgradeCount) / (float)demand : 0f):0.0}x demand.");
+    }
+
     void BuildCity()
     {
         float ppu = tuning.pixelsPerUnit;
@@ -531,6 +559,10 @@ public class GameBootstrap : MonoBehaviour
         // from the weight table. Random weights would happily put two side by side, and
         // two pulses in one screen is a very different thing from one.
         var reactorSlots = PickReactorSlots(rng);
+
+        // Labs claim their slots after reactors, avoiding the ones already taken, and
+        // are then indistinguishable from any other pre-placed landmark below.
+        foreach (var slot in PickLabSlots(rng, reactorSlots)) reactorSlots[slot.Key] = slot.Value;
 
         // Every footprint placed so far, so infill can find real gaps.
         var placed = new System.Collections.Generic.List<Rect>();
@@ -990,6 +1022,111 @@ public class GameBootstrap : MonoBehaviour
         }
 
         return chosen;
+    }
+
+    /// <summary>
+    /// Chooses which block slots become laboratories.
+    ///
+    /// Labs are placed deliberately and spaced apart rather than rolled, for the same
+    /// reason reactors are. On the weight table they were 14 of 145 in the main roll
+    /// and 14 of 92 in the infill pool — roughly one building in six across a city of
+    /// well over a thousand — which made the thing that decides a build something you
+    /// walked into rather than something you went to.
+    ///
+    /// Any type that drops power-ups is placed this way, so the rule holds as the
+    /// roster grows: a power-up source is a landmark, never filler.
+    ///
+    /// Each size leans toward the quarter it belongs in — small labs into the low-rise
+    /// districts where a 1x1 reads as deliberate against 1x1 neighbours, large ones
+    /// into the skyline. The lean is a sort and not a filter, so the count is still met
+    /// when the preferred quarter runs out of room.
+    /// </summary>
+    System.Collections.Generic.Dictionary<(int, int), BuildingType> PickLabSlots(
+        System.Random rng, System.Collections.Generic.Dictionary<(int, int), BuildingType> taken)
+    {
+        var chosen = new System.Collections.Generic.Dictionary<(int, int), BuildingType>();
+
+        BuildingType small = null, large = null;
+        foreach (var t in tuning.buildingTypes)
+        {
+            if (t == null || t.isReactor || t.upgradeDrops <= 0) continue;
+            if (t.tilesX * t.tilesY <= 1) small ??= t; else large ??= t;
+        }
+
+        int smallWanted = small == null ? 0 : rng.Next(tuning.labSmallMin, tuning.labSmallMax + 1);
+        int largeWanted = large == null ? 0 : rng.Next(tuning.labLargeMin, tuning.labLargeMax + 1);
+
+        var placed = new System.Collections.Generic.List<Vector2>();
+
+        // Large first. It has the narrower district preference and the bigger prize, so
+        // it gets first pick of the skyline rather than being crowded out of it by
+        // small labs that would have been just as happy anywhere.
+        PlaceLabs(rng, taken, chosen, placed, large, largeWanted, 4);
+        PlaceLabs(rng, taken, chosen, placed, small, smallWanted, 0);
+
+        return chosen;
+    }
+
+    /// <summary>
+    /// Greedily takes shuffled slots that clear every lab already placed, preferred
+    /// district first. Warns rather than quietly under-delivering: a count that cannot
+    /// fit at the current spacing is a tuning conflict, and the whole point of this
+    /// pass is that the number of labs in a run is known rather than emergent.
+    /// </summary>
+    void PlaceLabs(System.Random rng,
+                   System.Collections.Generic.Dictionary<(int, int), BuildingType> taken,
+                   System.Collections.Generic.Dictionary<(int, int), BuildingType> chosen,
+                   System.Collections.Generic.List<Vector2> placed,
+                   BuildingType type, int wanted, int preferredDistrict)
+    {
+        if (type == null || wanted <= 0) return;
+
+        var slots = new System.Collections.Generic.List<(int bx, int by)>();
+        for (int by = 0; by < tuning.blocksY; by++)
+            for (int bx = 0; bx < tuning.blocksX; bx++)
+            {
+                if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 &&
+                    Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
+                if (taken.ContainsKey((bx, by)) || chosen.ContainsKey((bx, by))) continue;
+                slots.Add((bx, by));
+            }
+
+        for (int i = slots.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (slots[i], slots[j]) = (slots[j], slots[i]);
+        }
+
+        // Partitioned rather than sorted. List.Sort is not stable, so sorting by
+        // district would throw away the shuffle inside each group and lay the labs
+        // out in block order.
+        var preferred = new System.Collections.Generic.List<(int bx, int by)>();
+        var rest = new System.Collections.Generic.List<(int bx, int by)>();
+        foreach (var s in slots)
+            (DistrictTarget(s.bx, s.by) == preferredDistrict ? preferred : rest).Add(s);
+        preferred.AddRange(rest);
+
+        int count = 0;
+        foreach (var (bx, by) in preferred)
+        {
+            if (count >= wanted) break;
+
+            var world = new Vector2((bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX,
+                                    (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY);
+
+            bool tooClose = false;
+            foreach (var p in placed)
+                if (Vector2.Distance(p, world) < tuning.labMinSpacing) { tooClose = true; break; }
+            if (tooClose) continue;
+
+            chosen[(bx, by)] = type;
+            placed.Add(world);
+            count++;
+        }
+
+        if (count < wanted)
+            Debug.LogWarning($"KRZ: only found room for {count} of {wanted} {type.name}. " +
+                             $"Lower Lab Min Spacing ({tuning.labMinSpacing}) or the counts.");
     }
 
     /// <summary>

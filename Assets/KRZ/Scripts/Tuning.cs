@@ -514,6 +514,44 @@ public class Tuning : ScriptableObject
                         artDisplayPx = 210, footprintFraction = 0.34f,
                         artTint = new Color(0.62f, 0.88f, 1f) },
 
+        // Laser Drone. The same hover hull a quarter larger than the Dropship, and the
+        // only thing in the roster that fights by controlling ground rather than by
+        // closing on you.
+        //
+        // It takes up a station out at ten units, plants, and sweeps a beam through a
+        // full turn over six seconds, then moves somewhere else and does it again.
+        // Nothing about it chases: the pressure is that the safe ground keeps moving,
+        // and that the beam is long enough to reach across most of the screen.
+        //
+        // Standing still costs you one clip per rotation. Standing *in* the beam and
+        // travelling with it is what kills, which is the mistake it is built to punish
+        // — the answer is to cross the beam early and get behind the turn, not to run
+        // ahead of it.
+        //
+        // Arrives at two minutes, so it lands in the middle of the gathering with
+        // mech-grade armour: the swipe barely marks it and it has to be answered with
+        // the Blast, or ignored and walked away from at the cost of the ground.
+        new EnemyType { name = "Laser Drone", sizeClass = 2, hp = 170f, armour = 12f,
+                        contactDamage = 0f, attacks = false,
+                        moveSpeed = 2.4f, attackRange = 10f,
+                        movement = MovementMode.Standoff,
+                        special = SpecialAction.SpinningLaser,
+                        specialCooldown = 4f, specialWindup = 0.9f, specialRange = 22f,
+                        laserRotationSeconds = 6f, laserRange = 15f,
+                        laserDamage = 38f, laserHitInterval = 0.35f,
+                        laserColour = new Color(1f, 0.30f, 0.24f),
+                        foodDrops = 5, foodScatter = 3f,
+                        bodyPx = 140, colour = new Color(0.92f, 0.34f, 0.30f),
+                        artFolder = "FlyingTank", artPrefix = "FlyingTank",
+                        artPathFormat = "{root}/{dir}/{prefix}_{dir}_{clip}_{frame}",
+                        artClipNames = new[] { "Idle", "Move", "Attack", "Hit", "Destruction" },
+                        artDirectionStyle = DirectionStyle.ShortUpper, artMirrored = false,
+                        artFrameSize = 192, artFrameDigits = 2, artFirstFrame = 0,
+                        idleFrames = 2, walkFrames = 6, attackFrames = 4,
+                        hitFrames = 2, deathFrames = 4,
+                        artDisplayPx = 262, footprintFraction = 0.34f,
+                        artTint = new Color(1f, 0.58f, 0.52f) },
+
         // Elite grunt. Same silhouette and speed, ten times the health, double the
         // damage, and it leaves a power-up — the thing in a swarm worth stopping for.
         // Ranged, so it stays dangerous even though you outrun it five to one.
@@ -706,6 +744,12 @@ public class Tuning : ScriptableObject
         new WaveEntry { label = "the gathering", startTime = 122f, endTime = 158f, interval = 18f,
                         enemyType = "Bruiser", count = 2, shape = SpawnShape.Ahead },
 
+        // Laser Drones, from two minutes. One at a time and well spaced: the beam is a
+        // fifteen-unit hazard that turns, and two overlapping sweeps would leave no
+        // readable ground at all rather than reading as twice the pressure.
+        new WaveEntry { label = "laser drones", startTime = 120f, endTime = 155f, interval = 15f,
+                        enemyType = "Laser Drone", count = 1, shape = SpawnShape.Clump },
+
         // Four seconds before the boss, so it is still on its feet when the
         // Abomination walks on and the two overlap.
         new WaveEntry { label = "GOLIATH", startTime = 156f,
@@ -786,7 +830,9 @@ public class Tuning : ScriptableObject
              "overlapping puffs an enemy is standing in.")]
     public float toxinTickInterval = 0.5f;
 
-    [Tooltip("Seconds a puff lingers after being dropped. This is the length of the wake.")]
+    [Tooltip("Seconds a puff lingers after being dropped, at one stack. This is the " +
+             "length of the wake. Each stack beyond the first adds the Toxin upgrade's " +
+             "Extra Seconds Per Stack on top, so the trail grows as it levels.")]
     public float toxinCloudLife = 2f;
 
     [Tooltip("Cloud radius at size 1, in world units.")]
@@ -965,12 +1011,13 @@ public class Tuning : ScriptableObject
         new UpgradeType { id = UpgradeId.Swarm,   displayName = "Swarm",
                           effect = "Homing particles discharge every few seconds",
                           perStack = 1.25f, maxStacks = 4,
-                          baseProjectiles = 3, extraProjectilesPerStack = 1,
+                          baseProjectiles = 3, extraProjectilesPerStack = 2,
                           weight = 0.9f, colour = new Color(0.6f, 1f, 0.85f) },
 
         new UpgradeType { id = UpgradeId.Toxin,   displayName = "Toxin",
                           effect = "A poison cloud around you and in your wake",
                           perStack = 1.5f, maxStacks = 4,
+                          extraSecondsPerStack = 1f,
                           weight = 0.9f, colour = new Color(0.55f, 0.9f, 0.35f) },
 
         new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
@@ -1014,6 +1061,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 120, maxHeightPx = 180, hp = 30f,
                            foodDrops = 6,  foodScatter = 2.5f, weight = 15f,
                            artSprite = "Buildings/civilian_1x1",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -2f },
                            artDirections = 1, artScale = 0.72f,
                            colour = new Color(0.26f, 0.29f, 0.38f) },
 
@@ -1038,6 +1086,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 150, maxHeightPx = 230, hp = 38f,
                            foodDrops = 9,  foodScatter = 3.2f, weight = 34f,
                            artSprite = "Buildings/civilian_1x2",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -4f },
                            artDirections = 1, artScale = 0.97f, artPivotOffsetX = 47f,
                            colour = new Color(0.22f, 0.31f, 0.39f) },
 
@@ -1048,6 +1097,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 400, maxHeightPx = 560, hp = 47f,
                            foodDrops = 14, foodScatter = 4.2f, weight = 20f,
                            artSprite = "Buildings/civilian_1x3",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -2f },
                            artDirections = 1, artScale = 0.88f, artPivotOffsetX = 34f,
                            colour = new Color(0.29f, 0.27f, 0.37f) },
 
@@ -1055,6 +1105,7 @@ public class Tuning : ScriptableObject
                            minHeightPx = 380, maxHeightPx = 520, hp = 59f,
                            foodDrops = 22, foodScatter = 5.2f, weight = 5f,
                            artSprite = "Buildings/civilian_2x2",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -4f },
                            artDirections = 1, artScale = 0.85f,
                            colour = new Color(0.31f, 0.30f, 0.35f) },
 
@@ -1108,17 +1159,23 @@ public class Tuning : ScriptableObject
         // Class 1 on a 1x1 footprint is the one place the roster breaks its own rule
         // that class follows area. A lab has to stay a real job at size 1 or the
         // upgrade that makes a run is something you collect by accident.
+        //
+        // Weight 0: both labs are placed deliberately and spaced apart, the same way
+        // reactors are, so weight is unused for them. Anything that drops power-ups
+        // goes through that pass — a power-up source is a landmark, never filler.
         new BuildingType { name = "Laboratory 1x1", sizeClass = 1, tilesX = 1, tilesY = 1,
                            minHeightPx = 200, maxHeightPx = 250, hp = 38f,
-                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 14f,
+                           foodDrops = 8, foodScatter = 3f, upgradeDrops = 1, weight = 0f,
                            artSprite = "Buildings/laboratory_2x2",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -4f },
                            artDirections = 1, artScale = 0.41f,
                            colour = new Color(0.20f, 0.62f, 0.60f) },
 
         new BuildingType { name = "Laboratory 2x2", sizeClass = 3, tilesX = 2, tilesY = 2,
                            minHeightPx = 260, maxHeightPx = 330, hp = 59f,
-                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 10f,
+                           foodDrops = 18, foodScatter = 4.5f, upgradeDrops = 2, weight = 0f,
                            artSprite = "Buildings/laboratory_2x2",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -4f },
                            artDirections = 1, artScale = 0.82f,
                            // Finer, faster, wider chips than the rest of the city —
                            // Samson's calibration against the delivered lab art.
@@ -1137,6 +1194,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 8, foodScatter = 3f, weight = 0f, isReactor = true,
                            pulseDamage = 20f, pulseRadius = 24f,
                            artSprite = "Buildings/reactor_1x1",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -2f },
                            artDirections = 1, artScale = 0.71f,
                            // Left at zero on purpose. This was reported sitting low,
                            // but that reading was taken before the pivot was corrected,
@@ -1153,6 +1211,7 @@ public class Tuning : ScriptableObject
                            foodDrops = 20, foodScatter = 5f, weight = 0f, isReactor = true,
                            pulseDamage = 130f, pulseRadius = 32f,
                            artSprite = "Buildings/reactor_2x2",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -4f },
                            artDirections = 1,
                            colour = new Color(0.96f, 0.45f, 0.18f) },
 
@@ -1170,6 +1229,7 @@ public class Tuning : ScriptableObject
                            weight = 0f, isReactor = true, unique = true,
                            pulseDamage = 300f, pulseRadius = 40f,
                            artSprite = "Buildings/reactor_3x3",
+                           artStageOffsetY = new[] { 0f, 0f, 0f, -5f },
                            artDirections = 1, artScale = 0.89f,
                            colour = new Color(1f, 0.30f, 0.22f) },
     };
@@ -1180,6 +1240,30 @@ public class Tuning : ScriptableObject
     [Tooltip("Minimum distance between reactors in world units. 26 is wider than the " +
              "screen diagonal at maximum zoom-out, so two can never be visible at once.")]
     public float reactorMinSpacing = 26f;
+
+    [Header("Laboratories")]
+    [Tooltip("How many small labs exist, rolled per run. Labs are placed deliberately " +
+             "like reactors rather than rolled from the weight table — at 14 weight in " +
+             "a 145 table, and again inside the infill pool, they used to be roughly " +
+             "one building in six, which made the thing that decides a build something " +
+             "you walked into rather than went to.")]
+    public int labSmallMin = 10;
+    public int labSmallMax = 15;
+
+    [Tooltip("How many large labs exist, rolled per run. These drop two power-ups each " +
+             "and lean toward the skyline quarter, so the richer prize is also the one " +
+             "furthest from where the run starts.")]
+    public int labLargeMin = 5;
+    public int labLargeMax = 10;
+
+    [Tooltip("Minimum distance between any two labs, in world units. Cannot be as wide " +
+             "as the reactor spacing: the map is about 105 x 52 units, and twenty-odd " +
+             "labs will not fit on it at 26. 13 still breaks up every cluster — the old " +
+             "roll put labs within a couple of blocks of each other constantly — but two " +
+             "can share a screen late on, when growth has zoomed the camera out. If a " +
+             "lab must never have a neighbour in view, lower the counts rather than " +
+             "raising this, or placement quietly under-delivers and warns.")]
+    public float labMinSpacing = 13f;
 
     [Tooltip("Damage multiplier by (your size - the building's class), from -4 to +4. " +
              "The middle entry is your own class and is always 1. Left of it is the wall: " +

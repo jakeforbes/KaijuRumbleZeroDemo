@@ -22,6 +22,9 @@ public class Building : Damageable
 
     public override bool IsAlive => hp > 0f;
 
+    /// <summary>Power-ups this building leaves when destroyed. Laboratories only.</summary>
+    public int UpgradeDrops => type != null ? type.upgradeDrops : 0;
+
     BuildingType type;
     int tilesX, tilesY;
     int fullHeightPx;
