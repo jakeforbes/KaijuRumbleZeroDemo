@@ -21,6 +21,45 @@ public class UriesArt : MonoBehaviour
 
     static readonly string[] ClipNames = { "idle", "walk", "swipe", "blast", "hit" };
 
+    /// <summary>A clip the delivered art cannot supply, rebuilt from one that can.</summary>
+    readonly struct Patch
+    {
+        public readonly Clip Source;
+        public readonly int[] Frames;
+        public readonly float Fps;
+
+        public Patch(Clip source, int[] frames, float fps)
+        {
+            Source = source; Frames = frames; Fps = fps;
+        }
+    }
+
+    /// <summary>
+    /// Level 2's idle shipped broken in all five directions: frames 01 and 02 each
+    /// contain two characters side by side — 420 px of occupied canvas against the
+    /// 185 px the character actually fills — and frames 00 and 03 are crushed to
+    /// half width. The loop was strobing between three silhouettes four times a
+    /// second, which is the jankiness that was reported.
+    ///
+    /// Level 2's walk cycle is clean: all eight frames sit within 13 px of the same
+    /// width with the feet on the same row. So idle borrows the stride's two passing
+    /// poses — frames 0 and 4, where the legs are closest together — alternated
+    /// slowly. Those two are the only choice that works from every angle: the other
+    /// six read fine head-on, where the projection foreshortens the stride away, but
+    /// in profile they are unmistakably a walk playing on the spot.
+    ///
+    /// Delete this entry the moment the artist redelivers level 2's idle. Nothing
+    /// else depends on it, and every other level's idle measured clean.
+    /// </summary>
+    static readonly Dictionary<(int Level, Clip Clip), Patch> Patches = new()
+    {
+        { (2, Clip.Idle), new Patch(Clip.Walk, new[] { 0, 4 }, 2.5f) },
+    };
+
+    /// <summary>Playback rate for a clip. A patched clip sets its own.</summary>
+    static float FpsFor(int level, Clip clip)
+        => Patches.TryGetValue((level, clip), out var patch) ? patch.Fps : Fps;
+
     // Facing index 0..7 is s, se, e, ne, n, nw, w, sw. The last three are mirrors.
     static readonly string[] DirFolder =
         { "south", "southeast", "east", "northeast", "north", "northeast", "east", "southeast" };
@@ -99,7 +138,7 @@ public class UriesArt : MonoBehaviour
         }
 
         float elapsed = Time.time - clipStartedAt;
-        int index = Mathf.FloorToInt(elapsed * Fps);
+        int index = Mathf.FloorToInt(elapsed * FpsFor(level, current));
 
         if (oneShot && index >= frames.Length)
         {
@@ -149,6 +188,21 @@ public class UriesArt : MonoBehaviour
     {
         string key = $"Uries/Level_{level}/{ClipNames[(int)clip]}/{direction}";
         if (cache.TryGetValue(key, out var cached)) return cached;
+
+        // A patched clip borrows frames from a sibling that loaded cleanly, so the
+        // substitution is invisible to everything above this method.
+        if (Patches.TryGetValue((level, clip), out var patch))
+        {
+            var source = Load(level, patch.Source, direction);
+            if (source == null || source.Length == 0) { cache[key] = null; return null; }
+
+            var borrowed = new Sprite[patch.Frames.Length];
+            for (int i = 0; i < borrowed.Length; i++)
+                borrowed[i] = source[Mathf.Clamp(patch.Frames[i], 0, source.Length - 1)];
+
+            cache[key] = borrowed;
+            return borrowed;
+        }
 
         int count = FrameCounts[clip];
         var frames = new Sprite[count];
