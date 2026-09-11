@@ -94,6 +94,7 @@ public class GameBootstrap : MonoBehaviour
         director.player = player.transform;
         director.Running = !IsGym;
 
+        gameObject.AddComponent<BossObjectiveUi>();
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
         hud.player = player;

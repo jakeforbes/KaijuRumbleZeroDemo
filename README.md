@@ -13,7 +13,7 @@ prefabs. `GameBootstrap` builds the camera, ground, city, player and HUD from co
 when you press Play, in whatever scene is open. Nothing is wired in the Editor, so
 nothing drifts out of sync and there is no scene file to merge-conflict over.
 
-Greybox art is generated at runtime too — no art assets are needed to run it.
+The project includes sprite artwork; procedural fallback art and animated effects are generated at runtime.
 
 ## Tuning
 
@@ -116,3 +116,66 @@ object's ground contact point. That is what makes walking behind a building work
 
 Collision footprints are always the ground area an object occupies, never the sprite
 bounds — a kaiju overlaps a tower's upper floors without colliding with them.
+
+## City atmosphere and animated effects
+
+The city uses a dark blue nighttime treatment, blooming bright highlights and
+slowly drifting, world-anchored blue fog. Dense fog banks have clearer gaps between
+them, and luminous details retain their colour so combat and pickups stay readable.
+`CityAtmosphereFeature` is installed on both the PC and Mobile URP renderers.
+Its **City Atmosphere** settings in `Assets/Settings/PC_Renderer.asset` and
+`Mobile_Renderer.asset` control night strength (0.92), bloom strength (0.65) and fog
+strength (0.58). These are renderer settings, separate from gameplay `Tuning.cs`.
+The haze is a procedural screen effect, not volumetric lighting or physical fog.
+
+Buildings now have animated details layered over their existing artwork:
+
+- Generic pulsing glows and moving luminous motes around detected baked lights.
+- Green lightning wrapped around reactor roof coils.
+- A fast-moving lava-lamp-style glowing glob underneath laboratory domes.
+- Spinning side fans and rotating roof dishes on cantilever buildings.
+- Rooftop smokestacks and drifting smoke on civilian buildings.
+
+Building effects follow supported artwork and damage states. Per-building controls
+live in `BuildingType.cs`; the generic lighting pass provides a starting point for
+further individual building adjustments. The Gym scene is useful for reviewing
+these details across the building lineup.
+
+Combat and pickup feedback uses procedural meshes and shaders:
+
+- Standard attacks sweep an energy crescent across their contact area.
+- Blast/Prism fires cyan beams with bright cores and soft glow; enemy ranged fire
+  uses smaller orange beams. Blast impacts produce small cyan shockwaves.
+- Stomp produces a coloured pressure wave with screen displacement. Bruiser shoves,
+  Abomination roars, building collision impacts and reactor explosions use expanding
+  shockwaves sized to their respective effects.
+- Missiles and swarm projectiles have pointed bodies, fins and animated exhaust;
+  swarm impacts produce small shockwaves.
+- Upgrades are animated double-helix DNA icons retaining the existing colour system.
+  Food has a rounded pill silhouette. Hamburger collection relies on pulled food
+  rather than an additional collection burst.
+- Damage flashes the player's actual sprite red. Building hit debris and enemy
+  electrification retain their existing effects.
+
+`StompDistortionFeature` is enabled on both renderer assets. Effect shaders are in
+`Assets/KRZ/Resources`; gameplay builds the visual objects at runtime.
+
+## Boss guidance and victory
+
+Once a living boss spawns, a pulsing green triangle at the screen edge points toward
+it. The triangle fades out over approximately 0.25 seconds when the boss's position
+is inside the camera viewport, then fades back in when it moves outside. This UI
+works with the debug HUD disabled.
+
+Defeating the boss allows its available death animation to finish before victory
+pauses gameplay. The player cannot take damage during this final delay. The victory
+banner and repeating colourful shockwave fireworks use unscaled time, so they
+continue while the world is paused. Click **Restart** or press **F10** to start a new
+run and restore normal time; victory restart works even with cheat keys disabled.
+
+### Visual verification
+
+The runtime C# sources and effect shader code have passed compilation checks during
+this update. Full Unity Play mode visual verification remains pending. Review the
+Gym building states, beam and shockwave readability in fog, boss arrow transitions,
+and death-animation-to-victory timing in the Game view on the target renderer.

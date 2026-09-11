@@ -36,7 +36,7 @@ public class PlayerSpecial : MonoBehaviour
     void Update()
     {
         var progress = PlayerProgress.Instance;
-        if (progress == null || progress.IsDead) return;
+        if (progress == null || progress.RunOver) return;
 
         BlastCooldownRemaining -= Time.deltaTime;
         if (Pressed() && BlastCooldownRemaining <= 0f) Blast(progress);
@@ -125,8 +125,8 @@ public class PlayerSpecial : MonoBehaviour
 
             var screenDir = new Vector2(flatDir.x, flatDir.y * tuning.isoSquash).normalized;
 
-            HitFx.Line(muzzle, muzzle + (Vector3)(screenDir * range), new Color(0.55f, 0.9f, 1f),
-                       tuning.pixelsPerUnit, 0.22f, width);
+            EnergyBeamFx.Show(muzzle, muzzle + (Vector3)(screenDir * range),
+                              new Color(0.55f, 0.9f, 1f), width, 0.22f);
 
             FireBeam(origin, flatDir, range, halfWidth, damage);
         }
@@ -151,7 +151,7 @@ public class PlayerSpecial : MonoBehaviour
             if (across > halfWidth) continue;
 
             target.TakeDamage(damage, origin);
-            HitFx.Burst(hits[i].ClosestPoint(origin), new Color(0.6f, 0.95f, 1f), 0.7f, tuning.pixelsPerUnit);
+            ShockwaveFx.Show(hits[i].ClosestPoint(origin), new Color(0.6f, 0.95f, 1f), .35f, .5f, .24f);
         }
     }
 
@@ -161,7 +161,8 @@ public class PlayerSpecial : MonoBehaviour
         float damage = tuning.stompDamage * upgrades.StompPowerMul * progress.DamageMultiplier;
 
         Vector2 origin = transform.position;
-        HitFx.Burst(origin, new Color(1f, 0.85f, 0.4f), radius * 1.6f, tuning.pixelsPerUnit, 0.25f);
+        // The old diamond was 1.6 * radius wide and half as tall.
+        ShockwaveFx.Show(origin, new Color(1f, .67f, .28f), radius * .8f, .5f, .45f, displacement: true);
 
         int count = Physics2D.OverlapCircle(origin, radius, filter, hits);
         for (int i = 0; i < count; i++)

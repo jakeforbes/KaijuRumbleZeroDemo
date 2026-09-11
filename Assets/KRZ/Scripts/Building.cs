@@ -78,6 +78,11 @@ public class Building : Damageable
 
         maxHp = type.hp;
         hp = maxHp;
+        if (usingArt) BuildingAmbientFx.Attach(this, sr, type);
+        if (usingArt && type.isReactor) ReactorCoilFx.Attach(this, sr, type);
+        if (usingArt && type.artSprite == "Buildings/laboratory_2x2") LabDomeFx.Attach(this, sr, type);
+        if (usingArt && type.artSprite.StartsWith("Buildings/cantilever_")) CantileverEquipmentFx.Attach(this, sr, type);
+        if (usingArt && type.artSprite.StartsWith("Buildings/civilian_")) CivilianSmokestackFx.Attach(this, sr, type);
     }
 
     /// <summary>
@@ -214,8 +219,8 @@ public class Building : Damageable
     void Pulse()
     {
         AudioEvents.Play(Sfx.ReactorPulse, transform.position, owner: gameObject);
-        HitFx.Burst(transform.position, new Color(1f, 0.85f, 0.35f),
-                    type.pulseRadius * 0.85f, ppu, 0.45f);
+        ShockwaveFx.Show(transform.position, new Color(1f, 0.85f, 0.35f),
+                         type.pulseRadius, tuning.isoSquash, 0.65f);
 
         if (PlayerProgress.Instance != null)
             PlayerProgress.Instance.ShakeExternal(tuning.tierUpShake);

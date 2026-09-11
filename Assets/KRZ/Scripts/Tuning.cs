@@ -875,8 +875,11 @@ public class Tuning : ScriptableObject
              "changes where contact happens.")]
     [Range(0f, 0.5f)] public float swipeContactDelay = 0.20f;
 
-    [Tooltip("Draw the swipe arc briefly. A tuning aid, replaced by real VFX in Stage 9.")]
+    [InspectorName("Show Swipe Energy")]
+    [Tooltip("Show the sweeping energy crescent at each standard attack's contact frame.")]
     public bool showSwipeArc = true;
+    [Range(0.08f, 0.5f)] public float swipeEnergyDuration = 0.22f;
+    public Color swipeEnergyColour = new Color(0.20f, 0.85f, 1f, 1f);
 
     [Header("Blast — the manual special")]
     [Tooltip("One big number rather than chip damage: this is the answer to armour.\n\n" +

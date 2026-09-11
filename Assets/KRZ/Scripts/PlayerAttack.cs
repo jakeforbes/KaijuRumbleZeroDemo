@@ -32,7 +32,7 @@ public class PlayerAttack : MonoBehaviour
 
     void Update()
     {
-        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsDead) return;
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.RunOver) return;
 
         var up = PlayerUpgrades.Instance;
 

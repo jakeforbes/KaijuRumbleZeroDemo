@@ -174,6 +174,30 @@ public static class GreyboxArt
         return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), ppu);
     }
 
+    /// <summary>Abstract food capsule with rounded ends, a soft edge and subtle shading.</summary>
+    public static Sprite FoodPill(int size, Color fill, float ppu)
+    {
+        int width = Mathf.Max(8, size), height = Mathf.Max(4, size / 2);
+        var pixels = new Color[width * height];
+        float radius = height * .5f - 1f;
+        float straightHalf = width * .5f - radius - 1f;
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+        {
+            float dx = Mathf.Max(0, Mathf.Abs(x + .5f - width * .5f) - straightHalf);
+            float dy = y + .5f - height * .5f;
+            float distance = Mathf.Sqrt(dx * dx + dy * dy);
+            float alpha = Mathf.Clamp01(radius + .5f - distance);
+            float border = Mathf.SmoothStep(0, 1, Mathf.Clamp01(distance - radius + 1.6f));
+            float shade = Mathf.Lerp(.82f, 1f, (y + .5f) / height) * Mathf.Lerp(1, .62f, border);
+            Color c = fill * shade;
+            c.a = fill.a * alpha;
+            pixels[y * width + x] = c;
+        }
+        var texture = MakeTexture(pixels, width, height);
+        return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(.5f, .5f), ppu);
+    }
+
     /// <summary>Small diamond pickup. Pivot at the ground so it sorts with everything else.</summary>
     public static Sprite Pickup(int size, Color fill, float ppu)
     {

@@ -93,7 +93,7 @@ public class Food : MonoBehaviour
     void Update()
     {
         var progress = PlayerProgress.Instance;
-        if (progress == null) return;
+        if (progress == null || progress.HasWon) return;
 
         // Thrown out of the collapse, not yet settled.
         if (hopT < 1f)
@@ -148,9 +148,9 @@ public class Food : MonoBehaviour
     static void EnsureSprites(float ppu)
     {
         if (spriteSmall != null) return;
-        spriteSmall = GreyboxArt.Pickup(40, new Color(1f, 0.85f, 0.34f), ppu);
-        spriteMedium = GreyboxArt.Pickup(58, new Color(1f, 0.62f, 0.22f), ppu);
-        spriteLarge = GreyboxArt.Pickup(76, new Color(1f, 0.36f, 0.30f), ppu);
+        spriteSmall = GreyboxArt.FoodPill(40, new Color(1f, 0.85f, 0.34f), ppu);
+        spriteMedium = GreyboxArt.FoodPill(58, new Color(1f, 0.62f, 0.22f), ppu);
+        spriteLarge = GreyboxArt.FoodPill(76, new Color(1f, 0.36f, 0.30f), ppu);
     }
 
     /// <summary>Cleared between runs so a restart does not reuse dead transforms.</summary>

@@ -19,6 +19,9 @@ public class DebugHud : MonoBehaviour
     {
         fps = Mathf.Lerp(fps, 1f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f), 0.1f);
         Popups.show = tuning.showDamageNumbers;
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon &&
+            Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame)
+        { GameBootstrap.Restart(); return; }
         if (tuning.enableCheatKeys) ReadCheats();
         if (tuning.showColliders) DrawColliders();
     }
@@ -119,7 +122,7 @@ public class DebugHud : MonoBehaviour
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
         if (kb.f12Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;
         if (kb.f10Key.wasPressedThisFrame) { GameBootstrap.Restart(); return; }
-        if (CameraRig.IsBossIntroductionPlaying) return;
+        if (CameraRig.IsBossIntroductionPlaying || (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon)) return;
 
         var progress = PlayerProgress.Instance;
         if (progress != null)
@@ -168,7 +171,7 @@ public class DebugHud : MonoBehaviour
             if (kb.commaKey.wasPressedThisFrame) wd.Skip(-15f);
         }
 
-        if (CameraRig.IsBossIntroductionPlaying) return;
+        if (CameraRig.IsBossIntroductionPlaying || (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon)) return;
         if (kb.leftBracketKey.wasPressedThisFrame)
             Time.timeScale = Mathf.Max(0.1f, Time.timeScale - 0.25f);
         if (kb.rightBracketKey.wasPressedThisFrame)
@@ -282,10 +285,10 @@ public class DebugHud : MonoBehaviour
     /// </summary>
     void DrawWin(PlayerProgress progress)
     {
-        float since = Time.time - progress.WonAt;
+        float since = Time.unscaledTime - progress.WonAt;
         float pulse = Mathf.PingPong(since * 3f, 1f);
 
-        var box = new Rect((Screen.width - 420f) * 0.5f, Screen.height * 0.34f, 420f, 104f);
+        var box = new Rect((Screen.width - 420f) * 0.5f, Screen.height * 0.34f, 420f, 142f);
         GUI.color = new Color(0.05f, 0.10f, 0.06f, 0.80f);
         GUI.DrawTexture(box, Texture2D.whiteTexture);
 
@@ -296,7 +299,9 @@ public class DebugHud : MonoBehaviour
         GUI.color = Color.white;
         GUI.Label(new Rect(box.x, box.y + 62f, box.width, 24f),
                   $"the Abomination is down   —   food eaten {progress.FoodTotal:0}   —   F10 to restart",
-                  meterStyle);
+                   meterStyle);
+        if (GUI.Button(new Rect(box.center.x - 70f, box.y + 98f, 140f, 30f), "Restart"))
+            GameBootstrap.Restart();
     }
 
     /// <summary>Blast readiness on the left, collected upgrades stacked beside it.</summary>

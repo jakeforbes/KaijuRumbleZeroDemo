@@ -45,6 +45,7 @@ public class CameraRig : MonoBehaviour
 
     void LateUpdate()
     {
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon) return;
         if (introActive) return;
         if (target == null) return;
 

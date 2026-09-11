@@ -31,17 +31,24 @@ public sealed class EnemySoundsWindow : EditorWindow
             }
             else if (GUILayout.Button("Create separate sounds"))
             {
-                string path = AssetDatabase.GenerateUniqueAssetPath("Assets/KRZ/Resources/Enemy Sounds/" + type.name + ".prefab");
+                // Runtime resolves this exact name; never serialize the enemy array
+                // into Tuning.asset just to assign a sound-bank reference.
+                string path = "Assets/KRZ/Resources/Enemy Sounds/" + type.name + ".prefab";
+                if (AssetDatabase.LoadMainAssetAtPath(path) != null)
+                {
+                    Debug.LogWarning("An asset already exists at " + path + ". Add a SoundPlayer to it instead of overwriting it.");
+                    Selection.activeObject = AssetDatabase.LoadMainAssetAtPath(path);
+                    EditorGUILayout.EndHorizontal();
+                    continue;
+                }
                 var go = new GameObject(type.name + " Sounds");
                 try
                 {
                     var copy = go.AddComponent<SoundPlayer>();
                     if (tuning.enemySounds != null) copy.CopyFrom(tuning.enemySounds);
                     var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
-                    Undo.RecordObject(tuning, "Assign enemy sounds");
-                    type.sounds = prefab.GetComponent<SoundPlayer>();
-                    EditorUtility.SetDirty(tuning);
-                    AssetDatabase.SaveAssets();
+                    // SaveAsPrefabAsset saves only this prefab. SaveAssets would
+                    // also flush unrelated dirty assets, including live tuning.
                     Selection.activeObject = prefab;
                 }
                 finally { DestroyImmediate(go); }

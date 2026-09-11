@@ -61,7 +61,6 @@ public class Hamburger : MonoBehaviour
 
     void Consume(PlayerProgress progress)
     {
-        int pulled = 0;
         Vector2 origin = progress.transform.position;
 
         foreach (var f in Food.All)
@@ -72,14 +71,9 @@ public class Hamburger : MonoBehaviour
             if (new Vector2(delta.x, delta.y / tuning.isoSquash).magnitude > radius) continue;
 
             f.Attract(tuning.hamburgerAttractSeconds);
-            pulled++;
         }
 
         AudioEvents.Play(Sfx.UpgradePickup, transform.position, owner: gameObject);
-        HitFx.Burst(origin, new Color(1f, 0.78f, 0.30f), radius * 0.35f, tuning.pixelsPerUnit, 0.5f);
-        progress.ShakeExternal(tuning.tierUpShake * 0.8f);
-        Popups.Add(progress.transform.position + Vector3.up * progress.Scale,
-                   $"<b>{pulled}</b>", new Color(1f, 0.8f, 0.35f));
 
         Destroy(gameObject);
     }

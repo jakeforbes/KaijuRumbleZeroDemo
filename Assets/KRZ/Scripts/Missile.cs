@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// <summary>
 /// A homing missile from a Mech volley.
@@ -10,8 +11,10 @@ using UnityEngine;
 /// </summary>
 public class Missile : MonoBehaviour
 {
-    static Sprite sprite;
+    static Mesh missileMesh;
+    static Material missileMaterial;
     static Transform root;
+    static readonly int FlamePhase = Shader.PropertyToID("_FlamePhase");
 
     Tuning tuning;
     float damage;
@@ -19,13 +22,43 @@ public class Missile : MonoBehaviour
     float turn;
     float diesAt;
     Vector2 velocity;
+    MeshRenderer visual;
+    MaterialPropertyBlock properties;
+    float flameOffset;
 
     public static void Reset() => root = null;
+
+    /// <summary>Shared artwork only; enemy and Swarm missiles retain separate flight logic.</summary>
+    public static MeshRenderer CreateVisual(Transform parent, int sizePx, float ppu)
+    {
+        if (missileMesh == null)
+        {
+            missileMesh = new Mesh { name = "Shared missile silhouette" };
+            // +X is the nose; reserve space behind the body for exhaust.
+            missileMesh.vertices = new[] { new Vector3(-1.3f,-.375f,0), new Vector3(.55f,-.375f,0),
+                                          new Vector3(.55f,.375f,0), new Vector3(-1.3f,.375f,0) };
+            missileMesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+            missileMesh.triangles = new[] { 0,1,2,0,2,3 };
+            missileMesh.RecalculateBounds();
+        }
+        if (missileMaterial == null)
+            missileMaterial = new Material(Resources.Load<Shader>("HomingMissile")) { name = "Homing missile (shared)" };
+
+        var art = new GameObject("Missile body, fins and exhaust");
+        art.transform.SetParent(parent, false);
+        art.transform.localScale = Vector3.one * (Mathf.Max(4, sizePx) / Mathf.Max(1f, ppu));
+        art.AddComponent<MeshFilter>().sharedMesh = missileMesh;
+        var renderer = art.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = missileMaterial;
+        renderer.sortingOrder = 3;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        return renderer;
+    }
 
     public static void Volley(Tuning tuning, EnemyType type, Vector3 from, float ppu)
     {
         if (root == null) root = new GameObject("Missiles").transform;
-        if (sprite == null) sprite = GreyboxArt.Pickup(Mathf.Max(4, tuning.missilePx), Color.white, ppu);
 
         for (int i = 0; i < type.volleyCount; i++)
         {
@@ -33,10 +66,7 @@ public class Missile : MonoBehaviour
             go.transform.SetParent(root, false);
             go.transform.position = from + Vector3.up * (type.bodyPx * 0.5f / ppu);
 
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.color = new Color(1f, 0.62f, 0.30f);
-            sr.sortingOrder = 3;
+            var renderer = CreateVisual(go.transform, tuning.missilePx, ppu);
 
             var m = go.AddComponent<Missile>();
             m.tuning = tuning;
@@ -44,12 +74,17 @@ public class Missile : MonoBehaviour
             m.speed = type.missileSpeed;
             m.turn = type.missileTurn;
             m.diesAt = Time.time + type.missileLife;
+            m.visual = renderer;
+            m.properties = new MaterialPropertyBlock();
+            m.flameOffset = i * 2.71f + from.x * .37f + from.y * .53f;
+            m.AnimateExhaust();
 
             // Burst outward first, then curve in. Firing them straight at the player
             // reads as one thick line; a spread reads as a swarm.
             float angle = (i / (float)type.volleyCount) * Mathf.PI * 2f + Random.value;
             var dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle) * tuning.isoSquash).normalized;
             m.velocity = dir * type.missileSpeed * Random.Range(0.5f, 0.8f);
+            if (m.velocity.sqrMagnitude > .01f) go.transform.right = m.velocity.normalized;
         }
 
 
@@ -57,6 +92,7 @@ public class Missile : MonoBehaviour
 
     void Update()
     {
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon) return;
         var progress = PlayerProgress.Instance;
         if (progress == null || Time.time >= diesAt) { Destroy(gameObject); return; }
 
@@ -73,13 +109,19 @@ public class Missile : MonoBehaviour
 
         if (velocity.sqrMagnitude > 0.01f)
             transform.right = velocity.normalized;
+        AnimateExhaust();
 
         float hitRadius = tuning.missileHitRadius * progress.Scale;
         if (flat.magnitude <= hitRadius)
         {
-            HitFx.Burst(transform.position, new Color(1f, 0.6f, 0.3f), 0.5f, tuning.pixelsPerUnit, 0.15f);
             progress.TakeDamage(damage);
             Destroy(gameObject);
         }
+    }
+
+    void AnimateExhaust()
+    {
+        properties.SetFloat(FlamePhase, Time.time * 35f + flameOffset);
+        visual.SetPropertyBlock(properties);
     }
 }

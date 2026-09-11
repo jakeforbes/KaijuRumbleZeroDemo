@@ -1,60 +1,63 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
-/// <summary>
-/// Draws the swipe arc for a fraction of a second so range and width can be tuned
-/// by eye. This is a tuning aid, not the real attack visual — Stage 9 replaces it.
-/// </summary>
+/// <summary>Energy crescent on the attack's flat-ground arc. Damage and timing stay in PlayerAttack.</summary>
 public class SwipeFx : MonoBehaviour
 {
-    static Sprite cached;
-    static float cachedArc = -1f;
-
-    SpriteRenderer sr;
-    float life;
-    float age;
+    static Mesh quad;
+    static Material material;
+    static readonly int Progress = Shader.PropertyToID("_Progress");
+    static readonly int HalfArc = Shader.PropertyToID("_HalfArc");
+    static readonly int EnergyColour = Shader.PropertyToID("_EnergyColour");
+    MeshRenderer output;
+    MaterialPropertyBlock properties;
+    float life, age;
 
     public static void Show(Tuning tuning, Vector3 at, Vector2 aim, float range, float arc, float ppu)
     {
-        if (!tuning.showSwipeArc) return;
-
-        // The wedge is drawn at a fixed pixel radius and scaled, so it is only
-        // regenerated when the arc angle itself changes.
-        if (cached == null || !Mathf.Approximately(cachedArc, arc))
+        if (!tuning.showSwipeArc || range <= 0) return;
+        if (quad == null)
         {
-            cached = GreyboxArt.Wedge(128, arc, new Color(1f, 0.95f, 0.7f, 0.5f), ppu);
-            cachedArc = arc;
+            quad = new Mesh { name = "Shared energy swipe quad" };
+            quad.vertices = new[] { new Vector3(-1,-1,0), new Vector3(1,-1,0), new Vector3(1,1,0), new Vector3(-1,1,0) };
+            quad.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+            quad.triangles = new[] { 0,1,2,0,2,3 };
+            quad.RecalculateBounds();
         }
+        if (material == null)
+            material = new Material(Resources.Load<Shader>("SwipeEnergy")) { name = "Swipe energy (shared)" };
 
-        // Rotate on the flat ground plane, then squash: that ordering is what the
-        // isometric projection actually does, so the wedge lands where hits land.
-        var root = new GameObject("swipe");
+        // Rotate in the flat plane before squashing, exactly as the old wedge did.
+        float squash = Mathf.Max(.01f, tuning.isoSquash);
+        var root = new GameObject("swiping energy");
         root.transform.position = at;
-        root.transform.localScale = new Vector3(1f, tuning.isoSquash, 1f);
-
-        Vector2 flat = new Vector2(aim.x, aim.y / tuning.isoSquash);
-        float deg = Mathf.Atan2(flat.y, flat.x) * Mathf.Rad2Deg;
-
-        var child = new GameObject("arc");
+        root.transform.localScale = new Vector3(1, squash, 1);
+        Vector2 flat = new Vector2(aim.x, aim.y / squash);
+        var child = new GameObject("energy crescent");
         child.transform.SetParent(root.transform, false);
-        child.transform.localRotation = Quaternion.Euler(0f, 0f, deg);
-        child.transform.localScale = Vector3.one * (range / (128f / ppu));
-
-        var sr = child.AddComponent<SpriteRenderer>();
-        sr.sprite = cached;
-        sr.sortingOrder = 2;
-
+        child.transform.localRotation = Quaternion.Euler(0,0,Mathf.Atan2(flat.y,flat.x)*Mathf.Rad2Deg);
+        child.transform.localScale = Vector3.one * range;
+        child.AddComponent<MeshFilter>().sharedMesh = quad;
+        var renderer = child.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.sortingOrder = 2;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
         var fx = root.AddComponent<SwipeFx>();
-        fx.sr = sr;
-        fx.life = 0.18f;
+        fx.output = renderer;
+        fx.life = Mathf.Max(.05f, tuning.swipeEnergyDuration);
+        fx.properties = new MaterialPropertyBlock();
+        fx.properties.SetFloat(HalfArc, Mathf.Clamp(arc,1,360)*.5f*Mathf.Deg2Rad);
+        fx.properties.SetColor(EnergyColour, tuning.swipeEnergyColour);
+        fx.properties.SetFloat(Progress, 0);
+        renderer.SetPropertyBlock(fx.properties);
     }
 
     void Update()
     {
         age += Time.deltaTime;
-        float t = 1f - Mathf.Clamp01(age / life);
-        var c = sr.color;
-        c.a = t;
-        sr.color = c;
-        if (age >= life) Destroy(gameObject);
+        if (age >= life) { output.enabled = false; Destroy(gameObject); return; }
+        properties.SetFloat(Progress, age / life);
+        output.SetPropertyBlock(properties);
     }
 }

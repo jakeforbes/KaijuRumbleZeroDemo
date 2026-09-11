@@ -414,8 +414,8 @@ public class Enemy : Damageable
     void Shove()
     {
         AudioEvents.Play(type.specialSound, transform.position, owner: gameObject);
-        HitFx.Burst(transform.position, new Color(1f, 0.55f, 0.25f),
-                    type.specialRange, tuning.pixelsPerUnit, 0.5f);
+        ShockwaveFx.Show(transform.position, new Color(1f, 0.55f, 0.25f),
+                         type.specialRange * .5f, .5f, .5f);
 
         var progress = PlayerProgress.Instance;
         if (progress == null || progress.RunOver) return;
@@ -487,12 +487,11 @@ public class Enemy : Damageable
         Vector3 target = progress.transform.position;
 
         if (type.ranged)
-            HitFx.Line(transform.position + Vector3.up * (type.bodyPx * 0.6f / tuning.pixelsPerUnit),
-                       target, new Color(1f, 0.7f, 0.35f), tuning.pixelsPerUnit, 0.16f, 0.18f);
+            EnergyBeamFx.Show(transform.position + Vector3.up * (type.bodyPx * 0.6f / tuning.pixelsPerUnit),
+                              target, new Color(1f, .48f, .12f), .18f, .16f);
         else
             body.linearVelocity = ((Vector2)(target - transform.position)).normalized * 6f;
 
-        HitFx.Burst(target, new Color(1f, 0.45f, 0.35f), 0.9f * progress.Scale, tuning.pixelsPerUnit);
         progress.TakeDamage(type.contactDamage);
     }
 
@@ -551,14 +550,16 @@ public class Enemy : Damageable
         // The boss is the run's end condition. Announced here rather than from the
         // director so it holds for any enemy flagged isBoss, however it got spawned —
         // including the F-key cheat, which is the only way anyone tests this.
-        if (IsBoss && PlayerProgress.Instance != null) PlayerProgress.Instance.Win();
+        bool playsDeath = art != null && sound != Sfx.Squish && type.deathFrames > 0;
+        float deathDuration = playsDeath ? type.deathFrames / DirectionalArt.Fps + 0.15f : 0f;
+        if (IsBoss && PlayerProgress.Instance != null) PlayerProgress.Instance.Win(deathDuration);
 
         // With a destruction clip, the corpse lingers just long enough to play it.
         // Collision goes immediately so a dying enemy never blocks or shoves.
-        if (art != null && sound != Sfx.Squish && type.deathFrames > 0)
+        if (playsDeath)
         {
             dying = true;
-            destroyAt = Time.time + type.deathFrames / DirectionalArt.Fps + 0.15f;
+            destroyAt = Time.time + deathDuration;
             art.Play(EnemyArt.Death, true);
 
             foreach (var c in GetComponents<Collider2D>()) c.enabled = false;

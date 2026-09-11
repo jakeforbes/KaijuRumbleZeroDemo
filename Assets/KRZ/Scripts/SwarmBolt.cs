@@ -15,7 +15,6 @@ using UnityEngine;
 /// </summary>
 public class SwarmBolt : MonoBehaviour
 {
-    static Sprite sprite;
     static Transform root;
 
     Tuning tuning;
@@ -28,7 +27,11 @@ public class SwarmBolt : MonoBehaviour
     float orbitAngle;
     float orbitRadius;
     Vector2 velocity;
-    SpriteRenderer sr;
+    MeshRenderer visual;
+    MaterialPropertyBlock properties;
+    static readonly int Accent = Shader.PropertyToID("_Accent");
+    static readonly int Opacity = Shader.PropertyToID("_Opacity");
+    static readonly int FlamePhase = Shader.PropertyToID("_FlamePhase");
 
     public static void Reset() => root = null;
 
@@ -41,7 +44,6 @@ public class SwarmBolt : MonoBehaviour
     {
         if (count <= 0) return;
         if (root == null) root = new GameObject("Swarm").transform;
-        if (sprite == null) sprite = GreyboxArt.Pickup(Mathf.Max(4, tuning.swarmBoltPx), Color.white, ppu);
 
         var targets = FindTargets(tuning, from.position);
         if (targets.Count == 0) return;
@@ -53,14 +55,13 @@ public class SwarmBolt : MonoBehaviour
             var go = new GameObject("bolt");
             go.transform.SetParent(root, false);
 
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
-            sr.color = new Color(0.65f, 1f, 0.85f);
-            sr.sortingOrder = 3;
+            var visual = Missile.CreateVisual(go.transform, tuning.swarmBoltPx, ppu);
 
             var b = go.AddComponent<SwarmBolt>();
             b.tuning = tuning;
-            b.sr = sr;
+            b.visual = visual;
+            b.properties = new MaterialPropertyBlock();
+            b.properties.SetColor(Accent, new Color(.65f,1f,.85f));
             b.origin = from;
             b.damage = damage;
             b.target = targets[i % targets.Count];
@@ -70,6 +71,7 @@ public class SwarmBolt : MonoBehaviour
             b.diesAt = b.launchAt + tuning.swarmLife;
 
             go.transform.position = b.OrbitPoint(bodyHeight);
+            b.AnimateVisual(.45f);
         }
 
         AudioEvents.Play(Sfx.Swarm, from.position, owner: from.gameObject);
@@ -99,6 +101,7 @@ public class SwarmBolt : MonoBehaviour
 
     void Update()
     {
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.HasWon) return;
         if (Time.time >= diesAt) { Destroy(gameObject); return; }
 
         if (Time.time < launchAt)
@@ -125,10 +128,12 @@ public class SwarmBolt : MonoBehaviour
 
         velocity = Vector2.MoveTowards(velocity, wanted, tuning.swarmTurn * Time.deltaTime);
         transform.position += (Vector3)velocity * Time.deltaTime;
+        if (velocity.sqrMagnitude > .001f) transform.right = velocity.normalized;
+        AnimateVisual(1f);
 
         if (flat.magnitude > tuning.swarmHitRadius) return;
 
-        HitFx.Burst(transform.position, new Color(0.7f, 1f, 0.9f), 0.6f, tuning.pixelsPerUnit, 0.15f);
+        ShockwaveFx.Show(transform.position, new Color(0.7f, 1f, 0.9f), .3f, .5f, .24f);
         target.TakeDamage(damage, transform.position);
         Destroy(gameObject);
     }
@@ -147,13 +152,21 @@ public class SwarmBolt : MonoBehaviour
         transform.position = OrbitPoint(bodyHeight);
 
         // Brightening as it tightens, so the moment of release is telegraphed.
-        if (sr != null) sr.color = new Color(0.65f, 1f, 0.85f, Mathf.Lerp(1f, 0.45f, remaining));
+        transform.right = new Vector3(-Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)*tuning.isoSquash, 0);
+        AnimateVisual(Mathf.Lerp(1f, .45f, remaining));
+    }
+
+    void AnimateVisual(float opacity)
+    {
+        properties.SetFloat(Opacity,opacity);
+        properties.SetFloat(FlamePhase,Time.time*35+orbitAngle);
+        visual.SetPropertyBlock(properties);
     }
 
     /// <summary>Nothing left to hit. Fades rather than vanishing on a frame boundary.</summary>
     void Fizzle()
     {
-        HitFx.Burst(transform.position, new Color(0.65f, 1f, 0.85f), 0.35f, tuning.pixelsPerUnit, 0.2f);
+        ShockwaveFx.Show(transform.position, new Color(0.65f, 1f, 0.85f), .175f, .5f, .2f);
         Destroy(gameObject);
     }
 }

@@ -64,6 +64,7 @@ public class PlayerProgress : MonoBehaviour
     float invulnerableUntil;
     float flashUntil;
     Color bodyColour;
+    bool bodyColourCaptured;
     PlayerController controller;
     CameraRig rig;
 
@@ -92,10 +93,19 @@ public class PlayerProgress : MonoBehaviour
                                   1f - Mathf.Exp(-tuning.growthLerpSpeed * Time.deltaTime));
         controller.SetScale(currentScale);
 
-        if (bodyArt == null) return;
-        if (bodyColour.a <= 0f) bodyColour = bodyArt.color;
+        ApplyBodyColour();
+    }
 
-        if (Time.time < flashUntil) bodyArt.color = Color.white;
+    void ApplyBodyColour()
+    {
+        if (bodyArt == null) return;
+        if (!bodyColourCaptured) { bodyColour = bodyArt.color; bodyColourCaptured = true; }
+
+        if (Time.time < flashUntil)
+        {
+            float strength = Mathf.Clamp01((flashUntil - Time.time) / .08f);
+            bodyArt.color = Color.Lerp(bodyColour, new Color(1f, .12f, .1f, bodyColour.a), strength);
+        }
         else if (Invulnerable) bodyArt.color = Color.Lerp(bodyColour, Color.white,
                                                           Mathf.PingPong(Time.time * 8f, 1f) * 0.5f);
         else bodyArt.color = bodyColour;
@@ -106,7 +116,7 @@ public class PlayerProgress : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        if (IsDead || Invulnerable) return;
+        if (RunOver || victoryPending || Invulnerable) return;
 
         // Flat subtraction rather than a percentage, so small attacks fall away
         // entirely as you grow while heavy ones still land. A Grunt's 6 stops
@@ -115,8 +125,9 @@ public class PlayerProgress : MonoBehaviour
         if (amount <= 0f) return;
 
         Hp -= amount;
-        flashUntil = Time.time + 0.1f;
+        flashUntil = Time.time + 0.22f;
         invulnerableUntil = Time.time + tuning.hitInvulnerability;
+        ApplyBodyColour(); // Tint the actual body immediately, including hits after this frame's Update.
         AudioEvents.Play(Sfx.PlayerHit, transform.position, owner: gameObject);
         if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Hit);
         Shake(tuning.hitShake);
@@ -127,16 +138,25 @@ public class PlayerProgress : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by the boss on its own death. The player keeps control afterwards —
-    /// the arena is still standing and there is nothing left to threaten you, which
-    /// is the whole point of having won.
+    /// Boss defeat freezes gameplay while the victory presentation runs on unscaled time.
     /// </summary>
-    public void Win()
+    bool victoryPending;
+
+    public void Win(float delay = 0f)
     {
-        if (HasWon || IsDead) return;
+        if (HasWon || IsDead || victoryPending) return;
+        victoryPending = true;
+        StartCoroutine(FinishVictory(delay));
+    }
+
+    System.Collections.IEnumerator FinishVictory(float delay)
+    {
+        if (delay > 0f) yield return new WaitForSeconds(delay);
 
         HasWon = true;
-        WonAt = Time.time;
+        CameraRig.CancelActiveIntroduction();
+        Time.timeScale = 0f;
+        WonAt = Time.unscaledTime;
         AudioEvents.Play(Sfx.Win, transform.position, owner: gameObject);
         Shake(tuning.tierUpShake * 2f);
     }

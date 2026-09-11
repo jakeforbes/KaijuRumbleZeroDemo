@@ -11,6 +11,33 @@ using UnityEngine;
 [System.Serializable]
 public class BuildingType
 {
+    [Header("Ambient lighting VFX")]
+    public bool ambientVfxEnabled = true;
+    [Range(0f, 2f)] public float ambientVfxIntensity = 0.65f;
+    [Range(0.1f, 3f)] public float ambientVfxPulseSpeed = 0.7f;
+    [Range(0f, 2f)] public float ambientVfxParticles = 1f;
+    [Tooltip("Size multiplier for glow around detected baked lights.")]
+    [Range(0.25f, 3f)] public float ambientVfxSize = 1f;
+
+    [Header("Laboratory dome")]
+    public bool labGlobEnabled = true;
+    [Range(0f, 3f)] public float labGlobIntensity = 1f;
+    [Tooltip("Speed of the erratic liquid motion inside the dome.")]
+    [Range(0.1f, 3f)] public float labGlobSpeed = 1f;
+    [Range(0.5f, 1.3f)] public float labGlobSize = 1f;
+
+    [Header("Cantilever equipment")]
+    public bool cantileverEquipmentEnabled = true;
+    [Range(0f, 4f)] public float cantileverFanSpeed = 1f;
+    [Range(0f, 4f)] public float cantileverDishSpeed = 1f;
+    [Range(0.5f, 1.5f)] public float cantileverEquipmentSize = 1f;
+
+    [Header("Civilian smokestacks")]
+    public bool smokestacksEnabled = true;
+    [Range(0.5f, 1.5f)] public float smokestackSize = 1f;
+    [Range(0f, 1f)] public float smokeDensity = 0.45f;
+    [Range(0.1f, 3f)] public float smokeSpeed = 1f;
+
     [Header("Hit debris")]
     public bool debrisEnabled = true;
     [Range(0, 100)] public int debrisCount = 15;
@@ -65,6 +92,10 @@ public class BuildingType
     public int upgradeDrops;
 
     [Header("Reactor pulse")]
+    public bool coilLightningEnabled = true;
+    [Range(0f, 3f)] public float coilLightningIntensity = 1f;
+    [Range(0.1f, 3f)] public float coilLightningSpeed = 1f;
+
     [Tooltip("Damage dealt to every enemy in radius when this is destroyed. 0 for " +
              "ordinary buildings. Hits enemies only — never other buildings, never " +
              "the player, so a reactor is a weapon rather than a hazard.")]

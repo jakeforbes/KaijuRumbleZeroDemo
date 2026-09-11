@@ -91,7 +91,7 @@ public class PlayerController : MonoBehaviour
         building.TakeDamage(tuning.knockbackImpactDamage, transform.position);
 
         AudioEvents.Play(Sfx.KaijuImpact, at, owner: gameObject);
-        HitFx.Burst(at, new Color(1f, 0.8f, 0.45f), Scale * 0.8f, tuning.pixelsPerUnit, 0.35f);
+        ShockwaveFx.Show(at, new Color(1f, 0.8f, 0.45f), Scale * .4f, .5f, .35f);
         if (PlayerProgress.Instance != null)
             PlayerProgress.Instance.ShakeExternal(tuning.tierUpShake * 1.5f);
     }
@@ -99,7 +99,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         var state = PlayerProgress.Instance;
-        bool dead = state != null && state.IsDead;
+        bool dead = state != null && state.RunOver;
         bool locked = dead || BeingKnockedBack;
         Vector2 raw = locked ? Vector2.zero : ReadInput();
 
