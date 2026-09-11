@@ -39,6 +39,12 @@ public class ToxicField : MonoBehaviour
     /// <summary>Drops a puff at a point, sized for the kaiju standing there.</summary>
     public void Emit(Vector2 at, float radius)
     {
+        // Life is fixed when the puff is laid down, not read every frame, so levelling
+        // Toxin stretches the wake from here on instead of reaching back and extending
+        // gas that was already dispersing.
+        var upgrades = PlayerUpgrades.Instance;
+        float life = upgrades != null ? upgrades.ToxinCloudLife : tuning.toxinCloudLife;
+
         if (root == null) root = new GameObject("Toxin").transform;
         if (sprite == null) sprite = GreyboxArt.Cloud(128, tuning.pixelsPerUnit);
 
@@ -59,7 +65,7 @@ public class ToxicField : MonoBehaviour
             at = at,
             radius = radius,
             bornAt = Time.time,
-            diesAt = Time.time + tuning.toxinCloudLife,
+            diesAt = Time.time + life,
             art = sr,
         });
     }

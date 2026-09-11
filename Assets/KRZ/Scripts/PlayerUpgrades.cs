@@ -76,6 +76,28 @@ public class PlayerUpgrades : MonoBehaviour
     public float ToxinPowerMul => GrantedPowerMul(UpgradeId.Toxin);
 
     /// <summary>
+    /// How long each puff of the cloud lingers: the base life plus a second for every
+    /// stack after the first. Length is the readable half of Toxin the way particle
+    /// count is for Swarm — you can see the wake stretch further behind you, where a
+    /// damage multiplier on the same short cloud would have been invisible.
+    ///
+    /// Read at the moment a puff is emitted, so picking the upgrade up lengthens the
+    /// trail from there on rather than retroactively extending gas already laid down.
+    /// </summary>
+    public float ToxinCloudLife
+    {
+        get
+        {
+            int n = Count(UpgradeId.Toxin);
+            if (n <= 0) return tuning.toxinCloudLife;
+
+            var type = Find(UpgradeId.Toxin);
+            if (type == null) return tuning.toxinCloudLife;
+            return tuning.toxinCloudLife + (n - 1) * type.extraSecondsPerStack;
+        }
+    }
+
+    /// <summary>
     /// Stomp is the one upgrade that creates an ability rather than modifying one,
     /// so its first stack grants it at base power and only later stacks multiply.
     /// Otherwise picking it up once already lands a boosted hit.

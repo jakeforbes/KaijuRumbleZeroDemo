@@ -43,6 +43,11 @@ public class UpgradeType
              "extraProjectilesPerStack.")]
     public int baseProjectiles;
 
+    [Tooltip("Seconds added per stack beyond the first. Toxin uses this for how long " +
+             "each puff lingers: the trail behind you lengthens as it levels, rather " +
+             "than the same short cloud only hitting harder.")]
+    public float extraSecondsPerStack;
+
     public int maxStacks = 5;
 
     [Tooltip("Relative chance of being the one that drops.")]
