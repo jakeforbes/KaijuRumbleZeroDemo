@@ -443,8 +443,10 @@ public class Tuning : ScriptableObject
                         artFolder = "Mech", artPrefix = "mech", artDisplayPx = 384, footprintFraction = 0.34f,
                         artFrameDigits = 4, artFirstFrame = 1 },
 
-        // Goliath. One per run, arriving just ahead of the boss — the last thing the
-        // army has left before the thing that is not an army at all.
+        // Goliath. Arrives just ahead of the boss — the last thing the army has left
+        // before the thing that is not an army at all — and then keeps turning up as
+        // one of the two units the boss escort draws from, so the finale never goes
+        // quiet around the Abomination.
         //
         // The Mech chassis at half again the size, three times the health and a volley
         // three times as wide. Twenty-four missiles will not out-damage eight, because
@@ -771,6 +773,32 @@ public class Tuning : ScriptableObject
                         enemyType = "Abomination", count = 1, shape = SpawnShape.Clump },
     };
 
+    [Header("Boss escort")]
+    [Tooltip("Keeps sending heavies while the boss is alive. Every wave beat ends " +
+             "before the Abomination arrives, so without this the finale is a duel in " +
+             "an empty city.")]
+    public bool bossEscortEnabled = true;
+
+    [Tooltip("Only tops up when fewer than this many non-boss enemies are alive. The " +
+             "boss is meant to stay the threat — this exists so it is not the only " +
+             "thing on the screen, not to bury the player during it.")]
+    public int bossEscortFloor = 6;
+
+    [Tooltip("Seconds between top-ups. A crowded arena still spends its turn rather " +
+             "than banking one, so reinforcements never arrive in a lump.")]
+    public float bossEscortInterval = 8f;
+
+    [Tooltip("Grace after the boss lands before the first reinforcements, so its " +
+             "entrance gets a moment to itself.")]
+    public float bossEscortFirstDelay = 6f;
+
+    [Tooltip("Types to draw from, picked at random per top-up. Heavies only: a Grunt " +
+             "at this point is food, and a stream of them reads as padding.")]
+    public string[] bossEscortTypes = { "Laser Drone", "Goliath" };
+
+    [Tooltip("How many arrive per top-up.")]
+    public int bossEscortCount = 2;
+
     [Header("Survival")]
     [Tooltip("Grace after any hit. Without it a swarm deletes you in a single frame.")]
     public float hitInvulnerability = 0.5f;
@@ -876,6 +904,19 @@ public class Tuning : ScriptableObject
 
     [Tooltip("How close a missile must get to the kaiju to hit, scaled by size.")]
     public float missileHitRadius = 0.9f;
+
+    [Tooltip("Health of an enemy missile, so the player can shoot a volley down. " +
+             "Deliberately a Grunt's, which is under one swipe: the interesting part " +
+             "is the dodge roll below, not chipping a missile to death.")]
+    public float missileHp = 12f;
+
+    [Tooltip("Chance each hit on a missile is jinked out of the way of instead of " +
+             "landing. At 0.5 a swipe into a volley takes out about half of what it " +
+             "touches, which keeps a Mech's answer 'thin it and take the rest' rather " +
+             "than 'press attack and ignore it'.\n\n" +
+             "A dodge also costs the missile its heading, so even a hit that does not " +
+             "kill buys the time it takes to turn back.")]
+    [Range(0f, 0.95f)] public float missileDodgeChance = 0.5f;
 
     public float hitShake = 0.18f;
 
@@ -1058,11 +1099,13 @@ public class Tuning : ScriptableObject
                           perStack = 1f, maxStacks = 3,
                           weight = 1f, colour = new Color(0.95f, 0.85f, 0.45f) },
 
-        // 12% per stack was under the threshold where a single pickup registers —
-        // it read as "maybe". 20% is felt on the pickup, and five of them roughly
-        // two and a half times your speed, which is a whole build rather than a trim.
+        // 12% per stack was under the threshold where a single pickup registers — it
+        // read as "maybe". 20% was felt on the pickup and stacked to about two and a
+        // half times base; 30% stacks to 3.7x across five, which is half again as fast
+        // at the top end and turns a full Speed build into its own way to play rather
+        // than a faster version of the normal one.
         new UpgradeType { id = UpgradeId.Speed,   displayName = "Speed",
-                          effect = "Move 20% faster", perStack = 1.2f, maxStacks = 5,
+                          effect = "Move 30% faster", perStack = 1.3f, maxStacks = 5,
                           weight = 1f, colour = new Color(0.5f, 0.9f, 0.75f) },
 
         new UpgradeType { id = UpgradeId.Stomp,   displayName = "Stomp",

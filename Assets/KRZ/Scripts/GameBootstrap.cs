@@ -106,6 +106,15 @@ public class GameBootstrap : MonoBehaviour
         foreach (var c in FindObjectsByType<Camera>(FindObjectsSortMode.None)) Destroy(c.gameObject);
         foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None)) Destroy(l.gameObject);
         Physics2D.gravity = Vector2.zero;
+
+        // Plain OverlapCircle calls stop seeing triggers. Every one of them in this
+        // project is a placement clearance check asking whether solid ground is free,
+        // and missiles carry a trigger collider purely so the player's attacks can
+        // find them — left on, a volley drifting past a spawn point would start
+        // silently rejecting spawns, which is exactly how the boss went missing once
+        // already. The player's own sweeps pass an explicit ContactFilter2D with
+        // useTriggers set, so they are unaffected by this.
+        Physics2D.queriesHitTriggers = false;
     }
 
     Camera BuildCamera()

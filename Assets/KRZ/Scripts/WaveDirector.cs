@@ -28,6 +28,9 @@ public class WaveDirector : MonoBehaviour
     /// </summary>
     float recoveryUntil = -1f;
 
+    float nextEscortAt;
+    bool escortArmed;
+
     public bool Recovering => Time.time < recoveryUntil;
     public float RecoverySecondsLeft => Mathf.Max(0f, recoveryUntil - Time.time);
 
@@ -91,6 +94,65 @@ public class WaveDirector : MonoBehaviour
         }
 
         if (active != null) CurrentLabel = active;
+
+        if (tuning.bossEscortEnabled && EscortTick()) CurrentLabel = "boss escort";
+    }
+
+    /// <summary>
+    /// Keeps the streets occupied while the boss is up.
+    ///
+    /// Every sustained beat ends before the Abomination arrives, so the moment it
+    /// walks on the map empties and the finale becomes a duel in a dead city — the
+    /// one fight in the run where nothing is happening except the thing you are
+    /// already aiming at. This tops the arena back up, and only when it has actually
+    /// thinned: the boss stays the threat, and what arrives is there to stop you
+    /// giving it your undivided attention.
+    ///
+    /// Heavies only. Grunts this late are food, and a stream of them would read as
+    /// the game padding rather than as pressure.
+    ///
+    /// Returns true when it spawned, so the HUD can say what is going on.
+    /// </summary>
+    bool EscortTick()
+    {
+        bool bossUp = false;
+        int others = 0;
+        foreach (var e in Enemy.All)
+        {
+            if (e == null || !e.IsAlive) continue;
+            if (e.IsBoss) bossUp = true; else others++;
+        }
+
+        if (!bossUp) { escortArmed = false; return false; }
+
+        // Armed on the boss's arrival rather than at a clock time, so the first
+        // reinforcements land after its entrance has had room to register.
+        if (!escortArmed)
+        {
+            escortArmed = true;
+            nextEscortAt = Time.time + tuning.bossEscortFirstDelay;
+            return false;
+        }
+
+        if (Time.time < nextEscortAt) return false;
+        nextEscortAt = Time.time + tuning.bossEscortInterval;
+
+        // Checked after the timer, not before, so a crowded arena still costs the
+        // escort its turn instead of banking one to fire the instant it clears.
+        if (others >= tuning.bossEscortFloor) return false;
+        if (tuning.bossEscortTypes == null || tuning.bossEscortTypes.Length == 0) return false;
+
+        // Routed through the ordinary spawn path so escorts inherit the off-screen
+        // placement, the living cap and the clearance checks every other wave gets.
+        Spawn(new WaveEntry
+        {
+            label = "boss escort",
+            enemyType = tuning.bossEscortTypes[Random.Range(0, tuning.bossEscortTypes.Length)],
+            count = Mathf.Max(1, tuning.bossEscortCount),
+            shape = SpawnShape.Clump,
+        });
+
+        return true;
     }
 
     /// <summary>Jumps the clock, firing nothing that was skipped. For testing the late game.</summary>

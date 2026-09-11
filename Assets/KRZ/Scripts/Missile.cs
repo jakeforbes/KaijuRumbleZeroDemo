@@ -2,14 +2,20 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// A homing missile from a Mech volley.
+/// A homing missile from a Mech volley, and something the player can shoot down.
 ///
-/// Deliberately has no Collider2D at all: it steers by position and checks its own
-/// distance to the player. That is what keeps a cluster of them from shoving each
-/// other, colliding with the swarm, or waking the physics solver — and it is far
-/// cheaper than eight rigid bodies per volley.
+/// Flight is still done entirely by position: it steers itself and checks its own
+/// distance to the player, which is what keeps a cluster of them from shoving each
+/// other or waking the solver. The collider it now carries is a trigger on a
+/// kinematic body and exists only so the player's sweeps can find it — nothing
+/// physical ever happens to it, and a volley still costs no solver work.
+///
+/// A missile is as fragile as a Grunt, so any real hit kills one, but half of every
+/// hit is jinked away from. That is the whole design: a well-timed swipe into an
+/// incoming volley thins it rather than deleting it, so the answer to a Mech stays
+/// "cut the volley down and take the rest" instead of "press attack and ignore it".
 /// </summary>
-public class Missile : MonoBehaviour
+public class Missile : Damageable
 {
     static Mesh missileMesh;
     static Material missileMaterial;
@@ -25,6 +31,39 @@ public class Missile : MonoBehaviour
     MeshRenderer visual;
     MaterialPropertyBlock properties;
     float flameOffset;
+    float hp;
+
+    public override bool IsAlive => hp > 0f;
+
+    /// <summary>
+    /// Shot at by the player. Half of all hits are jinked out of the way of rather
+    /// than absorbed, and the jink is shown as an actual change of course instead of
+    /// a number that fails to appear — a hit that silently does nothing reads as the
+    /// game having dropped the input.
+    ///
+    /// The sidestep is not only feedback: it costs the missile its heading, so a
+    /// dodged hit still buys the player the time it takes to turn back.
+    /// </summary>
+    public override void TakeDamage(float amount, Vector2 from)
+    {
+        if (!IsAlive) return;
+
+        if (Random.value < tuning.missileDodgeChance)
+        {
+            var sideways = new Vector2(-velocity.y, velocity.x).normalized;
+            if (Random.value < 0.5f) sideways = -sideways;
+
+            velocity = (velocity + sideways * speed * 0.9f).normalized * speed;
+            ShockwaveFx.Show(transform.position, new Color(0.75f, 0.88f, 1f), .3f, .5f, .18f);
+            return;
+        }
+
+        hp -= amount;
+        if (IsAlive) return;
+
+        ShockwaveFx.Show(transform.position, new Color(1f, 0.72f, 0.32f), .7f, .5f, .3f);
+        Destroy(gameObject);
+    }
 
     public static void Reset() => root = null;
 
@@ -68,8 +107,22 @@ public class Missile : MonoBehaviour
 
             var renderer = CreateVisual(go.transform, tuning.missilePx, ppu);
 
+            // Kinematic body under a trigger collider: the only reason either exists
+            // is so the player's OverlapCircle sweeps can find the thing. Kinematic
+            // means nothing pushes it and it pushes nothing, and the trigger means no
+            // contact is ever resolved, so the flight code below stays authoritative.
+            var rb = go.AddComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.gravityScale = 0f;
+            rb.freezeRotation = true;
+
+            var col = go.AddComponent<CircleCollider2D>();
+            col.isTrigger = true;
+            col.radius = Mathf.Max(0.12f, tuning.missilePx * 0.5f / ppu);
+
             var m = go.AddComponent<Missile>();
             m.tuning = tuning;
+            m.hp = tuning.missileHp;
             m.damage = type.missileDamage;
             m.speed = type.missileSpeed;
             m.turn = type.missileTurn;
