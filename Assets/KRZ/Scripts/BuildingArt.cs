@@ -80,7 +80,8 @@ public static class BuildingArt
         string dir = Directions[Mathf.Clamp(direction, 0, DirectionCount - 1)];
         for (int i = 0; i < StageCount; i++)
             stages[i] = Load($"{type.artSprite}_{Suffix[i]}_{dir}", type.tilesX, type.tilesY,
-                             ppu, type.artScale, type.artPivotOffsetX, type.artPivotOffsetY);
+                             ppu, type.artScale, type.artPivotOffsetX,
+                             type.artPivotOffsetY + StageOffset(type, i));
 
         // A shared ruin standing in for a final state that does not read as wreckage.
         // Loaded by its own full path with its own scale, because one debris pile is
@@ -94,6 +95,15 @@ public static class BuildingArt
 
         return stages;
     }
+
+    /// <summary>
+    /// A stage's own vertical correction, or none when the type does not list one.
+    /// Short arrays are allowed so a type can correct only the stage that needs it.
+    /// </summary>
+    static float StageOffset(BuildingType type, int stage)
+        => type.artStageOffsetY != null && stage < type.artStageOffsetY.Length
+           ? type.artStageOffsetY[stage]
+           : 0f;
 
     /// <summary>Returns null for a blank path or a missing file, without complaint.</summary>
     public static Sprite Load(string resourcePath, int tilesX, int tilesY,

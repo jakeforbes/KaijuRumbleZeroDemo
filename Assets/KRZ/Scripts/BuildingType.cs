@@ -157,6 +157,16 @@ public class BuildingType
              "it only hides the real fault.")]
     public float artPivotOffsetY;
 
+    [Tooltip("Per-stage vertical correction in texture pixels, added to Art Pivot " +
+             "Offset Y, in the order pristine, damaged_1, damaged_2, destroyed. " +
+             "Positive moves that stage UP, the same convention as the field above.\n\n" +
+             "For delivered damage sets whose stages do not all draw their ground " +
+             "contact on the same row, which makes the building hop as it takes " +
+             "damage. Measured, not guessed: find the lowest row of each stage's art " +
+             "and enter the difference from 8, negated. Leave empty — the normal case " +
+             "— for art whose stages already agree.")]
+    public float[] artStageOffsetY;
+
     [Tooltip("Optional replacement for the destroyed state only — a full Resources " +
              "path, with no state or direction suffix. For buildings whose own final " +
              "state does not read as wreckage.\n\n" +
