@@ -5,7 +5,7 @@ using UnityEngine;
 /// Chases the player, stops at its attack range, hits on a cooldown. Dies to swipes,
 /// or to being walked over once the kaiju outgrows it.
 /// </summary>
-[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar, Sfx.MechPunch)]
+[SoundActions(Sfx.EnemySpawn, Sfx.Footstep, Sfx.EnemyAttack, Sfx.EnemyHit, Sfx.EnemyBlocked, Sfx.EnemyDeath, Sfx.Squish, Sfx.EnemyPushed, Sfx.EnemyDeploy, Sfx.BossRoar, Sfx.MechPunch, Sfx.LaserSweep)]
 public class Enemy : Damageable
 {
     public static readonly List<Enemy> All = new();
@@ -30,6 +30,16 @@ public class Enemy : Damageable
     float destroyAt;
     HealthBar bar;
     float wanderAngle;
+
+    // Spinning laser. The beam is a live object this enemy owns for the length of a
+    // sweep, so every path out of the sweep has to release it.
+    bool sweeping;
+    float sweepStartedAt;
+    float sweepStartAngle;
+    float sweepDirection = 1f;
+    float nextLaserHitAt;
+    float stationAngle;
+    EnergyBeamFx beam;
 
     public EnemyArt art;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
@@ -138,6 +148,7 @@ public class Enemy : Damageable
 
         e.nextVolleyAt = Time.time + type.specialCooldown;
         e.wanderAngle = Random.value * Mathf.PI * 2f;
+        e.stationAngle = Random.value * Mathf.PI * 2f;
 
         var sounds = type.sounds;
         if (sounds == null) sounds = Resources.Load<SoundPlayer>("Enemy Sounds/" + type.name);
@@ -149,7 +160,12 @@ public class Enemy : Damageable
     }
 
     void OnEnable() => All.Add(this);
-    void OnDisable() => All.Remove(this);
+
+    void OnDisable()
+    {
+        All.Remove(this);
+        EndSweep();
+    }
 
 
     void Update()
@@ -159,12 +175,18 @@ public class Enemy : Damageable
         if (dying)
         {
             body.linearVelocity = Vector2.zero;
+            EndSweep();
             if (Time.time >= destroyAt) Destroy(gameObject);
             return;
         }
 
         var progress = PlayerProgress.Instance;
-        if (progress == null || progress.RunOver) { body.linearVelocity = Vector2.zero; return; }
+        if (progress == null || progress.RunOver)
+        {
+            body.linearVelocity = Vector2.zero;
+            EndSweep();
+            return;
+        }
 
         Vector2 toPlayer = progress.transform.position - transform.position;
         float flat = new Vector2(toPlayer.x, toPlayer.y / tuning.isoSquash).magnitude;
@@ -187,6 +209,14 @@ public class Enemy : Damageable
         if (type.movement == MovementMode.Flee)
         {
             Flee(toPlayer, flat);
+            if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
+            Recolour();
+            return;
+        }
+
+        if (type.movement == MovementMode.Standoff)
+        {
+            Standoff(progress);
             if (bar != null && Squishable) { Destroy(bar.gameObject); bar = null; }
             Recolour();
             return;
@@ -256,6 +286,140 @@ public class Enemy : Damageable
         // Scavenger would bolt straight into the first wall behind it.
         Vector2 moveDir = new Vector2(dir.x, dir.y * tuning.isoSquash).normalized;
         body.linearVelocity = AvoidBuildings(moveDir) * type.moveSpeed;
+    }
+
+    /// <summary>How far off the standoff ring still counts as being in position.</summary>
+    const float StationTolerance = 2f;
+
+    /// <summary>
+    /// The point this unit is trying to fire from: somewhere on a ring of attackRange
+    /// around the player, at the angle it last picked. Computed on the flat ground
+    /// plane and squashed back, so the ring is a circle in world terms rather than the
+    /// oval the projection would otherwise make of it.
+    /// </summary>
+    Vector2 StationPoint(PlayerProgress progress)
+    {
+        var ring = new Vector2(Mathf.Cos(stationAngle), Mathf.Sin(stationAngle)) * type.attackRange;
+        return (Vector2)progress.transform.position + new Vector2(ring.x, ring.y * tuning.isoSquash);
+    }
+
+    /// <summary>
+    /// Being at the right *range* to fire, not at one exact point. The station point
+    /// is pinned to the player, so a player who keeps moving drags it around faster
+    /// than the drone can follow — gating the shot on arriving at it exactly meant a
+    /// running player could keep the unit permanently out of position and it would
+    /// never fire at all. The angle still decides where it repositions to; only the
+    /// distance decides whether it may shoot.
+    /// </summary>
+    bool OnStation(PlayerProgress progress)
+    {
+        Vector2 d = (Vector2)progress.transform.position - (Vector2)transform.position;
+        float flat = new Vector2(d.x, d.y / tuning.isoSquash).magnitude;
+        return Mathf.Abs(flat - type.attackRange) <= StationTolerance;
+    }
+
+    /// <summary>
+    /// Moves to the chosen station and holds it. Deliberately not a chase: arcing round
+    /// to a firing position is what separates this from everything else in the roster,
+    /// all of which walks straight at you.
+    /// </summary>
+    void Standoff(PlayerProgress progress)
+    {
+        Vector2 delta = StationPoint(progress) - (Vector2)transform.position;
+        if (new Vector2(delta.x, delta.y / tuning.isoSquash).magnitude <= StationTolerance)
+        {
+            body.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        body.linearVelocity = AvoidBuildings(delta.normalized) * type.moveSpeed;
+    }
+
+    /// <summary>
+    /// Beam thickness, matched to the player's own Blast at size 2 — the reference this
+    /// weapon was asked to look like. Read from the same two numbers the Blast uses, so
+    /// retuning that carries over rather than leaving a copy to keep in step by hand.
+    /// </summary>
+    float LaserWidth
+    {
+        get
+        {
+            float sizeTwo = tuning.tierScale != null && tuning.tierScale.Length > 1
+                ? tuning.tierScale[1] : 2.625f;
+            return tuning.blastWidthFraction * sizeTwo;
+        }
+    }
+
+    /// <summary>Fired from the middle of the drawn body rather than from its feet.</summary>
+    Vector3 Muzzle => transform.position + Vector3.up *
+                      (0.5f * (art != null ? type.artDisplayPx : type.bodyPx) / tuning.pixelsPerUnit);
+
+    void StartSweep(PlayerProgress progress)
+    {
+        sweeping = true;
+        sweepStartedAt = Time.time;
+        nextLaserHitAt = 0f;
+
+        // Opens pointing at the player, so the first thing the sweep does is threaten
+        // rather than spend a second and a half travelling round to them.
+        Vector2 d = (Vector2)progress.transform.position - (Vector2)transform.position;
+        var flat = new Vector2(d.x, d.y / tuning.isoSquash);
+        sweepStartAngle = flat.sqrMagnitude > 0.0001f ? Mathf.Atan2(flat.y, flat.x) : 0f;
+
+        // Turn direction is rolled per sweep so two drones on screen never lock step.
+        sweepDirection = Random.value < 0.5f ? -1f : 1f;
+
+        beam = EnergyBeamFx.Hold(type.laserColour, LaserWidth);
+        AudioEvents.Play(Sfx.LaserSweep, transform.position, owner: gameObject);
+        if (art != null) art.Play(EnemyArt.Attack, true);
+    }
+
+    /// <summary>
+    /// One frame of the sweep: point the beam, then test the one target it is allowed
+    /// to hit. Damage is a band test against the kaiju and nothing else, which is what
+    /// keeps the beam off other enemies and off buildings — a sweeping laser that also
+    /// cut down the swarm around it would be clearing the screen for the player.
+    /// </summary>
+    void Sweep(PlayerProgress progress)
+    {
+        float duration = Mathf.Max(0.2f, type.laserRotationSeconds);
+        float t = Mathf.Clamp01((Time.time - sweepStartedAt) / duration);
+
+        float angle = sweepStartAngle + sweepDirection * t * Mathf.PI * 2f;
+        var flatDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+        var screenDir = new Vector2(flatDir.x, flatDir.y * tuning.isoSquash).normalized;
+
+        Vector3 muzzle = Muzzle;
+        if (beam != null) beam.Aim(muzzle, muzzle + (Vector3)(screenDir * type.laserRange));
+
+        if (Time.time < nextLaserHitAt) return;
+
+        Vector2 delta = (Vector2)progress.transform.position - (Vector2)transform.position;
+        Vector2 toPlayerFlat = new Vector2(delta.x, delta.y / tuning.isoSquash);
+
+        float along = Vector2.Dot(toPlayerFlat, flatDir);
+        if (along < 0f || along > type.laserRange) return;
+
+        // Against the kaiju's own half-width, not a point, or a beam this thin would
+        // pass through something six units across without touching it.
+        float across = Mathf.Abs(toPlayerFlat.x * flatDir.y - toPlayerFlat.y * flatDir.x);
+        float playerRadius = tuning.playerFootprintFraction.x * 0.5f * progress.Scale;
+        if (across > LaserWidth * 0.5f + playerRadius) return;
+
+        progress.TakeDamage(type.laserDamage);
+        nextLaserHitAt = Time.time + type.laserHitInterval;
+        ShockwaveFx.Show(progress.transform.position, type.laserColour, .5f, .5f, .24f);
+    }
+
+    /// <summary>
+    /// Ends a sweep and, more importantly, puts the beam out. Called from every exit —
+    /// the sweep finishing, the unit dying, the run ending, the object going away — so
+    /// there is no path that leaves a beam burning with nothing behind it.
+    /// </summary>
+    void EndSweep()
+    {
+        sweeping = false;
+        if (beam != null) { beam.Release(); beam = null; }
     }
 
     /// <summary>
@@ -344,6 +508,30 @@ public class Enemy : Damageable
     /// <summary>Returns true while the special owns this frame.</summary>
     bool HandleSpecial(PlayerProgress progress, float flat)
     {
+        // A sustained special owns the unit outright until it finishes. Checked first
+        // so nothing below can move it, re-telegraph, or start a second sweep on top
+        // of the one already turning.
+        if (sweeping)
+        {
+            body.linearVelocity = Vector2.zero;
+            Sweep(progress);
+
+            if (Time.time >= sweepStartedAt + Mathf.Max(0.2f, type.laserRotationSeconds))
+            {
+                EndSweep();
+                nextVolleyAt = Time.time + type.specialCooldown;
+
+                // A new station well away from the old one, so the next sweep comes
+                // from somewhere the player has to turn to face. Anything less than a
+                // quarter turn reads as drifting rather than as repositioning.
+                stationAngle += Random.Range(Mathf.PI * 0.35f, Mathf.PI * 0.9f)
+                                * (Random.value < 0.5f ? -1f : 1f);
+            }
+
+            Recolour();
+            return true;
+        }
+
         if (volleyWinding)
         {
             body.linearVelocity = Vector2.zero;
@@ -351,13 +539,13 @@ public class Enemy : Damageable
             {
                 volleyWinding = false;
                 nextVolleyAt = Time.time + type.specialCooldown;
-                FireSpecial();
+                FireSpecial(progress);
             }
             Recolour();
             return true;
         }
 
-        if (Time.time >= nextVolleyAt && flat <= type.specialRange && CanFireSpecial())
+        if (Time.time >= nextVolleyAt && flat <= type.specialRange && CanFireSpecial(progress))
         {
             volleyWinding = true;
             volleyEndsAt = Time.time + type.specialWindup;
@@ -370,8 +558,13 @@ public class Enemy : Damageable
     }
 
     /// <summary>Lets a special decline to start, rather than telegraphing and doing nothing.</summary>
-    bool CanFireSpecial()
+    bool CanFireSpecial(PlayerProgress progress)
     {
+        // Fires from its station or not at all. Without this it would plant and sweep
+        // from wherever it happened to be when the cooldown came up, which is the
+        // chase behaviour the standoff exists to avoid.
+        if (type.special == SpecialAction.SpinningLaser) return OnStation(progress);
+
         if (type.special != SpecialAction.DeployTroops) return true;
 
         int mine = 0;
@@ -380,10 +573,17 @@ public class Enemy : Damageable
         return mine < type.deployMaxAlive;
     }
 
-    void FireSpecial()
+    void FireSpecial(PlayerProgress progress)
     {
         switch (type.special)
         {
+            case SpecialAction.SpinningLaser:
+                // Starts the sweep rather than resolving it. The cooldown is reset
+                // again when the sweep ends, so it counts from the end of the turn
+                // and not from the start of a sweep that runs for seconds.
+                StartSweep(progress);
+                break;
+
             case SpecialAction.MissileVolley:
                 AudioEvents.Play(Sfx.EnemyAttack, transform.position, owner: gameObject);
                 Missile.Volley(tuning, type, transform.position, tuning.pixelsPerUnit);
@@ -539,6 +739,7 @@ public class Enemy : Damageable
     void Die(Sfx sound)
     {
         hp = 0f;
+        EndSweep();
         if (bar != null) { Destroy(bar.gameObject); bar = null; }
         if (sound == Sfx.EnemyDeath) AudioEvents.Play(Sfx.EnemyDeath, transform.position, 0.5f, owner: gameObject);
         Food.Scatter(tuning, transform.position, type.foodDrops, type.foodScatter, tuning.pixelsPerUnit);

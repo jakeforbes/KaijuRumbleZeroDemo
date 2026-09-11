@@ -8,6 +8,14 @@ public enum MovementMode
 
     /// <summary>Drifts chaotically and bolts when the player closes in.</summary>
     Flee,
+
+    /// <summary>
+    /// Takes up a firing position on a ring at attackRange and holds it, rather than
+    /// closing to that range and stopping wherever it happened to arrive. Pairs with a
+    /// sustained special: the unit picks a station, fires from it, then picks another,
+    /// so it reads as repositioning instead of as a chaser standing still.
+    /// </summary>
+    Standoff,
 }
 
 /// <summary>Periodic behaviours an enemy can have on top of its basic attack.</summary>
@@ -22,6 +30,14 @@ public enum SpecialAction
     /// and a heavy mech's punch are the same action with different numbers.
     /// </summary>
     Knockback,
+
+    /// <summary>
+    /// Plants, then sweeps a beam through a full turn. Unlike every other special this
+    /// one is sustained rather than instantaneous — it owns the unit for the whole
+    /// rotation, which is what makes it something you walk out of rather than something
+    /// you either ate or did not.
+    /// </summary>
+    SpinningLaser,
 }
 
 /// <summary>
@@ -124,6 +140,31 @@ public class EnemyType
     public float missileTurn = 40f;
 
     public float missileLife = 4f;
+
+    [Header("Special: spinning laser")]
+    [Tooltip("Seconds for one full turn of the beam. The whole unit is this number — " +
+             "it is how long you have to read where the beam is going and get out, and " +
+             "how long the unit stands still and can be punished for it.")]
+    [Min(0.2f)] public float laserRotationSeconds = 6f;
+
+    [Tooltip("Beam length in world units, measured on the flat ground plane. Wants to " +
+             "over-reach the standoff distance in Attack Range, so the sweep still " +
+             "covers a player who has backed off since it planted.")]
+    public float laserRange = 15f;
+
+    [Tooltip("Damage per hit. The beam is a band test against the kaiju and nothing " +
+             "else, so this never touches other enemies or buildings.")]
+    public float laserDamage = 38f;
+
+    [Tooltip("Shortest gap between two hits from the same beam. A sweep passing over a " +
+             "player who is standing still clips them for one hit; standing in the beam " +
+             "and travelling with it is what makes it tick, and is meant to be lethal.")]
+    [Min(0.05f)] public float laserHitInterval = 0.35f;
+
+    [Tooltip("Beam colour. Width is taken from the player's own Blast at size 2, so " +
+             "retuning Blast Width Fraction carries over instead of leaving two numbers " +
+             "to keep in step by hand.")]
+    public Color laserColour = new Color(1f, 0.30f, 0.24f);
 
     [Header("Special: deploy troops")]
     [Tooltip("Name of the enemy type to deploy, matched against Tuning.enemyTypes.")]
