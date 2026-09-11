@@ -75,6 +75,26 @@ public class PlayerUpgrades : MonoBehaviour
     public float SwarmPowerMul => GrantedPowerMul(UpgradeId.Swarm);
     public float ToxinPowerMul => GrantedPowerMul(UpgradeId.Toxin);
 
+    public bool HasTrample => Count(UpgradeId.Trample) > 0;
+    public float TramplePowerMul => GrantedPowerMul(UpgradeId.Trample);
+
+    public bool HasSlam => Count(UpgradeId.Slam) > 0;
+    public float SlamPowerMul => GrantedPowerMul(UpgradeId.Slam);
+
+    /// <summary>
+    /// Slam's reach, as a multiple of the swipe's. Exactly 1 at the first stack — the
+    /// upgrade's promise is a swipe-ranged blow at triple damage — and growing from
+    /// there, so later stacks widen the cone as well as deepening the hit.
+    /// </summary>
+    public float SlamRangeMul
+    {
+        get
+        {
+            int n = Count(UpgradeId.Slam);
+            return n <= 0 ? 0f : Mathf.Pow(tuning.slamRangePerStack, n - 1);
+        }
+    }
+
     /// <summary>
     /// How long each puff of the cloud lingers: the base life plus a second for every
     /// stack after the first. Length is the readable half of Toxin the way particle

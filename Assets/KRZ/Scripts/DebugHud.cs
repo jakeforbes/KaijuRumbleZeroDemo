@@ -141,8 +141,10 @@ public class DebugHud : MonoBehaviour
 
         if (GameBootstrap.Instance != null)
         {
-            // Shift picks the heavier species, so armour can be tested without waves.
-            bool heavy = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+            // Alt picks the heavier species, so armour can be tested without waves.
+            // This was Shift until the dash took Shift: holding it to spawn a heavy
+            // would also have launched the kaiju across the street every time.
+            bool heavy = kb.leftAltKey.isPressed || kb.rightAltKey.isPressed;
             if (kb.f4Key.wasPressedThisFrame) GameBootstrap.Instance.SpawnSwarm(heavy ? 4 : 12, heavy ? 1 : 0);
             if (kb.f5Key.wasPressedThisFrame) Enemy.KillAll();
 
@@ -325,6 +327,20 @@ public class DebugHud : MonoBehaviour
             GUI.DrawTexture(new Rect(x + 2f, y + 2f, 116f * frac, 14f), Texture2D.whiteTexture);
             GUI.color = Color.white;
             GUI.Label(box, ready ? "<b>BLAST  ready</b>" : "BLAST", meterStyle);
+
+            // Dash sits directly under Blast: two manual abilities on similar timers,
+            // and knowing whether the escape is up matters as much as the attack.
+            bool dashReady = special.DashCooldownRemaining <= 0f;
+            float dashFrac = dashReady ? 1f
+                : 1f - Mathf.Clamp01(special.DashCooldownRemaining / Mathf.Max(0.01f, special.DashCooldownTotal));
+
+            var dashBox = new Rect(x, y + 20f, 120f, 18f);
+            GUI.color = new Color(0f, 0f, 0f, 0.6f);
+            GUI.DrawTexture(dashBox, Texture2D.whiteTexture);
+            GUI.color = dashReady ? new Color(1f, 0.72f, 0.30f, 0.95f) : new Color(0.55f, 0.42f, 0.22f, 0.9f);
+            GUI.DrawTexture(new Rect(x + 2f, y + 22f, 116f * dashFrac, 14f), Texture2D.whiteTexture);
+            GUI.color = Color.white;
+            GUI.Label(dashBox, dashReady ? "<b>DASH  ready</b>" : "DASH", meterStyle);
         }
 
         if (up == null) return;

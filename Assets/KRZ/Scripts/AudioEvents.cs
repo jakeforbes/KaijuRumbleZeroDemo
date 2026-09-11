@@ -43,7 +43,8 @@ public enum Sfx
     MechPunch,
     KaijuImpact,
     Swarm,
-    LaserSweep
+    LaserSweep,
+    Dash
 }
 
 public static class AudioEvents

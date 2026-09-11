@@ -10,6 +10,8 @@ public enum UpgradeId
     Furnace,   // faster special
     Swarm,     // homing energy particles on a timer
     Toxin,     // a poison cloud around you and in your wake
+    Trample,   // the dash damages whatever it runs through
+    Slam,      // the dash lands a heavy blow where it stops
 }
 
 /// <summary>

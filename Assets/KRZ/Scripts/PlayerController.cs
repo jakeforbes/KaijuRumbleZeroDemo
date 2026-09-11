@@ -32,7 +32,16 @@ public class PlayerController : MonoBehaviour
     /// against you produces velocity you did not ask for, which flickered the walk
     /// and idle loops against each other and restarted them every frame.
     /// </summary>
-    public bool IsMoving => desired.sqrMagnitude > 0.0025f;
+    public bool IsMoving => desired.sqrMagnitude > 0.0025f || Dashing;
+
+    /// <summary>True while a dash is carrying the kaiju. Input is ignored for its duration.</summary>
+    public bool Dashing => Time.time < dashUntil;
+
+    /// <summary>
+    /// The dash's heading on the flat ground plane, for anything that has to hit along
+    /// it. Unsquashed, so a band test against it measures the same in every direction.
+    /// </summary>
+    public Vector2 DashFlatDir { get; private set; } = Vector2.down;
 
     /// <summary>Stick movement below this is treated as drift, not intent.</summary>
     const float DeadZone = 0.2f;
@@ -55,6 +64,11 @@ public class PlayerController : MonoBehaviour
     float knockbackSpeed;
     float knockbackFrom;
     float knockbackUntil;
+
+    Vector2 dashDir;
+    float dashSpeed;
+    float dashUntil;
+    bool endingDash;
 
     void Awake()
     {
@@ -79,6 +93,13 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     void OnCollisionEnter2D(Collision2D collision)
     {
+        // A dash into a building stops there rather than grinding against it: the
+        // velocity is reasserted every physics step, so without this the kaiju would
+        // shove itself into the wall for the rest of the dash. It does no damage —
+        // wrecking a building on contact stays the roar's job, or every dash down a
+        // street would flatten it.
+        if (Dashing && collision.collider.GetComponentInParent<Building>() != null) CancelDash();
+
         if (!BeingKnockedBack) return;
 
         var building = collision.collider.GetComponentInParent<Building>();
@@ -100,7 +121,9 @@ public class PlayerController : MonoBehaviour
     {
         var state = PlayerProgress.Instance;
         bool dead = state != null && state.RunOver;
-        bool locked = dead || BeingKnockedBack;
+        // A dash locks input for its duration, so it commits. Being able to steer
+        // mid-dash makes it a speed boost rather than a decision.
+        bool locked = dead || BeingKnockedBack || Dashing;
         Vector2 raw = locked ? Vector2.zero : ReadInput();
 
         // Squash the vertical component so movement matches the isometric projection.
@@ -170,11 +193,56 @@ public class PlayerController : MonoBehaviour
         knockbackSpeed = 2f * distance / seconds;
         knockbackFrom = Time.time;
         knockbackUntil = Time.time + seconds;
+
+        // Being hit beats dashing. Leaving both live would have the dash fight the
+        // throw for the rigidbody every frame.
+        dashUntil = 0f;
+
         body.linearVelocity = knockbackDir * knockbackSpeed;
     }
 
     /// <summary>Called on impact, so the kaiju stops instead of grinding into a wall.</summary>
     public void CancelKnockback() => knockbackUntil = 0f;
+
+    /// <summary>
+    /// Carries the kaiju a set distance along a chosen heading, overriding input the
+    /// way Knockback does and for the same reason: mass grows with the square of size,
+    /// so an impulse big enough to move a size-5 kaiju would fire a size-1 one off the
+    /// map.
+    ///
+    /// Constant speed rather than Knockback's decay. A dash that slows to a crawl on
+    /// the way out reads as being shoved; one that holds its speed and then simply
+    /// stops reads as something the player did on purpose.
+    ///
+    /// Aimed on the flat plane and squashed back, so dashing north-east covers the
+    /// same ground as dashing east.
+    /// </summary>
+    public void Dash(Vector2 flatDir, float distance, float seconds)
+    {
+        if (flatDir.sqrMagnitude < 0.0001f) return;
+        flatDir.Normalize();
+
+        // Snapped to one of the eight facings rather than run along the raw heading.
+        // A dash is a committed move and should land where the player can predict,
+        // and snapping keeps travel and the drawn facing identical — otherwise the
+        // kaiju slides off at an angle it is not facing.
+        Facing = FacingFromInput(flatDir, Facing);
+        float deg = Facing * 45f * Mathf.Deg2Rad;
+        flatDir = new Vector2(Mathf.Sin(deg), -Mathf.Cos(deg));
+
+        DashFlatDir = flatDir;
+        dashDir = new Vector2(flatDir.x, flatDir.y * tuning.isoSquash).normalized;
+        seconds = Mathf.Max(0.05f, seconds);
+        dashSpeed = distance / seconds;
+        dashUntil = Time.time + seconds;
+        endingDash = true;
+
+        AimDir = dashDir;
+
+        body.linearVelocity = dashDir * dashSpeed;
+    }
+
+    public void CancelDash() => dashUntil = 0f;
 
     void FixedUpdate()
     {
@@ -182,6 +250,12 @@ public class PlayerController : MonoBehaviour
         {
             float t = Mathf.InverseLerp(knockbackFrom, knockbackUntil, Time.time);
             body.linearVelocity = knockbackDir * (knockbackSpeed * (1f - t));
+            return;
+        }
+
+        if (Dashing)
+        {
+            body.linearVelocity = dashDir * dashSpeed;
             return;
         }
 
@@ -193,6 +267,20 @@ public class PlayerController : MonoBehaviour
         float speed = tuning.moveSpeed
                       * (progress != null ? progress.SpeedMultiplier : 1f)
                       * (upgrades != null ? upgrades.MoveSpeedMul : 1f);
+
+        // A dash ends at walking pace rather than being handed to the ordinary
+        // deceleration at dash pace. Decelerating 30 units per second at 90 units per
+        // second squared coasts the kaiju another five units past where the dash was
+        // supposed to end — roughly as far again as the dash itself, and all of what
+        // reads as floatiness. Clamped rather than zeroed, so dashing while running
+        // flows back into the run instead of stopping dead.
+        if (endingDash)
+        {
+            endingDash = false;
+            if (body.linearVelocity.magnitude > speed)
+                body.linearVelocity = body.linearVelocity.normalized * speed;
+        }
+
         Vector2 target = desired * speed;
         float rate = desired.sqrMagnitude > 0.001f ? tuning.acceleration : tuning.deceleration;
         body.linearVelocity = Vector2.MoveTowards(body.linearVelocity, target, rate * Time.fixedDeltaTime);

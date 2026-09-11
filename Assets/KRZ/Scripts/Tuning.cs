@@ -948,6 +948,77 @@ public class Tuning : ScriptableObject
              "that sits on the ground, and the gap widened as the kaiju grew.")]
     [Range(0f, 1f)] public float blastOriginFraction = 0.5f;
 
+    [Header("Dash")]
+    [Tooltip("How far one dash travels at size 1, before the exponent below. Measured " +
+             "on the flat ground plane, so a dash north-east covers the same distance " +
+             "as one due east.")]
+    public float dashDistance = 1.575f;
+
+    [Tooltip("How the distance grows with size: distance x (scale ^ this). 1.0 makes a " +
+             "size-5 kaiju dash four times as far as a size-1 one, which crosses the " +
+             "whole screen; 0 makes the dash shrink to a shuffle relative to a body " +
+             "that has quadrupled. 0.5 is the same compromise the stomp radius, the " +
+             "food magnet and the camera zoom all landed on.")]
+    [Range(0f, 1f)] public float dashDistanceExponent = 0.5f;
+
+    [Tooltip("How long the dash takes. Input is locked for the whole of it, so a long " +
+             "one feels like losing control of the kaiju.\n\n" +
+             "This is the dial that sets the dash's speed, because speed is just " +
+             "distance over time: to keep the same speed while changing the distance, " +
+             "change this in the same proportion. Lengthening it alone slows the dash " +
+             "down without moving it any less far.")]
+    public float dashSeconds = 0.2f;
+
+    [Tooltip("Seconds between dashes. Deliberately close to the Blast's, so the two " +
+             "manual abilities share a rhythm, but slightly shorter: this one is " +
+             "mobility, and being unable to reposition is worse than being unable to " +
+             "hit.")]
+    public float dashCooldown = 5f;
+
+    [Header("Trample — granted by the upgrade")]
+    [Tooltip("Damage to everything the dash passes through, at one stack. Comparable " +
+             "to the Blast's, because it answers the same problem — armour — and asks " +
+             "more in return: the Blast is aimed from safety, Trample is a commitment " +
+             "to running through the thing that is hurting you.\n\n" +
+             "Each enemy is hit once per dash however long it is inside the band, so " +
+             "this is damage per dash and not damage per second.")]
+    public float trampleDamage = 24f;
+
+    [Tooltip("Width of the damaged band as a fraction of the kaiju's height, matching " +
+             "blastWidthFraction's convention. Wider than the Blast's because this is " +
+             "a body barging through rather than a beam: the band should cover what " +
+             "the kaiju visibly shoulders aside.")]
+    [Range(0.1f, 2f)] public float trampleWidthFraction = 0.9f;
+
+    [Tooltip("Colour of the dash trail and its impacts. Only drawn once Trample is " +
+             "held — an undamaging dash stays clean, so the particles read as the " +
+             "upgrade rather than as movement.")]
+    public Color trampleColour = new Color(1f, 0.72f, 0.30f);
+
+    [Tooltip("Seconds between trail puffs along the dash. At the default dash length " +
+             "this is about six of them, which reads as a streak without spawning a " +
+             "shockwave object every frame.")]
+    public float trampleTrailInterval = 0.03f;
+
+    [Header("Slam — granted by the upgrade")]
+    [Tooltip("Slam's damage as a multiple of one swipe, at the first stack. Three is " +
+             "deliberately a number you feel land: the dash already costs you your " +
+             "position and a five second cooldown, so the payoff has to be worth " +
+             "having aimed it.")]
+    public float slamSwipeMultiplier = 3f;
+
+    [Tooltip("Reach multiplier per stack beyond the first, applied to the swipe's own " +
+             "range. The first stack is exactly a swipe's reach, so the upgrade reads " +
+             "as 'that, but three times as hard' before it starts growing.")]
+    public float slamRangePerStack = 1.25f;
+
+    [Tooltip("Colour of the electrical burst and its shockwave.")]
+    public Color slamColour = new Color(0.75f, 0.95f, 1f);
+
+    [Tooltip("Arcs drawn at the first stack, scaled up with the reach multiplier so a " +
+             "bigger Slam reads as denser as well as wider.")]
+    public int slamBolts = 14;
+
     [Header("Stomp — granted by the upgrade")]
     [Tooltip("Damage at one stack, deliberately half of blastDamage. Extra stacks " +
              "multiply from here rather than from a boosted first stack.")]
@@ -1019,6 +1090,23 @@ public class Tuning : ScriptableObject
                           perStack = 1.5f, maxStacks = 4,
                           extraSecondsPerStack = 1f,
                           weight = 0.9f, colour = new Color(0.55f, 0.9f, 0.35f) },
+
+        // Trample turns the dash from an escape into a charge, which is the only
+        // upgrade in the list that changes what an existing button is for rather than
+        // making it bigger. Grants an ability, so like Stomp and Toxin the first stack
+        // is worth its base numbers and only later stacks multiply.
+        new UpgradeType { id = UpgradeId.Trample, displayName = "Trample",
+                          effect = "Your dash flattens whatever it runs through",
+                          perStack = 1.35f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(1f, 0.72f, 0.30f) },
+
+        // Slam is the other half of the dash's build. Trample pays you for what you
+        // drive through, Slam for where you stop — so the two stack into a charge that
+        // hurts along its whole length, and either alone is a different button.
+        new UpgradeType { id = UpgradeId.Slam, displayName = "Slam",
+                          effect = "Your dash ends in a heavy electrified blow",
+                          perStack = 1.4f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.75f, 0.95f, 1f) },
 
         new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
                           effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,

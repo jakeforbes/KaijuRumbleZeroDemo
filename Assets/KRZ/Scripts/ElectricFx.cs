@@ -33,6 +33,52 @@ public class ElectricFx : MonoBehaviour
         return fx;
     }
 
+    /// <summary>
+    /// A one-shot fan of arcs spidering out across a ground cone, for the Slam.
+    ///
+    /// Unlike the crawling arcs this class normally draws, nothing owns this: it fires
+    /// once over an area, and the area is the whole point. Bolt count, reach and
+    /// thickness all come off the range it is handed, so the burst is how the player
+    /// reads how far the blow actually landed — an effect that stayed the same size
+    /// while the damage grew would teach the wrong range.
+    ///
+    /// Drawn on the squashed ground plane, so the fan lies flat in the street instead
+    /// of standing up like a wall.
+    /// </summary>
+    public static void Burst(Vector3 origin, Vector2 aimFlat, float range, float arcDegrees,
+                             float isoSquash, float ppu, Color colour, int bolts)
+    {
+        if (range <= 0f || bolts <= 0) return;
+
+        float half = arcDegrees * 0.5f * Mathf.Deg2Rad;
+        float baseAngle = Mathf.Atan2(aimFlat.y, aimFlat.x);
+
+        for (int i = 0; i < bolts; i++)
+        {
+            float angle = baseAngle + Random.Range(-half, half);
+
+            // Never the full reach, so the fan has a ragged edge rather than reading
+            // as a drawn circle with the radius written on it.
+            float reach = range * Random.Range(0.45f, 1f);
+
+            var flat = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            Vector3 tip = origin + (Vector3)(new Vector2(flat.x, flat.y * isoSquash) * reach);
+
+            const int Segments = 3;
+            float jitter = reach * 0.16f;
+            Vector3 previous = origin;
+
+            for (int s = 1; s <= Segments; s++)
+            {
+                Vector3 next = Vector3.Lerp(origin, tip, s / (float)Segments);
+                if (s < Segments) next += (Vector3)(Random.insideUnitCircle * jitter);
+
+                HitFx.Line(previous, next, colour, ppu, 0.16f, reach * 0.035f);
+                previous = next;
+            }
+        }
+    }
+
     void Update()
     {
         if (Time.time < nextAt) return;

@@ -101,6 +101,51 @@ public class PlayerAttack : MonoBehaviour
         return Vector2.Dot(flat, aimFlat) >= cosHalfArc;
     }
 
+    /// <summary>
+    /// The Slam: one heavy blow thrown at the end of a dash, in the swipe's own cone.
+    ///
+    /// Lives here rather than beside the dash because the geometry is the swipe's —
+    /// same origin, same arc, same nearest-point test — and two copies of that would
+    /// be two things to keep in step. The dash only decides when it happens.
+    ///
+    /// Hits buildings as well as enemies, exactly as the swipe does. It is an aimed
+    /// blow rather than a bulldoze, so unlike Trample there is nothing accidental
+    /// about what it lands on.
+    /// </summary>
+    public void Slam(float rangeMul, float damage)
+    {
+        GetArc(out Vector2 origin, out Vector2 aimFlat, out float range, out float cosHalfArc);
+        range *= Mathf.Max(0.1f, rangeMul);
+
+        // Bolt count rides the same multiplier as the reach, so a bigger Slam is
+        // visibly denser as well as wider.
+        int bolts = Mathf.Max(4, Mathf.RoundToInt(tuning.slamBolts * rangeMul));
+        ElectricFx.Burst(origin, aimFlat, range, tuning.swipeArc, tuning.isoSquash,
+                         tuning.pixelsPerUnit, tuning.slamColour, bolts);
+
+        ShockwaveFx.Show(origin, tuning.slamColour, range * 0.6f, .5f, .34f, displacement: true);
+        AudioEvents.Play(Sfx.KaijuImpact, origin, owner: gameObject);
+        if (PlayerProgress.Instance != null)
+            PlayerProgress.Instance.ShakeExternal(tuning.hitShake * 1.6f);
+
+        int count = Physics2D.OverlapCircle(origin, range, filter, hits);
+        bool hitEnemy = false, hitBuilding = false;
+
+        for (int i = 0; i < count; i++)
+        {
+            var target = hits[i].GetComponentInParent<Damageable>();
+            if (target == null || !target.IsAlive) continue;
+            if (!InArc(hits[i], origin, aimFlat, cosHalfArc)) continue;
+
+            target.TakeDamage(damage, origin);
+            if (target is Enemy) hitEnemy = true;
+            else if (target is Building) hitBuilding = true;
+        }
+
+        if (hitEnemy) AudioEvents.Play(Sfx.SwipeHitEnemy, origin, 0.9f, owner: gameObject);
+        if (hitBuilding) AudioEvents.Play(Sfx.SwipeHitBuilding, origin, owner: gameObject);
+    }
+
     /// <summary>The contact itself: the moment the swing connects and damage lands.</summary>
     void Swipe()
     {
