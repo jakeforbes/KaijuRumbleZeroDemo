@@ -94,6 +94,9 @@ public class PlayerSpecial : MonoBehaviour
 
     static bool Pressed()
     {
+        // Space and pad A confirm the pause menu as well as firing a Blast.
+        if (PauseMenu.BlockingInput) return false;
+
         var kb = Keyboard.current;
         if (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame)) return true;
 
@@ -104,6 +107,8 @@ public class PlayerSpecial : MonoBehaviour
 
     static bool DashPressed()
     {
+        if (PauseMenu.BlockingInput) return false;
+
         var kb = Keyboard.current;
         if (kb != null && (kb.leftShiftKey.wasPressedThisFrame ||
                            kb.rightShiftKey.wasPressedThisFrame)) return true;

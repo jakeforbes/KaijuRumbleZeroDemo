@@ -118,6 +118,10 @@ public class DebugHud : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
+        // The menu owns the keyboard while it is up. Space would otherwise reach Blast
+        // and the navigation keys would reach the cheats sharing them.
+        if (PauseMenu.BlockingInput) return;
+
         if (kb.lKey.wasPressedThisFrame) LogVisibleBuildings();
         if (kb.f1Key.wasPressedThisFrame) tuning.showDebugHud = !tuning.showDebugHud;
         if (kb.f12Key.wasPressedThisFrame) tuning.showColliders = !tuning.showColliders;

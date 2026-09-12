@@ -57,7 +57,29 @@ as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 | Right stick | Aim, independently of where you are moving |
 | Space or E | Blast |
 | A button or right trigger | Blast |
+| Esc, or the pad's Menu button | Pause menu |
 | — | The swipe fires automatically on a cooldown |
+
+## Pause
+
+Esc or the pad's Menu button freezes the run and overlays **Continue** and **Restart**, with
+Continue highlighted every time the menu opens. Move between the two with W/S, the arrow keys,
+the left stick or the d-pad, and choose with Enter, Space or A. The mouse works too: hovering
+highlights, clicking chooses. A cursor left sitting over Restart cannot steal the highlight —
+hover only takes over once the mouse has actually moved, and the keys or pad take it straight
+back. Esc or Menu again closes the menu, the same as Continue.
+
+Confirm shares its bindings with Blast, so the menu swallows the press that closed it — choosing
+Continue with Space or A does not also fire a Blast on the way out.
+
+Pausing is refused while the boss introduction is playing, since that cinematic runs on unscaled
+time and would carry on over a frozen world, and after a win or a death, both of which already
+own the screen with their own Restart.
+
+Effects and voices are silenced while paused; the music keeps playing at
+`pauseMusicVolume` (0.35) so the menu reads as the game waiting rather than as a crash. The
+menu restores whatever time scale was in force, so pausing during a `[` or `]` speed test does
+not quietly reset it.
 
 On a pad the right stick aims: the swipe and the Blast both fire along it, and the
 kaiju turns to face it, so you can back away from something while hitting it. Let go

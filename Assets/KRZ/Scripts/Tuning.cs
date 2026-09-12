@@ -1456,6 +1456,12 @@ public class Tuning : ScriptableObject
     [Tooltip("Seconds to fade in and out. Too fast reintroduces the pop, too slow smears.")]
     [Range(0.02f, 0.6f)] public float occluderFadeTime = 0.12f;
 
+    [Header("Pause menu")]
+    [Tooltip("How loud the music sits while the pause menu is open, relative to its " +
+             "normal level. Effects and voices are silenced outright; the music ducks " +
+             "instead, because total silence reads as the game having crashed.")]
+    [Range(0f, 1f)] public float pauseMusicVolume = 0.35f;
+
     [Header("Debug")]
     public bool showDebugHud = true;
     public bool enableCheatKeys = true;

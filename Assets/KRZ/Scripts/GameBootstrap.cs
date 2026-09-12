@@ -67,6 +67,7 @@ public class GameBootstrap : MonoBehaviour
         ToxicField.Reset();
         UpgradePickup.Reset();
         Hamburger.Reset();
+        PauseMenu.Reset();
         Popups.Clear();
         ClearScene();
         var cam = BuildCamera();
@@ -95,6 +96,7 @@ public class GameBootstrap : MonoBehaviour
         director.Running = !IsGym;
 
         gameObject.AddComponent<BossObjectiveUi>();
+        gameObject.AddComponent<PauseMenu>();
         var hud = gameObject.AddComponent<DebugHud>();
         hud.tuning = tuning;
         hud.player = player;

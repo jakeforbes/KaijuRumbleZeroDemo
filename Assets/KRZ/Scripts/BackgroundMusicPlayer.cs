@@ -30,6 +30,10 @@ public sealed class BackgroundMusicPlayer : MonoBehaviour
             sources[i].loop = true;
             sources[i].spatialBlend = 0;
             sources[i].volume = 0;
+
+            // The pause menu mutes the listener to silence effects and voices. Music
+            // opts out and ducks instead — see PauseMenu.MusicDuck below.
+            sources[i].ignoreListenerPause = true;
         }
     }
 
@@ -71,7 +75,7 @@ public sealed class BackgroundMusicPlayer : MonoBehaviour
         for (int i = 0; i < 2; i++)
         {
             gains[i] = Mathf.Lerp(startGains[i], i == active ? targetGain : 0, t);
-            sources[i].volume = gains[i] * Mathf.Clamp01(settings.masterVolume);
+            sources[i].volume = gains[i] * Mathf.Clamp01(settings.masterVolume) * PauseMenu.MusicDuck;
             sources[i].outputAudioMixerGroup = settings.output;
             if (t >= 1 && i != active && sources[i].clip != null)
             {

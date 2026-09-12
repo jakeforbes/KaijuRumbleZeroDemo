@@ -121,6 +121,12 @@ public class PlayerController : MonoBehaviour
     {
         var state = PlayerProgress.Instance;
         bool dead = state != null && state.RunOver;
+
+        // The pause menu steers with the same keys and stick this does, so movement has
+        // to stop reading them while the menu is up — and for the frame that closed it,
+        // or the press that chose Continue would also be a step.
+        if (PauseMenu.BlockingInput) { desired = Vector2.zero; return; }
+
         // A dash locks input for its duration, so it commits. Being able to steer
         // mid-dash makes it a speed boost rather than a decision.
         bool locked = dead || BeingKnockedBack || Dashing;
