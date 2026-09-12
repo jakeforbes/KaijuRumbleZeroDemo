@@ -2,10 +2,13 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Esc or the pad's Menu button freezes the run and overlays Continue / Restart.
+/// Both of the game's menus: the title the game opens on, and the Continue / Restart
+/// overlay Esc or the pad's Menu button raises mid-run. They are the same screen with
+/// a different heading and a different list, so they share one implementation — the
+/// world is frozen behind either one, and everything about navigating them matches.
 ///
 /// Built in IMGUI like the rest of the HUD rather than as a uGUI canvas, so it needs
-/// no EventSystem and no prefab — the project has neither, and adding them for two
+/// no EventSystem and no prefab — the project has neither, and adding them for three
 /// buttons would mean the only hand-wired objects in the game. IMGUI has no focus
 /// navigation of its own, so the highlight is tracked here and drawn by hand.
 /// </summary>
@@ -27,6 +30,12 @@ public sealed class PauseMenu : MonoBehaviour
 
     static int resumedFrame = -1;
 
+    /// <summary>
+    /// True while the title is up. The run's meters stay off it — a full health bar and
+    /// an empty food meter under the title advertise a run that has not started.
+    /// </summary>
+    public static bool AtTitle { get; private set; }
+
     /// <summary>How loud the music sits while paused, relative to its normal level.</summary>
     public static float MusicDuck { get; private set; } = 1f;
 
@@ -46,8 +55,25 @@ public sealed class PauseMenu : MonoBehaviour
     Vector2 lastMousePosition;
     bool mouseMoved;
 
-    readonly Rect[] optionRects = new Rect[2];
-    static readonly string[] Options = { "Continue", "Restart" };
+    /// <summary>Which menu is up. They differ only in heading and list.</summary>
+    enum Mode { Title, Pause }
+
+    Mode mode;
+
+    static readonly string[] TitleOptions = { "New Game" };
+    static readonly string[] PauseOptions = { "Continue", "Restart" };
+
+    string[] options = PauseOptions;
+    Rect[] optionRects = new Rect[2];
+
+    /// <summary>
+    /// Set by Restart so the rebuilt scene goes straight into a run instead of stopping
+    /// at the title. Deliberately outside Reset(): Restart sets it before the scene
+    /// reloads and Reset runs after, so clearing it there would undo the request.
+    /// </summary>
+    static bool skipTitle;
+
+    public static void SkipTitleOnce() => skipTitle = true;
 
     GUIStyle labelStyle;
     GUIStyle titleStyle;
@@ -56,12 +82,22 @@ public sealed class PauseMenu : MonoBehaviour
     public static void Reset()
     {
         IsPaused = false;
+        AtTitle = false;
         resumedFrame = -1;
         MusicDuck = musicDuckTarget = 1f;
         AudioListener.pause = false;
     }
 
-    void Awake() => tuning = Resources.Load<Tuning>("Tuning");
+    void Awake()
+    {
+        tuning = Resources.Load<Tuning>("Tuning");
+
+        // The gym is a review scene with nothing to start, and a restart has already
+        // asked for a run, so neither stops at the title.
+        bool wantsTitle = !skipTitle && !GameBootstrap.IsGym;
+        skipTitle = false;
+        if (wantsTitle) Open(Mode.Title);
+    }
 
     void OnDestroy()
     {
@@ -93,11 +129,13 @@ public sealed class PauseMenu : MonoBehaviour
 
         if (!IsPaused)
         {
-            if (toggle && CanPause()) Pause();
+            if (toggle && CanPause()) Open(Mode.Pause);
             return;
         }
 
-        if (toggle) { Resume(); return; }
+        // Esc backs out of the pause menu. There is nothing behind the title to back
+        // out to, so it does nothing there rather than dropping into a frozen run.
+        if (toggle && mode == Mode.Pause) { Resume(); return; }
 
         Navigate(kb, pad);
 
@@ -120,28 +158,38 @@ public sealed class PauseMenu : MonoBehaviour
         return progress == null || !progress.RunOver;
     }
 
-    void Pause()
+    void Open(Mode m)
     {
+        mode = m;
+        options = m == Mode.Title ? TitleOptions : PauseOptions;
+        if (optionRects.Length != options.Length) optionRects = new Rect[options.Length];
+
         IsPaused = true;
-        highlighted = 0;              // Continue, every time the menu opens.
+        AtTitle = m == Mode.Title;
+        highlighted = 0;              // The first option, every time a menu opens.
         mouseMoved = false;
 
         // Latched, not clear: pausing mid-stride means a movement key is probably held,
         // and an unlatched axis would read that as a deliberate press and move the
-        // highlight off Continue on the first frame the menu was up.
+        // highlight off the default on the first frame the menu was up.
         navLatched = true;
         timeScaleBeforePause = Time.timeScale;
         Time.timeScale = 0f;
 
-        // Silences effects and voices. The music sources opt out of listener pause and
-        // duck instead, so the menu reads as the game waiting rather than as a crash.
+        // Silences effects and voices. The music sources opt out of listener pause, so
+        // they keep playing: ducked under the pause menu, which reads as the game
+        // waiting, and at full level under the title, which is the front door rather
+        // than an interruption of anything.
         AudioListener.pause = true;
-        musicDuckTarget = tuning != null ? tuning.pauseMusicVolume : 0.35f;
+        musicDuckTarget = m == Mode.Title ? 1f
+                        : tuning != null ? tuning.pauseMusicVolume
+                        : 0.35f;
     }
 
     void Resume()
     {
         IsPaused = false;
+        AtTitle = false;
         resumedFrame = Time.frameCount;
 
         // Restores whatever the speed cheats had set rather than assuming 1, so pausing
@@ -156,7 +204,10 @@ public sealed class PauseMenu : MonoBehaviour
         // Resume either way: Restart reloads the scene, and an unpause that never ran
         // would leave the listener muted for the new run.
         Resume();
-        if (option == 1) GameBootstrap.Restart();
+
+        // New Game just starts the run: the scene is already built and waiting behind
+        // the title, so there is nothing to reload.
+        if (mode == Mode.Pause && option == 1) GameBootstrap.Restart();
     }
 
     /// <summary>
@@ -183,7 +234,7 @@ public sealed class PauseMenu : MonoBehaviour
         if (navLatched) return;
 
         navLatched = true;
-        highlighted = (highlighted + (v > 0f ? Options.Length - 1 : 1)) % Options.Length;
+        highlighted = (highlighted + (v > 0f ? options.Length - 1 : 1)) % options.Length;
 
         // The pad or keys taking over hands the highlight back to them until the mouse
         // is moved again, so a cursor left sitting over Restart cannot hold it.
@@ -211,30 +262,35 @@ public sealed class PauseMenu : MonoBehaviour
         GUI.color = new Color(0f, 0f, 0f, 0.55f);
         GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
 
-        const float w = 340f, h = 200f;
+        // The title needs the width for its name and one row fewer than the pause menu.
+        bool title = mode == Mode.Title;
+        float w = title ? 460f : 340f;
+        float h = title ? 160f : 200f;
+
         var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
         GUI.color = new Color(0.05f, 0.07f, 0.10f, 0.92f);
         GUI.DrawTexture(box, Texture2D.whiteTexture);
 
         GUI.color = Color.white;
-        GUI.Label(new Rect(box.x, box.y + 18f, box.width, 40f), "<b>PAUSED</b>", titleStyle);
+        GUI.Label(new Rect(box.x, box.y + 18f, box.width, 40f),
+                  title ? "<b>KAIJU RUMBLE ZERO</b>" : "<b>PAUSED</b>", titleStyle);
 
         const float bw = 220f, bh = 40f;
-        for (int i = 0; i < Options.Length; i++)
+        for (int i = 0; i < options.Length; i++)
             optionRects[i] = new Rect(box.center.x - bw * 0.5f, box.y + 76f + i * (bh + 12f), bw, bh);
 
         if (mouseMoved)
             for (int i = 0; i < optionRects.Length; i++)
                 if (optionRects[i].Contains(Event.current.mousePosition)) highlighted = i;
 
-        for (int i = 0; i < Options.Length; i++)
+        for (int i = 0; i < options.Length; i++)
         {
             bool on = i == highlighted;
             GUI.color = on ? new Color(1f, 0.66f, 0.24f, 0.95f) : new Color(0f, 0f, 0f, 0.55f);
             GUI.DrawTexture(optionRects[i], Texture2D.whiteTexture);
 
             GUI.color = on ? new Color(0.08f, 0.06f, 0.03f) : Color.white;
-            GUI.Label(optionRects[i], on ? $"<b>{Options[i]}</b>" : Options[i], labelStyle);
+            GUI.Label(optionRects[i], on ? $"<b>{options[i]}</b>" : options[i], labelStyle);
             GUI.color = Color.white;
 
             // Invisible button over the drawn one: the click handling is GUI.Button's,
@@ -244,7 +300,7 @@ public sealed class PauseMenu : MonoBehaviour
 
         GUI.color = new Color(1f, 1f, 1f, 0.45f);
         GUI.Label(new Rect(box.x, box.y + h - 30f, box.width, 20f),
-                  "Esc / Menu to close", labelStyle);
+                  title ? "Enter, Space or A to begin" : "Esc / Menu to close", labelStyle);
         GUI.color = Color.white;
     }
 }

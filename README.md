@@ -60,10 +60,15 @@ as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 | Esc, or the pad's Menu button | Pause menu |
 | — | The swipe fires automatically on a cooldown |
 
-## Pause
+## Title and pause
 
-Esc or the pad's Menu button freezes the run and overlays **Continue** and **Restart**, with
-Continue highlighted every time the menu opens. Move between the two with W/S, the arrow keys,
+The game opens on a title screen — **KAIJU RUMBLE ZERO** over a single **New Game** button,
+with the built city frozen behind it. The run is already standing there waiting, so New Game
+starts it rather than loading anything. Esc does nothing on the title: there is no run behind
+it to go back to.
+
+Esc or the pad's Menu button freezes a run in progress and overlays **Continue** and
+**Restart**, with Continue highlighted every time the menu opens. Move between the two with W/S, the arrow keys,
 the left stick or the d-pad, and choose with Enter, Space or A. The mouse works too: hovering
 highlights, clicking chooses. A cursor left sitting over Restart cannot steal the highlight —
 hover only takes over once the mouse has actually moved, and the keys or pad take it straight
@@ -76,10 +81,15 @@ Pausing is refused while the boss introduction is playing, since that cinematic 
 time and would carry on over a frozen world, and after a win or a death, both of which already
 own the screen with their own Restart.
 
-Effects and voices are silenced while paused; the music keeps playing at
-`pauseMusicVolume` (0.35) so the menu reads as the game waiting rather than as a crash. The
-menu restores whatever time scale was in force, so pausing during a `[` or `]` speed test does
-not quietly reset it.
+Both menus silence effects and voices and leave the music playing. Under the pause menu it
+ducks to `pauseMusicVolume` (0.35) so the screen reads as the game waiting; under the title it
+stays at full, since the title is the front door rather than an interruption. The pause menu
+restores whatever time scale was in force, so pausing during a `[` or `]` speed test does not
+quietly reset it.
+
+Restarting — from the pause menu, from the victory banner or with `F10` — goes straight back
+into a run rather than stopping at the title, since asking for a restart is already asking for
+a run. The Gym scene never shows the title; it has nothing to start.
 
 On a pad the right stick aims: the swipe and the Blast both fire along it, and the
 kaiju turns to face it, so you can back away from something while hitting it. Let go
@@ -111,8 +121,9 @@ across the map on its own.
 | `[` `]` | Slow down / speed up time |
 | `\` | Reset time scale |
 
-Debug output and cheats are switched off with `showDebugHud` and `enableCheatKeys`
-in `Tuning.cs`.
+The debug HUD starts **off** — `showDebugHud` in `Tuning.cs` defaults to false, so the game
+opens on its title rather than on a wall of diagnostics. `F1` brings it up. The cheat keys
+themselves are still live; `enableCheatKeys` in `Tuning.cs` is what switches those off.
 
 ## Scenes
 

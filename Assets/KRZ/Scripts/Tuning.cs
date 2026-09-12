@@ -1463,7 +1463,9 @@ public class Tuning : ScriptableObject
     [Range(0f, 1f)] public float pauseMusicVolume = 0.35f;
 
     [Header("Debug")]
-    public bool showDebugHud = true;
+    [Tooltip("Off by default so the game opens on its title rather than on a wall of " +
+             "diagnostics. F1 brings it back whenever it is wanted.")]
+    public bool showDebugHud = false;
     public bool enableCheatKeys = true;
     public bool showColliders = false;
 }

@@ -238,7 +238,7 @@ public class DebugHud : MonoBehaviour
     void DrawFoodMeter()
     {
         var progress = PlayerProgress.Instance;
-        if (progress == null) return;
+        if (progress == null || PauseMenu.AtTitle) return;
 
         meterStyle ??= new GUIStyle(GUI.skin.label)
         {

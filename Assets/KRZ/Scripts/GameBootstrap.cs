@@ -35,6 +35,10 @@ public class GameBootstrap : MonoBehaviour
     {
         CameraRig.CancelActiveIntroduction();
         Time.timeScale = 1f;
+
+        // Restarting is a request for a run, so the rebuilt scene goes straight into
+        // one rather than stopping at the title on the way.
+        PauseMenu.SkipTitleOnce();
         Instance = null;
         SceneManager.sceneLoaded += OnReloaded;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -460,7 +464,8 @@ public class GameBootstrap : MonoBehaviour
         building.Init(tuning, type, tilesX, tilesY, heightPx, ppu, flipped, direction);
     }
 
-    bool IsGym => SceneManager.GetActiveScene().name == "Gym";
+    /// <summary>Static so the menu can ask too — the gym has no run to start.</summary>
+    public static bool IsGym => SceneManager.GetActiveScene().name == "Gym";
 
     float GymTiles()
     {
