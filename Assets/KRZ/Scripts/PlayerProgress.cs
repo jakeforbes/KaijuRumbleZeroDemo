@@ -52,7 +52,14 @@ public class PlayerProgress : MonoBehaviour
     // Also invulnerable for the duration of a boss's camera introduction, since
     // the player keeps moving/acting during it but shouldn't be able to be hit
     // while the camera is off them.
-    public bool Invulnerable => Time.time < invulnerableUntil || godMode || CameraRig.IsBossIntroductionPlaying;
+    /// <summary>
+    /// Shell rides the same gate as the post-hit invulnerability frames rather than adding a
+    /// second check beside TakeDamage. Every source of damage in the game already passes
+    /// through here, so a shield that hooked in anywhere else would be one missed call away
+    /// from not working against whichever enemy was written last.
+    /// </summary>
+    public bool Invulnerable => Time.time < invulnerableUntil || godMode
+                             || CameraRig.IsBossIntroductionPlaying || PlayerShell.Active;
     public float Scale => currentScale;
 
     /// <summary>Body sprite, so damage can flash it.</summary>
@@ -96,6 +103,16 @@ public class PlayerProgress : MonoBehaviour
         ApplyBodyColour();
     }
 
+    /// <summary>
+    /// Re-read the body's base colour on the next frame.
+    ///
+    /// The flash and the invulnerability shimmer both lerp from a colour captured once, and
+    /// the character select can swap the art — and its tint — long after that capture. Without
+    /// this, whichever character the player was built with pins its tint onto every other one,
+    /// because ApplyBodyColour writes the captured colour back every frame.
+    /// </summary>
+    public void RecaptureBodyColour() => bodyColourCaptured = false;
+
     void ApplyBodyColour()
     {
         if (bodyArt == null) return;
@@ -129,7 +146,7 @@ public class PlayerProgress : MonoBehaviour
         invulnerableUntil = Time.time + tuning.hitInvulnerability;
         ApplyBodyColour(); // Tint the actual body immediately, including hits after this frame's Update.
         AudioEvents.Play(Sfx.PlayerHit, transform.position, owner: gameObject);
-        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Hit);
+        if (CharacterArt.Instance != null) CharacterArt.Instance.PlayOnce(CharacterArt.Clip.Hit);
         Shake(tuning.hitShake);
         Popups.Add(transform.position + Vector3.up * currentScale,
                    $"<b>-{amount:0}</b>", new Color(1f, 0.35f, 0.3f));

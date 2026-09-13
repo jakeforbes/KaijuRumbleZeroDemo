@@ -12,6 +12,8 @@ public enum UpgradeId
     Toxin,     // a poison cloud around you and in your wake
     Trample,   // the dash damages whatever it runs through
     Slam,      // the dash lands a heavy blow where it stops
+    Shell,     // a shield that forms on a timer and holds for a few seconds
+    Grubling,  // a pet that trails you and charges what it finds
 }
 
 /// <summary>

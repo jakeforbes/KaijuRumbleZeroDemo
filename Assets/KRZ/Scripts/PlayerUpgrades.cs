@@ -49,6 +49,15 @@ public class PlayerUpgrades : MonoBehaviour
     /// beam would have been invisible by comparison.
     /// </summary>
     public int BlastBeams => 1 << Mathf.Clamp(Count(UpgradeId.Prism), 0, 3);
+
+    /// <summary>
+    /// Bones one throw puts out: 1, then 2, 3, 4. One per stack rather than the Blast's
+    /// doubling, because the two abilities are paid for differently. A beam is instant and
+    /// costs nothing once fired, so eight of them is spectacle; a bone is a round trip that
+    /// the player steers, and eight of those is an unreadable cloud that removes the aiming
+    /// the ability is built on. Adding one at a time keeps every bone a lane you can follow.
+    /// </summary>
+    public int BoneCount => 1 + Mathf.Clamp(Count(UpgradeId.Prism), 0, 3);
     public float MoveSpeedMul => Mul(UpgradeId.Speed);
     public float BlastCooldownMul => Mul(UpgradeId.Furnace);
     public float BlastPowerMul => Mul(UpgradeId.Beam);
@@ -74,6 +83,27 @@ public class PlayerUpgrades : MonoBehaviour
 
     public float SwarmPowerMul => GrantedPowerMul(UpgradeId.Swarm);
     public float ToxinPowerMul => GrantedPowerMul(UpgradeId.Toxin);
+
+    public bool HasShell => Count(UpgradeId.Shell) > 0;
+
+    /// <summary>
+    /// Seconds between shells. Stacks buy frequency rather than strength — a shield that is
+    /// either up or down has no number to multiply — so this walks down from shellInterval a
+    /// step per stack and stops at shellMinInterval.
+    /// </summary>
+    public float ShellInterval
+    {
+        get
+        {
+            int n = Count(UpgradeId.Shell);
+            if (n <= 0) return tuning.shellInterval;
+            return Mathf.Max(tuning.shellMinInterval,
+                             tuning.shellInterval - (n - 1) * tuning.shellIntervalPerStack);
+        }
+    }
+
+    /// <summary>Grubs at your heel: one per stack, to the upgrade's cap of four.</summary>
+    public int GrublingCount => Count(UpgradeId.Grubling);
 
     public bool HasTrample => Count(UpgradeId.Trample) > 0;
     public float TramplePowerMul => GrantedPowerMul(UpgradeId.Trample);

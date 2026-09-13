@@ -45,7 +45,10 @@ public class Tuning : ScriptableObject
     [Range(0.1f, 0.9f)] public float aimDeadZone = 0.35f;
 
     [Header("The kaiju's colour")]
-    [Tooltip("Multiplied over the delivered frames. The model is drawn almost entirely " +
+    [Tooltip("Tints the greybox capsule the kaiju falls back to when a character's frames " +
+             "are missing. Real art takes its tint from its own entry in the character " +
+             "roster below, because the right tint depends on how the model was drawn.\n\n" +
+             "Multiplied over the frames. The model is drawn almost entirely " +
              "in white and pale grey, so this lands on it cleanly: white becomes the " +
              "tint exactly and the shading survives as darker shades of the same hue.\n\n" +
              "Kept bright rather than deep. A saturated orange cuts the green and blue " +
@@ -64,6 +67,7 @@ public class Tuning : ScriptableObject
     [Tooltip("How far up the body the halo sits. The kaiju's pivot is at its feet, so " +
              "a halo centred on the pivot would pool on the ground.")]
     public float playerGlowHeight = 0.5f;
+
 
     [Header("Camera")]
     [Min(0.01f)] public float bossIntroPanSeconds = 1.25f;
@@ -989,6 +993,77 @@ public class Tuning : ScriptableObject
              "that sits on the ground, and the gap widened as the kaiju grew.")]
     [Range(0f, 1f)] public float blastOriginFraction = 0.5f;
 
+    [Header("Bone boomerang — the Skeleton's special, in place of Blast")]
+    [Tooltip("Well below blastDamage per hit, because a throw is paid out more than once.\n\n" +
+             "A target caught on both legs takes twice this — about one Blast — and that is " +
+             "the floor rather than the ceiling: running away from the returning bone drags " +
+             "its homeward lane across ground the outward lane never touched, so a player who " +
+             "kites well can sweep several groups on one press. Priced so that the skilled " +
+             "line is the reward and the naive throw is merely fine.")]
+    public float boneDamage = 14f;
+
+    [Tooltip("Shorter than the Blast's cooldown. The bone has to fly out and come back before " +
+             "it has done its work, and matching the Blast's six seconds on top of that flight " +
+             "left long stretches with nothing to press.")]
+    public float boneCooldown = 4.5f;
+
+    [Tooltip("How far out the bone travels before turning, on the flat ground plane. Well " +
+             "short of blastRange because the bone covers the distance twice and the return " +
+             "leg is aimed by where you walk — the throw's real reach is the round trip plus " +
+             "however far you drag the homeward lane, not this number.")]
+    public float boneRange = 7.5f;
+
+    [Tooltip("Total width of the fan when Prism has added bones, in degrees, centred on the " +
+             "aim. Spread across however many bones are in flight: two sit on the edges, four " +
+             "divide it evenly.\n\n" +
+             "Kept well under 180 on purpose. The fan is always in front — a bone thrown " +
+             "behind the kaiju returns through it from off-screen, where the player has no " +
+             "way to see it coming or steer it.")]
+    [Range(10f, 160f)] public float boneFanDegrees = 60f;
+
+    [Tooltip("Travel speed as a multiple of the kaiju's own top speed, out and back alike.\n\n" +
+             "A multiple rather than a number, because the bone has to beat the player home " +
+             "and the player gets faster: speedPerTier compounds every tier and the Speed " +
+             "upgrade stacks on top, so a fixed figure that outran a size-1 Skeleton would be " +
+             "outrun by a size-5 one and the bone would never land. At 2 you can always drag " +
+             "the return lane somewhere useful, but never escape it.\n\n" +
+             "Measured on the flat ground plane, which is also where the player's speed is " +
+             "measured — movement is squashed after the multiply, not before — so the two are " +
+             "the same units and this ratio is exact.")]
+    [Min(1.05f)] public float boneSpeedPlayerMultiple = 2f;
+
+    [Tooltip("Spin of the drawn bone, degrees per second. Purely the look — it turns the art, " +
+             "not the thing that measures hits.")]
+    public float boneSpinDegrees = 900f;
+
+    [Tooltip("Hit radius as a fraction of the kaiju's height, so the throw grows with you the " +
+             "same way the Blast's band does.\n\n" +
+             "Kept at three quarters of boneArtScale's ratio to it, so shrinking the drawing " +
+             "shrinks what it hits. What you see is what it hits is the rule everywhere else " +
+             "in the project; a bone that struck wider than it looked would be the one thing " +
+             "on screen that lied.")]
+    [Range(0.05f, 1.5f)] public float boneHitFraction = 0.24f;
+
+    [Tooltip("How close the bone has to get on the way home before it counts as caught, as a " +
+             "fraction of the kaiju's height. Too tight and a bone chasing a running kaiju " +
+             "never quite lands.")]
+    [Range(0.1f, 2f)] public float boneCatchFraction = 0.7f;
+
+    [Tooltip("Height the bone rides at, as a fraction of the kaiju's height. The drawing only: " +
+             "hit detection stays on the ground plane where the footprints are.")]
+    [Range(0f, 1f)] public float boneOriginFraction = 0.45f;
+
+    [Tooltip("Drawn size of the placeholder bone, relative to the kaiju's height. Change " +
+             "boneHitFraction with it or the drawing and the damage stop agreeing.")]
+    public float boneArtScale = 0.41f;
+
+    [Tooltip("Pixel width of the generated placeholder sprite. Delete this and bonePx once " +
+             "there is real art.")]
+    public int bonePx = 96;
+
+    [Tooltip("Hard lifetime. A bone thrown as the kaiju dies has nothing to come home to.")]
+    public float boneLife = 8f;
+
     [Header("Dash")]
     [Tooltip("How far one dash travels at size 1, before the exponent below. Measured " +
              "on the flat ground plane, so a dash north-east covers the same distance " +
@@ -1080,6 +1155,65 @@ public class Tuning : ScriptableObject
     [Range(0f, 1f)] public float stompBuildingMultiplier = 0.35f;
 
     [Header("Upgrades")]
+    [Header("Shell — the timed shield")]
+    [Tooltip("Seconds between shells at the first stack. Every stack after the first takes " +
+             "shellIntervalPerStack off it, down to shellMinInterval.")]
+    public float shellInterval = 15f;
+
+    [Tooltip("Seconds removed from the interval per stack beyond the first.")]
+    public float shellIntervalPerStack = 1f;
+
+    [Tooltip("The floor. At three seconds up and ten down, a fully levelled Shell covers " +
+             "just under a third of the run — enough to change how you push, not enough to " +
+             "stop you having to read the fight.")]
+    public float shellMinInterval = 10f;
+
+    [Tooltip("How long each shell holds. Short on purpose: the upgrade is a window to take a " +
+             "risk in, not a state you live in.")]
+    public float shellDuration = 3f;
+
+    [Header("Grubling — the pet")]
+    [Tooltip("Damage per bite.\n\n" +
+             "Six bites a cycle on a five second cycle is 7.2 DPS a grub before travel time, " +
+             "against the swipe's 10, Stomp's 5.6 and Swarm's 7.8 at one stack. The brief " +
+             "asked for 10 a bite, which is 12 DPS a grub and 48 across four — five times " +
+             "Stomp, unattended. Same rhythm, smaller number.")]
+    public float grublingDamage = 6f;
+
+    [Tooltip("Seconds between charges. The grub idles at your heel until this elapses, then " +
+             "picks something and commits.")]
+    public float grublingInterval = 5f;
+
+    [Tooltip("How long a grub worries a target before breaking off and resetting.")]
+    public float grublingAttackSeconds = 3f;
+
+    [Tooltip("Seconds between bites while latched on.")]
+    public float grublingBiteInterval = 0.5f;
+
+    [Tooltip("How far a grub will look for something to charge, on the flat ground plane.")]
+    public float grublingRange = 9f;
+
+    [Tooltip("How close a grub has to be to bite, as a fraction of the kaiju's height.")]
+    [Range(0.1f, 3f)] public float grublingBiteFraction = 0.55f;
+
+    [Tooltip("Follow speed as a multiple of the kaiju's own top speed. Above 1 so a grub " +
+             "left behind by a dash can catch up — it never dashes itself, so this is the " +
+             "only way back to your heel.")]
+    [Min(0.1f)] public float grublingSpeedPlayerMultiple = 1.3f;
+
+    [Tooltip("Charge speed as a multiple of the kaiju's top speed. Faster than the follow, " +
+             "so committing to a target reads as a decision rather than a wander.")]
+    [Min(0.1f)] public float grublingChargeSpeedPlayerMultiple = 1.8f;
+
+    [Tooltip("How far behind you a grub settles, as a fraction of the kaiju's height. They " +
+             "fan out around this ring so four grubs do not stack into one silhouette.")]
+    [Range(0.2f, 4f)] public float grublingFollowFraction = 1.15f;
+
+    [Tooltip("Drawn height of a grub in pixels, before the kaiju's size scales it.")]
+    public int grublingPx = 34;
+
+    public Color grublingColour = new Color(0.72f, 0.85f, 0.42f);
+
     public UpgradeType[] upgrades =
     {
         // Brawler changes the rhythm: one extra strike per activation, per stack.
@@ -1154,6 +1288,24 @@ public class Tuning : ScriptableObject
         new UpgradeType { id = UpgradeId.Furnace, displayName = "Furnace",
                           effect = "Blast recharges 18% faster", perStack = 0.82f, maxStacks = 4,
                           weight = 0.9f, colour = new Color(0.75f, 0.6f, 1f) },
+
+        // The only defensive pickup in the set, and the only one whose stacks buy frequency
+        // rather than power. perStack stays 1: the shield either holds or it does not, so
+        // there is no number to multiply — levelling shortens the wait instead, which is
+        // read on the clock rather than in the damage log. Six stacks walks 15s down to 10s.
+        new UpgradeType { id = UpgradeId.Shell, displayName = "Shell",
+                          effect = "A shield forms every few seconds and holds for three",
+                          perStack = 1f, maxStacks = 6,
+                          weight = 0.9f, colour = new Color(0.55f, 0.8f, 1f) },
+
+        // Grubling is the only upgrade that puts something on the field that can be out of
+        // position. Swarm and Toxin follow you perfectly; a grub can be across the street
+        // chewing on a Trooper when you need it, which is the cost that pays for its damage
+        // being the highest unattended number in the set at full stacks.
+        new UpgradeType { id = UpgradeId.Grubling, displayName = "Grubling",
+                          effect = "A grub trails you and charges what it finds",
+                          perStack = 1f, maxStacks = 4,
+                          weight = 0.9f, colour = new Color(0.72f, 0.85f, 0.42f) },
     };
 
     [Tooltip("Fallback chance for any non-Lab building to drop an upgrade. 0 now that " +

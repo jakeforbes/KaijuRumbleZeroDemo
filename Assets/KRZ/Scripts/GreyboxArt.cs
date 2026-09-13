@@ -381,6 +381,89 @@ public static class GreyboxArt
             }
     }
 
+    /// <summary>
+    /// A thrown bone, drawn side-on and pivoted at its centre so it spins about its middle.
+    ///
+    /// Placeholder for the Skeleton's special until there is real art. Built from a signed
+    /// distance field rather than four circles stamped onto a bar: taking the nearest surface
+    /// of the five shapes makes the knobs meet the shaft in a smooth fillet, which at 96 px
+    /// is the difference between a bone and a dumbbell.
+    /// </summary>
+    public static Sprite Bone(int size, float ppu)
+    {
+        int w = Mathf.Max(10, size);
+        int h = Mathf.Max(6, Mathf.RoundToInt(size * 0.46f));
+        var px = new Color[w * h];
+
+        var body = new Color(0.95f, 0.93f, 0.86f);
+        var rim = new Color(0.50f, 0.47f, 0.42f);
+
+        float knobR = h * 0.27f;
+        float knobDy = h * 0.21f;
+        float leftX = w * 0.17f, rightX = w * 0.83f;
+        float shaftHalf = h * 0.155f;
+        float mid = h * 0.5f;
+
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                float d = Silhouette(x + 0.5f, y + 0.5f);
+
+                // A dark lip on the inside of the edge. The city is dim and the ground is
+                // blue-grey, so a pale sprite with no outline dissolves into it in motion.
+                px[y * w + x] = d > 0f ? Color.clear : d > -1.7f ? rim : body;
+            }
+
+        var tex = MakeTexture(px, w, h);
+        return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), ppu);
+
+        float Silhouette(float fx, float fy)
+        {
+            float knobs = Mathf.Min(
+                Knob(fx, fy, leftX, mid - knobDy), Knob(fx, fy, leftX, mid + knobDy),
+                Knob(fx, fy, rightX, mid - knobDy), Knob(fx, fy, rightX, mid + knobDy));
+
+            float shaft = Mathf.Max(Mathf.Abs(fy - mid) - shaftHalf,
+                                    Mathf.Max(leftX - fx, fx - rightX));
+            return Mathf.Min(knobs, shaft);
+        }
+
+        float Knob(float fx, float fy, float cx, float cy)
+            => Mathf.Sqrt((fx - cx) * (fx - cx) + (fy - cy) * (fy - cy)) - knobR;
+    }
+
+    /// <summary>
+    /// A hollow bubble: faint inside, bright at the rim. The Shell upgrade's shield.
+    ///
+    /// Round rather than a 2:1 ellipse, and that is deliberate against the rest of the file —
+    /// everything else here lies on the ground, so a circle standing up reads as something
+    /// wrapped around the kaiju rather than another puddle at its feet. Kept mostly hollow so
+    /// it never hides what it is protecting, which is the whole point of a defensive tell.
+    /// </summary>
+    public static Sprite Bubble(int size, float ppu)
+    {
+        int d = Mathf.Max(12, size);
+        var px = new Color[d * d];
+        float r = d * 0.5f;
+
+        for (int y = 0; y < d; y++)
+            for (int x = 0; x < d; x++)
+            {
+                float nx = (x + 0.5f - r) / r, ny = (y + 0.5f - r) / r;
+                float dist = Mathf.Sqrt(nx * nx + ny * ny);
+                if (dist > 1f) { px[y * d + x] = Color.clear; continue; }
+
+                // Rim brightness rises steeply over the outer tenth; the interior keeps a
+                // thin wash so the shield reads as a volume rather than as a drawn circle.
+                float rim = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.86f, 1f, dist));
+                float wash = 0.10f * Mathf.SmoothStep(0f, 1f, 1f - dist);
+                px[y * d + x] = new Color(1f, 1f, 1f, Mathf.Clamp01(wash + rim * 0.85f));
+            }
+
+        var tex = MakeTexture(px, d, d);
+        return Sprite.Create(tex, new Rect(0, 0, d, d), new Vector2(0.5f, 0.5f), ppu);
+    }
+
     static Texture2D MakeTexture(Color[] px, int w, int h)
     {
         var tex = new Texture2D(w, h, TextureFormat.RGBA32, false)

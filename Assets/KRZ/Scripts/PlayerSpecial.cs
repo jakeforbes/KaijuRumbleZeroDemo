@@ -50,7 +50,7 @@ public class PlayerSpecial : MonoBehaviour
         if (progress == null || progress.RunOver) return;
 
         BlastCooldownRemaining -= Time.deltaTime;
-        if (Pressed() && BlastCooldownRemaining <= 0f) Blast(progress);
+        if (Pressed() && BlastCooldownRemaining <= 0f) Special(progress);
 
         DashCooldownRemaining -= Time.deltaTime;
         if (DashPressed() && DashCooldownRemaining <= 0f && !player.Dashing
@@ -78,6 +78,10 @@ public class PlayerSpecial : MonoBehaviour
             nextSwarmAt = Time.time + tuning.swarmInterval;
             Swarm(progress);
         }
+
+        // Every frame rather than on a timer: the pack only changes when a stack lands, and
+        // checking a count is cheaper than the bookkeeping to know when that happened.
+        Grubling.Sync(transform, upgrades.GrublingCount, tuning);
     }
 
     /// <summary>
@@ -221,6 +225,72 @@ public class PlayerSpecial : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Fires whichever special the chosen kaiju has. Everything around it is deliberately
+    /// shared — the button, the cooldown fields, the HUD's readiness meter and the upgrade
+    /// multipliers — so a new special is a case here rather than a second ability system.
+    /// </summary>
+    void Special(PlayerProgress progress)
+    {
+        var character = CharacterArt.Selected;
+        if (character != null && character.special == CharacterSpecial.BoneBoomerang)
+            ThrowBones(progress);
+        else
+            Blast(progress);
+    }
+
+    /// <summary>
+    /// The Skeleton's throw. Reads the same upgrade multipliers as the Blast so a run's
+    /// pickups are never dead weight: Beam raises damage and reach, and Prism adds one more
+    /// bone to a forward fan rather than doubling beams around the kaiju.
+    /// </summary>
+    void ThrowBones(PlayerProgress progress)
+    {
+        float power = upgrades.BlastPowerMul;
+        float damage = tuning.boneDamage * power * progress.DamageMultiplier;
+        float range = tuning.boneRange * power;
+        float bodyHeight = progress.Scale;
+
+        // The same expression PlayerController uses for the kaiju's top speed, so the bone is
+        // a true multiple of what it is chasing rather than a number that happens to beat it
+        // at size 1. Tiers and the Speed upgrade both feed it, and both apply to the bone.
+        float playerSpeed = tuning.moveSpeed * progress.SpeedMultiplier * upgrades.MoveSpeedMul;
+        float speed = playerSpeed * tuning.boneSpeedPlayerMultiple;
+
+        BlastCooldownTotal = tuning.boneCooldown * upgrades.BlastCooldownMul;
+        BlastCooldownRemaining = BlastCooldownTotal;
+
+        Vector2 origin = transform.position;
+        Vector2 aim = player.AimDir.sqrMagnitude > 0.001f ? player.AimDir.normalized : Vector2.down;
+        Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
+
+        AudioEvents.Play(Sfx.Blast, origin, owner: gameObject);
+        if (CharacterArt.Instance != null) CharacterArt.Instance.PlayOnce(CharacterArt.Clip.Blast);
+        progress.ShakeExternal(tuning.hitShake * 0.7f);
+
+        int count = Mathf.Max(1, upgrades.BoneCount);
+        float fan = tuning.boneFanDegrees * Mathf.Deg2Rad;
+
+        for (int i = 0; i < count; i++)
+        {
+            // Spread evenly across an arc in front, never around the kaiju the way Prism
+            // spreads the Blast. A beam fired backwards is over instantly; a bone thrown
+            // backwards spends its whole return leg approaching from behind the player, out
+            // of the direction they are looking, which reads as the ability misfiring.
+            //
+            // Rotated on the flat plane so the fan opens evenly on the ground rather than as
+            // an oval in screen space.
+            float t = count == 1 ? 0f : i / (float)(count - 1) - 0.5f;
+            float turn = t * fan;
+            var flatDir = new Vector2(
+                aimFlat.x * Mathf.Cos(turn) - aimFlat.y * Mathf.Sin(turn),
+                aimFlat.x * Mathf.Sin(turn) + aimFlat.y * Mathf.Cos(turn));
+
+            BoneBoomerang.Throw(tuning, transform, flatDir, damage, range, speed, bodyHeight,
+                                tuning.pixelsPerUnit);
+        }
+    }
+
     void Blast(PlayerProgress progress)
     {
         float power = upgrades.BlastPowerMul;
@@ -246,7 +316,7 @@ public class PlayerSpecial : MonoBehaviour
         Vector2 aimFlat = new Vector2(aim.x, aim.y / tuning.isoSquash).normalized;
 
         AudioEvents.Play(Sfx.Blast, origin, owner: gameObject);
-        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Blast);
+        if (CharacterArt.Instance != null) CharacterArt.Instance.PlayOnce(CharacterArt.Clip.Blast);
 
         // Centred on the body rather than fired from the head. Hit detection still runs
         // on the ground plane where every footprint lives, so a beam as thick as most

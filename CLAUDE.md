@@ -31,6 +31,14 @@ In-editor checks, run from the Unity menu during a Play session:
 | `KRZ/Audio/Check Boss Encounter` (`Ctrl+Alt+B`) | Spawns the Abomination and exercises the encounter + music routes |
 | `KRZ/Select Tuning Asset` | Selects the Tuning asset for live tweaking |
 
+Art tooling, run in Edit mode (not during Play):
+
+| Menu | Purpose |
+| --- | --- |
+| `KRZ/Art/Bake Contact Sheet (preview)` | Renders each character's five facings once to the repo root, to check framing and facing before committing to a full bake |
+| `KRZ/Art/Bake Character Sprites` | Renders the Asset Store rigs to sprite sequences under `Resources/{Character}/` |
+| `KRZ/Configure Uries Textures` | Re-applies the Uries import settings; self-healing, runs itself when needed |
+
 When a change cannot be verified in Play mode, say so explicitly rather than implying it ran.
 
 ## The one hard rule: Tuning
@@ -57,12 +65,20 @@ reloads the scene and re-triggers `Launch()` manually, since it only fires once 
 
 **Data-driven definitions.** Enemies, buildings, upgrades and wave beats are serializable types
 (`EnemyType`, `BuildingType`, `UpgradeType`, `WaveEntry`) held as arrays on `Tuning`. Adding a
-species or a pacing beat is a data entry, not a new class. `WaveDirector` walks the `waves` list
+species or a pacing beat is a data entry, not a new class.
+
+The playable roster is the exception: `CharacterType.Roster` is a **`static readonly` table in
+code**, not a field on `Tuning`. It was an array on `Tuning` and hit the serialization trap below
+— the asset kept returning a stale `displayScale` through recompiles and reimports while the
+source said otherwise, because the cached copy lives in `Library`, not in the `.asset` YAML that
+looks clean. Character entries are asset paths and canvas scales that nobody tunes live, so they
+lose nothing by staying out of the Inspector. `CharacterArt` reads whichever entry
+`SelectedIndex` names, so the character select changes the player's art without rebuilding. `WaveDirector` walks the `waves` list
 against its own `Clock`, which cheats can scrub.
 
 **Static registries and singletons.** `Enemy.All`, `Building.All`, `Food.All` are static lists;
 `GameBootstrap`, `WaveDirector`, `PlayerProgress`, `PlayerUpgrades`, `OccluderFade`,
-`RuntimeSoundPlayer`, `UriesArt` expose `Instance`. Pooled/parented systems cache a static `root`
+`RuntimeSoundPlayer`, `CharacterArt` expose `Instance`. Pooled/parented systems cache a static `root`
 transform. **Any new static state needs a `Reset()` called from `GameBootstrap.Awake()`** — the
 existing block there is the list to extend, or a restart inherits the previous run's state.
 

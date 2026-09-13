@@ -66,7 +66,7 @@ public class PlayerAttack : MonoBehaviour
 
         // Animation first, damage on the contact frame. Landing damage on frame 0 put
         // the hit before the arm had moved.
-        if (UriesArt.Instance != null) UriesArt.Instance.PlayOnce(UriesArt.Clip.Swipe);
+        if (CharacterArt.Instance != null) CharacterArt.Instance.PlayOnce(CharacterArt.Clip.Swipe);
         strikePending = true;
         strikeAt = Time.time + tuning.swipeContactDelay;
     }

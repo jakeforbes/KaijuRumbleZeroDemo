@@ -55,17 +55,34 @@ as a scratchpad for finding a number, then put the number in `Tuning.cs`.
 | Left stick | Move, analog |
 | D-pad | Move, 8-way — identical to WASD |
 | Right stick | Aim, independently of where you are moving |
-| Space or E | Blast |
-| A button or right trigger | Blast |
+| Space or E | Special — Blast, or the Skeleton's bone |
+| A button or right trigger | Special |
 | Esc, or the pad's Menu button | Pause menu |
 | — | The swipe fires automatically on a cooldown |
 
-## Title and pause
+## Title, character select and pause
 
 The game opens on a title screen — **KAIJU RUMBLE ZERO** over a single **New Game** button,
 with the built city frozen behind it. The run is already standing there waiting, so New Game
-starts it rather than loading anything. Esc does nothing on the title: there is no run behind
-it to go back to.
+opens the character select rather than loading anything. Esc does nothing on the title: there
+is no run behind it to go back to.
+
+**Character select** is a 4×5 grid of twenty slots. The first three hold the playable kaiju —
+the **Alien** (the delivered Uries art), the **Lizard** and the **Skeleton** — and the
+remaining seventeen are drawn locked, with a question mark, as room the roster can grow into.
+Each portrait is frame 0 of that character's south-facing idle, so no separate portrait art
+exists to fall out of sync.
+
+| Input | Action |
+| --- | --- |
+| WASD, arrows, numpad 8/4/6/2, left stick or d-pad | Move around the grid; it wraps in both directions |
+| Enter, numpad Enter, Space, A button or right trigger | Choose |
+| Esc or B button | Back to the title |
+| Mouse | Hover highlights, click chooses |
+
+Choosing a locked slot does nothing — the question mark already says what it is, and a buzzer
+on every stray press would be the loudest thing in the game. The choice survives a restart, so
+`F10` and the pause menu's Restart both put you back in as whoever you last picked.
 
 Esc or the pad's Menu button freezes a run in progress and overlays **Continue** and
 **Restart**, with Continue highlighted every time the menu opens. Move between the two with W/S, the arrow keys,
@@ -81,17 +98,71 @@ Pausing is refused while the boss introduction is playing, since that cinematic 
 time and would carry on over a frozen world, and after a win or a death, both of which already
 own the screen with their own Restart.
 
-Both menus silence effects and voices and leave the music playing. Under the pause menu it
-ducks to `pauseMusicVolume` (0.35) so the screen reads as the game waiting; under the title it
-stays at full, since the title is the front door rather than an interruption. The pause menu
+Every menu silences effects and voices and leaves the music playing. Under the pause menu it
+ducks to `pauseMusicVolume` (0.35) so the screen reads as the game waiting; under the title and
+the character select it stays at full, since those are the front door rather than an
+interruption of anything. The pause menu
 restores whatever time scale was in force, so pausing during a `[` or `]` speed test does not
 quietly reset it.
 
-Restarting — from the pause menu, from the victory banner or with `F10` — goes straight back
-into a run rather than stopping at the title, since asking for a restart is already asking for
-a run. The Gym scene never shows the title; it has nothing to start.
+Restarting — from the pause menu, from the victory banner, or with `F10` after a death — goes
+back to the **character select**, not to the title and not straight into a run. A restart is a
+request for another go rather than a trip back to the front door, but it is also exactly when
+you might want a different kaiju. The grid opens on whoever you just played, so taking the same
+one again is a single press.
 
-On a pad the right stick aims: the swipe and the Blast both fire along it, and the
+Every restart lands there, so there is one rule rather than a list of which restarts stop where.
+The Gym scene shows neither screen; it has nothing to start and nobody to choose.
+
+## Specials
+
+The special button is shared, and so are its cooldown, its HUD readiness meter and the upgrades
+that feed it. What comes out depends on who you picked.
+
+**Blast** — the Alien's, and the default. Damage in a line, which is why it answers armour: the
+swipe chips, the Blast lands one number big enough to matter.
+
+**Bone boomerang** — the Skeleton's. A bone thrown out along the aim, spinning, that turns at
+range and chases the Skeleton home. Out is a straight line; home is a chase, re-aimed every frame
+at wherever the kaiju is now — so you can throw and keep running rather than stopping to point.
+It damages what it passes on both legs, once each way, and buildings take it in full like the
+Blast it replaces. The bone is currently a placeholder sprite generated in code.
+
+Each hit is deliberately small — half a Blast — because a throw is paid out more than once. A
+target caught on both legs takes about one Blast, and that is the floor: **running away from the
+returning bone drags its homeward lane across ground the outward lane never touched**, so a
+player who kites well sweeps several groups on one press. The bone travels at twice the kaiju's
+own top speed rather than at a fixed rate, so it always beats you home however fast you have
+grown — you can steer the return lane, but you cannot outrun it.
+
+### Two upgrades that are not damage multipliers
+
+The set is otherwise multipliers and extra projectiles. These two are shaped differently, and
+their full definitions live with the rest in `Tuning.cs`.
+
+**Shell** is the only defensive pickup. A shield forms on its own timer, holds for three
+seconds, and blocks everything while it is up. Its stacks buy **frequency, not strength** — a
+shield either holds or it does not, so there is no number to multiply. Levelling walks the wait
+from 15 seconds down to 10, which you read on the clock rather than in the damage log. It rides
+the same invulnerability gate as the post-hit i-frames, so it works against every source of
+damage in the game by construction rather than by being remembered.
+
+**Grubling** is a pet — one per stack, to four. It trails you at a ring, fans out so the pack
+does not stack into one silhouette, and **never dashes**: dash away and the grubs string out
+behind and run to catch up. Every five seconds one picks the nearest enemy within range and
+worries it for three seconds, biting twice a second, then breaks off and rearms — early, if it
+kills. It commits to that target rather than re-picking each frame, so it can be across the
+street on the wrong thing when you need it. That gap between what it is doing and what you want
+is the cost that pays for its damage. Grubs ignore buildings, like Trample.
+
+Both read the same upgrades, but Prism reads differently on each. It doubles the Blast's beams —
+1, 2, 4, 8 — and spreads them all the way around the kaiju. It adds bones **one at a time** to a
+max of four, fanned across 60° **in front** of you and never behind. A beam fired backwards is
+over instantly; a bone thrown backwards spends its entire return leg approaching from off-screen
+where you cannot see it or steer it, and four round trips at once is a cloud rather than four
+lanes you can read. Beam raises damage and reach for both.
+
+On a pad the right stick aims: the swipe and the special both fire along it, and the
 kaiju turns to face it, so you can back away from something while hitting it. Let go
 and aim falls back to the direction of travel. A keyboard player is always in that
 fallback, so nothing about the keyboard scheme changed.

@@ -36,9 +36,14 @@ public class GameBootstrap : MonoBehaviour
         CameraRig.CancelActiveIntroduction();
         Time.timeScale = 1f;
 
-        // Restarting is a request for a run, so the rebuilt scene goes straight into
-        // one rather than stopping at the title on the way.
-        PauseMenu.SkipTitleOnce();
+        // Restarting stops at the character select rather than the title: it is a request
+        // for another run rather than a trip back to the front door, but it is also exactly
+        // when someone wants to try a different kaiju. Confirming the same one through is a
+        // single press, and the grid opens on whoever was just played.
+        //
+        // Every restart lands here — the pause menu, the win banner and F10 on death — so
+        // there is one rule rather than a list of which restarts stop where.
+        PauseMenu.OpenSelectOnReload();
         Instance = null;
         SceneManager.sceneLoaded += OnReloaded;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -62,7 +67,11 @@ public class GameBootstrap : MonoBehaviour
         }
 
         Food.Reset();
+        BoneBoomerang.Reset();
         BuildingArt.ClearCache();
+        CharacterArt.ClearCache();
+        Grubling.Reset();
+        PlayerShell.Reset();
         DirectionalArt.ClearCache();
         Enemy.Reset();
         HitFx.Reset();
@@ -1255,6 +1264,10 @@ public class GameBootstrap : MonoBehaviour
         var toxin = go.AddComponent<ToxicField>();
         toxin.tuning = tuning;
 
+        // Same deal: present from the start, inert until Shell is held.
+        var shell = go.AddComponent<PlayerShell>();
+        shell.tuning = tuning;
+
         // Art hangs off a child so growth scales the sprite without scaling the footprint.
         var art = new GameObject("Art").transform;
         art.SetParent(go.transform, false);
@@ -1292,12 +1305,16 @@ public class GameBootstrap : MonoBehaviour
         // shading underneath survives as darker shades of the same hue.
         bsr.color = tuning.playerTint;
 
-        // Real art takes over if the package is present; greybox stays otherwise, so
-        // the build never depends on the art having been delivered.
-        var uries = go.AddComponent<UriesArt>();
-        uries.target = bsr;
-        uries.player = pc;
-        if (UriesArt.Available) bodyGo.transform.localScale = Vector3.one * UriesArt.CanvasScale;
+        // Real art takes over if the selected character's frames are present; greybox
+        // stays otherwise, so the build never depends on the art having been delivered.
+        //
+        // Tint and canvas scale are CharacterArt's to set, not this method's: they differ
+        // per character, and the player can still change the pick on the select screen
+        // long after this has run.
+        var characterArt = go.AddComponent<CharacterArt>();
+        characterArt.target = bsr;
+        characterArt.player = pc;
+        characterArt.greybox = bsr.sprite;
 
         fade.playerArt = bsr;
         // OccluderFade compares ground pivots; render from that same point.
