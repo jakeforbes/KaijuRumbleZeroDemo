@@ -67,8 +67,15 @@ reloads the scene and re-triggers `Launch()` manually, since it only fires once 
 (`EnemyType`, `BuildingType`, `UpgradeType`, `WaveEntry`) held as arrays on `Tuning`. Adding a
 species or a pacing beat is a data entry, not a new class.
 
-The playable roster is the exception: `CharacterType.Roster` is a **`static readonly` table in
-code**, not a field on `Tuning`. It was an array on `Tuning` and hit the serialization trap below
+**Levels.** `LevelDef.All` is a static table in code holding city size, pacing and the enemy
+that ends the level. `LevelDef.SelectedIndex` picks one — **0 is the one-minute Proving Ground
+and is the default**; 1 is the original three-minute run, unchanged. A level with null `waves`
+runs `Tuning.waves`, so the full run is untouched by any of this. Killing a level's `bossType`
+opens a `Portal` where it fell; walking in raises `PauseMenu.Mode.Evolution`, and the choice
+rebuilds the same level with `PlayerUpgrades.CarryToNextLevel()` preserving the build.
+
+The playable roster and the level table are exceptions: `CharacterType.Roster` and `LevelDef.All`
+are **`static readonly` tables in code**, not fields on `Tuning`. It was an array on `Tuning` and hit the serialization trap below
 — the asset kept returning a stale `displayScale` through recompiles and reimports while the
 source said otherwise, because the cached copy lives in `Library`, not in the `.asset` YAML that
 looks clean. Character entries are asset paths and canvas scales that nobody tunes live, so they

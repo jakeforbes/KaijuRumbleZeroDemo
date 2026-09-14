@@ -58,7 +58,19 @@ public sealed class PauseMenu : MonoBehaviour
     bool mouseMoved;
 
     /// <summary>Which screen is up.</summary>
-    enum Mode { Title, Select, Pause }
+    enum Mode { Title, Select, Pause, Evolution }
+
+    /// <summary>What a rebuilt scene opens on.</summary>
+    public enum Entry { Title, Select, Run }
+
+    /// <summary>
+    /// The evolutions the portal offers. Both are held back from the Proving Ground's drop
+    /// table, so this is the first time either can appear — being handed one earlier would
+    /// make the choice a formality.
+    /// </summary>
+    static readonly UpgradeId[] Evolutions = { UpgradeId.Swarm, UpgradeId.Stomp };
+
+    Rect[] evolutionRects = new Rect[2];
 
     Mode mode;
 
@@ -89,9 +101,16 @@ public sealed class PauseMenu : MonoBehaviour
     /// Deliberately outside Reset(): Restart sets it before the scene reloads and Reset runs
     /// after, so clearing it there would undo the request.
     /// </summary>
-    static bool openSelectOnLoad;
+    static Entry entryOnLoad = Entry.Title;
 
-    public static void OpenSelectOnReload() => openSelectOnLoad = true;
+    public static void EnterOn(Entry entry) => entryOnLoad = entry;
+
+    /// <summary>Raised by the portal once the player walks into it.</summary>
+    public static void OpenEvolution()
+    {
+        var menu = FindAnyObjectByType<PauseMenu>();
+        if (menu != null) menu.Open(Mode.Evolution);
+    }
 
     GUIStyle labelStyle;
     GUIStyle titleStyle;
@@ -112,13 +131,15 @@ public sealed class PauseMenu : MonoBehaviour
     {
         tuning = Resources.Load<Tuning>("Tuning");
 
-        // A restart drops straight onto the grid; a fresh play session starts at the title.
-        // Either way the flag is cleared here, so it cannot leak into the next reload.
-        bool toSelect = openSelectOnLoad;
-        openSelectOnLoad = false;
+        // Cleared here whatever it was, so a request cannot leak into the next reload.
+        var entry = entryOnLoad;
+        entryOnLoad = Entry.Title;
 
-        // The gym is a review scene with nothing to start and nobody to choose.
-        if (!GameBootstrap.IsGym) Open(toSelect ? Mode.Select : Mode.Title);
+        // The gym is a review scene with nothing to start and nobody to choose. Entry.Run
+        // stops at nothing either — it is the portal's hop into the next level, and the
+        // player is mid-run as far as they are concerned.
+        if (GameBootstrap.IsGym || entry == Entry.Run) return;
+        Open(entry == Entry.Select ? Mode.Select : Mode.Title);
     }
 
     void OnDestroy()
@@ -199,7 +220,10 @@ public sealed class PauseMenu : MonoBehaviour
         if (!IsPaused) timeScaleBeforePause = Time.timeScale;
 
         IsPaused = true;
-        AtTitle = m != Mode.Pause;
+
+        // Evolution is not a pre-run screen: there is a run behind it with a build worth
+        // looking at, so the meters stay up for it the way they do under the pause menu.
+        AtTitle = m == Mode.Title || m == Mode.Select;
 
         // The grid opens on whatever is already selected, so backing out and in again does
         // not silently move the pick. Every list opens on its first option.
@@ -216,7 +240,8 @@ public sealed class PauseMenu : MonoBehaviour
         // they keep playing: ducked under the pause menu, which reads as the game
         // waiting, and at full level under the front-door screens.
         AudioListener.pause = true;
-        musicDuckTarget = m != Mode.Pause ? 1f
+        bool ducks = m == Mode.Pause || m == Mode.Evolution;
+        musicDuckTarget = !ducks ? 1f
                         : tuning != null ? tuning.pauseMusicVolume
                         : 0.35f;
     }
@@ -236,6 +261,7 @@ public sealed class PauseMenu : MonoBehaviour
 
     void Choose(int option)
     {
+        if (mode == Mode.Evolution) { ChooseEvolution(option); return; }
         if (mode == Mode.Select) { ChooseCharacter(option); return; }
 
         // New Game goes to the grid rather than into the run, and stays frozen on the way.
@@ -262,6 +288,41 @@ public sealed class PauseMenu : MonoBehaviour
         // the frames it loads, so setting the index is the whole commit.
         CharacterArt.SelectedIndex = cell;
         Resume();
+    }
+
+    /// <summary>
+    /// Takes the evolution and rebuilds the level with it.
+    ///
+    /// The reward is granted before the stacks are handed forward, so it survives the reload
+    /// along with everything else the player collected. The rebuild skips the character
+    /// select — you are mid-run, not starting one — and the level index is left alone, which
+    /// is what makes the Proving Ground return to itself.
+    /// </summary>
+    void ChooseEvolution(int option)
+    {
+        var upgrades = PlayerUpgrades.Instance;
+        if (upgrades != null)
+        {
+            upgrades.Grant(Evolutions[Mathf.Clamp(option, 0, Evolutions.Length - 1)]);
+            PlayerUpgrades.CarryToNextLevel();
+        }
+
+        Resume();
+        GameBootstrap.Restart(toCharacterSelect: false);
+    }
+
+    string EvolutionName(int i)
+    {
+        var upgrades = PlayerUpgrades.Instance;
+        var type = upgrades != null ? upgrades.Find(Evolutions[i]) : null;
+        return type != null ? type.displayName : Evolutions[i].ToString();
+    }
+
+    string EvolutionEffect(int i)
+    {
+        var upgrades = PlayerUpgrades.Instance;
+        var type = upgrades != null ? upgrades.Find(Evolutions[i]) : null;
+        return type != null ? type.effect : "";
     }
 
     CharacterType CharacterAt(int cell)
@@ -300,13 +361,20 @@ public sealed class PauseMenu : MonoBehaviour
             h += dpad.x;
         }
 
-        if (mode != Mode.Select) h = 0f;
+        // Each screen listens on the axes it actually lays out along: the grid on both, the
+        // evolution's two side-by-side buttons on the horizontal, the lists on the vertical.
+        if (mode == Mode.Evolution) v = 0f;
+        else if (mode != Mode.Select) h = 0f;
 
         if (Mathf.Abs(h) < 0.5f && Mathf.Abs(v) < 0.5f) { navLatched = false; return; }
         if (navLatched) return;
         navLatched = true;
 
-        if (mode == Mode.Select)
+        if (mode == Mode.Evolution)
+        {
+            highlighted = (highlighted + (h > 0f ? 1 : Evolutions.Length - 1)) % Evolutions.Length;
+        }
+        else if (mode == Mode.Select)
         {
             // Dominant axis only, so a sloppy diagonal picks one direction instead of
             // jumping a row and a column at once.
@@ -352,6 +420,7 @@ public sealed class PauseMenu : MonoBehaviour
         GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
 
         if (mode == Mode.Select) DrawSelect();
+        else if (mode == Mode.Evolution) DrawEvolution();
         else DrawList();
 
         GUI.color = Color.white;
@@ -398,6 +467,77 @@ public sealed class PauseMenu : MonoBehaviour
         GUI.color = new Color(1f, 1f, 1f, 0.45f);
         GUI.Label(new Rect(box.x, box.y + h - 30f, box.width, 20f),
                   title ? "Enter, Space or A to begin" : "Esc / Menu to close", labelStyle);
+    }
+
+    /// <summary>
+    /// Two cards side by side. Laid out horizontally rather than as another list because the
+    /// two are alternatives rather than a menu — you are giving one up to take the other, and
+    /// a vertical list reads as "first option and the rest".
+    ///
+    /// There is no way out. Walking into the portal was the commitment; Esc is ignored here
+    /// on purpose, or the portal would be a thing you could stand in to pause the game.
+    /// </summary>
+    void DrawEvolution()
+    {
+        const float cardW = 240f, cardH = 150f, gap = 22f;
+        float w = cardW * 2f + gap + 64f;
+        float h = cardH + 150f;
+
+        var box = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+        GUI.color = new Color(0.06f, 0.05f, 0.10f, 0.94f);
+        GUI.DrawTexture(box, Texture2D.whiteTexture);
+
+        GUI.color = Color.white;
+        GUI.Label(new Rect(box.x, box.y + 18f, box.width, 40f),
+                  "<b>CHOOSE YOUR EVOLUTION</b>", titleStyle);
+
+        float cardY = box.y + 74f;
+        float firstX = box.center.x - (cardW + gap * 0.5f);
+        for (int i = 0; i < Evolutions.Length; i++)
+            evolutionRects[i] = new Rect(firstX + i * (cardW + gap), cardY, cardW, cardH);
+
+        if (mouseMoved)
+            for (int i = 0; i < evolutionRects.Length; i++)
+                if (evolutionRects[i].Contains(Event.current.mousePosition)) highlighted = i;
+
+        for (int i = 0; i < Evolutions.Length; i++)
+        {
+            var r = evolutionRects[i];
+            bool on = i == highlighted;
+
+            var type = PlayerUpgrades.Instance != null
+                     ? PlayerUpgrades.Instance.Find(Evolutions[i]) : null;
+            Color accent = type != null ? type.colour : Color.white;
+
+            if (on)
+            {
+                GUI.color = accent;
+                GUI.DrawTexture(new Rect(r.x - 3f, r.y - 3f, r.width + 6f, r.height + 6f),
+                                Texture2D.whiteTexture);
+            }
+
+            GUI.color = on ? new Color(0.16f, 0.18f, 0.24f) : new Color(0.10f, 0.11f, 0.15f);
+            GUI.DrawTexture(r, Texture2D.whiteTexture);
+
+            GUI.color = accent;
+            GUI.Label(new Rect(r.x, r.y + 26f, r.width, 34f),
+                      $"<b>{EvolutionName(i)}</b>", titleStyle);
+
+            // Wrapped, because the effect lines are written for the HUD and run long.
+            GUI.color = new Color(1f, 1f, 1f, on ? 0.95f : 0.6f);
+            var wrapped = new GUIStyle(labelStyle) { wordWrap = true, fontSize = 14 };
+            GUI.Label(new Rect(r.x + 16f, r.y + 68f, r.width - 32f, r.height - 82f),
+                      EvolutionEffect(i), wrapped);
+
+            GUI.color = Color.white;
+            if (GUI.Button(r, GUIContent.none, GUIStyle.none)) { Choose(i); return; }
+        }
+
+        GUI.color = new Color(1f, 1f, 1f, 0.45f);
+        GUI.Label(new Rect(box.x, box.y + h - 34f, box.width, 18f),
+                  "Move with A / D, the arrows or the stick", smallStyle);
+        GUI.Label(new Rect(box.x, box.y + h - 20f, box.width, 18f),
+                  "Enter, Space, A or RT to take it   ·   your upgrades come with you", smallStyle);
     }
 
     void DrawSelect()

@@ -18,7 +18,29 @@ public class PlayerUpgrades : MonoBehaviour
 
     readonly Dictionary<UpgradeId, int> stacks = new();
 
-    void Awake() => Instance = this;
+    /// <summary>
+    /// Stacks handed forward through a scene reload. Outside any Reset() for the usual
+    /// reason: it is filled before the level reloads and read in the Awake that follows,
+    /// so clearing it in between would throw away the run it exists to preserve.
+    /// </summary>
+    static Dictionary<UpgradeId, int> carried;
+
+    /// <summary>Keeps what the player has collected across the hop to the next level.</summary>
+    public static void CarryToNextLevel()
+        => carried = Instance == null ? null : new Dictionary<UpgradeId, int>(Instance.stacks);
+
+    void Awake()
+    {
+        Instance = this;
+
+        // Consumed, not merely read: a later restart from the pause menu should begin a
+        // clean run rather than silently inheriting a previous one's build.
+        if (carried != null)
+        {
+            foreach (var pair in carried) stacks[pair.Key] = pair.Value;
+            carried = null;
+        }
+    }
 
     void OnDestroy()
     {
@@ -205,16 +227,21 @@ public class PlayerUpgrades : MonoBehaviour
     {
         if (tuning.upgrades == null || tuning.upgrades.Length == 0) return null;
 
+        // The level's blacklist is applied here rather than at each drop site, because
+        // buildings, enemies, the free scatter at build time and the F7 cheat all roll
+        // through this one method — a check anywhere else would miss three of the four.
+        var level = LevelDef.Current;
+
         float total = 0f;
         foreach (var u in tuning.upgrades)
-            if (!IsMaxed(u.id)) total += Mathf.Max(0f, u.weight);
+            if (!IsMaxed(u.id) && !level.Blacklists(u.id)) total += Mathf.Max(0f, u.weight);
 
         if (total <= 0f) return null;
 
         float roll = Random.value * total;
         foreach (var u in tuning.upgrades)
         {
-            if (IsMaxed(u.id)) continue;
+            if (IsMaxed(u.id) || level.Blacklists(u.id)) continue;
             roll -= Mathf.Max(0f, u.weight);
             if (roll <= 0f) return u;
         }

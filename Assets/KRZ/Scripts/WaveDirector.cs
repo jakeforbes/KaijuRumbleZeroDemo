@@ -40,13 +40,22 @@ public class WaveDirector : MonoBehaviour
 
         // Push pending sustained beats out immediately, so relief is felt now rather
         // than after whatever was already queued lands on top of you.
-        foreach (var w in tuning.waves)
+        foreach (var w in Waves)
             if (w.IsSustained && w.nextFireAt < Clock + w.interval)
                 w.nextFireAt = Clock + w.interval * tuning.recoverySpawnInterval;
     }
 
     public string CurrentLabel { get; private set; } = "calm";
     public bool Running { get; set; } = true;
+
+    /// <summary>
+    /// The pacing for the level being played. A level with no list of its own runs Tuning's,
+    /// which is the full three-minute arc — so the original run is unchanged by any of this.
+    /// </summary>
+    WaveEntry[] Waves => LevelDef.Current.waves ?? tuning.waves;
+
+    /// <summary>Set once the level's closing enemy has been sent in, so it arrives only once.</summary>
+    bool levelBossSent;
 
     void Awake() => Instance = this;
 
@@ -57,7 +66,7 @@ public class WaveDirector : MonoBehaviour
 
     void Start()
     {
-        foreach (var w in tuning.waves)
+        foreach (var w in Waves)
         {
             w.fired = false;
             w.nextFireAt = w.startTime;
@@ -72,7 +81,7 @@ public class WaveDirector : MonoBehaviour
         Clock += Time.deltaTime;
 
         string active = null;
-        foreach (var w in tuning.waves)
+        foreach (var w in Waves)
         {
             if (Clock < w.startTime) continue;
 
@@ -94,6 +103,28 @@ public class WaveDirector : MonoBehaviour
         }
 
         if (active != null) CurrentLabel = active;
+
+        // The level's closing enemy, on its own clock rather than as a beat in the list.
+        // It has to be findable by the portal afterwards, and a wave entry carries no way
+        // to say "this one ends the level".
+        var level = LevelDef.Current;
+        if (!levelBossSent && level.bossSeconds > 0f && Clock >= level.bossSeconds)
+        {
+            levelBossSent = true;
+            CurrentLabel = level.bossType;
+            Debug.Log($"KRZ: {level.name} closing with {level.bossType}.");
+
+            // Through the ordinary squad path so it inherits off-screen placement and the
+            // clearance checks. It is not flagged isBoss — that is the Abomination's win
+            // condition — so none of the boss-only handling applies to it.
+            Spawn(new WaveEntry
+            {
+                label = level.bossType,
+                enemyType = level.bossType,
+                count = 1,
+                shape = SpawnShape.Ahead,
+            });
+        }
 
         if (tuning.bossEscortEnabled && EscortTick()) CurrentLabel = "boss escort";
     }
@@ -159,7 +190,7 @@ public class WaveDirector : MonoBehaviour
     public void Skip(float seconds)
     {
         Clock += seconds;
-        foreach (var w in tuning.waves)
+        foreach (var w in Waves)
         {
             // One-shot beats that were skipped over are written off rather than all
             // firing at once — except a boss, which still fires the moment the clock

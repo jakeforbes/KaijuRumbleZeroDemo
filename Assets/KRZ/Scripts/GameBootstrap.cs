@@ -19,6 +19,16 @@ public class GameBootstrap : MonoBehaviour
     Sprite[] waterFrames;
     Sprite[] groundTiles;
 
+    /// <summary>Where the kaiju is, for anything that needs it without holding a reference.</summary>
+    public Transform Player => player != null ? player.transform : null;
+
+    /// <summary>
+    /// City size for the level being played, falling back to Tuning when a level does not
+    /// state one. The Proving Ground is half this on each axis, so a quarter of the area.
+    /// </summary>
+    int BlocksX => LevelDef.Current.blocksX > 0 ? LevelDef.Current.blocksX : tuning.blocksX;
+    int BlocksY => LevelDef.Current.blocksY > 0 ? LevelDef.Current.blocksY : tuning.blocksY;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Launch()
     {
@@ -31,7 +41,11 @@ public class GameBootstrap : MonoBehaviour
     /// Reloads the scene and rebuilds. Launch() only fires once per play session,
     /// so the rebuild has to be re-triggered explicitly after the scene comes back.
     /// </summary>
-    public static void Restart()
+    /// <param name="toCharacterSelect">
+    /// False rebuilds straight into a run. The portal uses that: choosing an evolution and
+    /// then being asked to pick a kaiju again would undo the point of carrying upgrades over.
+    /// </param>
+    public static void Restart(bool toCharacterSelect = true)
     {
         CameraRig.CancelActiveIntroduction();
         Time.timeScale = 1f;
@@ -42,8 +56,9 @@ public class GameBootstrap : MonoBehaviour
         // single press, and the grid opens on whoever was just played.
         //
         // Every restart lands here — the pause menu, the win banner and F10 on death — so
-        // there is one rule rather than a list of which restarts stop where.
-        PauseMenu.OpenSelectOnReload();
+        // there is one rule rather than a list of which restarts stop where. The portal is
+        // the exception, and says so at the call.
+        PauseMenu.EnterOn(toCharacterSelect ? PauseMenu.Entry.Select : PauseMenu.Entry.Run);
         Instance = null;
         SceneManager.sceneLoaded += OnReloaded;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -72,6 +87,7 @@ public class GameBootstrap : MonoBehaviour
         CharacterArt.ClearCache();
         Grubling.Reset();
         PlayerShell.Reset();
+        Portal.Reset();
         DirectionalArt.ClearCache();
         Enemy.Reset();
         HitFx.Reset();
@@ -158,10 +174,10 @@ public class GameBootstrap : MonoBehaviour
 
     Rect CityLandBounds()
     {
-        float minX = (0 - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
-        float maxX = (tuning.blocksX - 1 - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
-        float minY = (0 - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
-        float maxY = (tuning.blocksY - 1 - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
+        float minX = (0 - BlocksX * 0.5f) * tuning.blockSpacingX;
+        float maxX = (BlocksX - 1 - BlocksX * 0.5f) * tuning.blockSpacingX;
+        float minY = (0 - BlocksY * 0.5f) * tuning.blockSpacingY;
+        float maxY = (BlocksY - 1 - BlocksY * 0.5f) * tuning.blockSpacingY;
 
         float m = tuning.shoreMargin;
         return Rect.MinMaxRect(minX - m, minY - m, maxX + m, maxY + m);
@@ -593,15 +609,15 @@ public class GameBootstrap : MonoBehaviour
         var placed = new System.Collections.Generic.List<Rect>();
         var open = new System.Collections.Generic.List<(int bx, int by, float x, float y)>();
 
-        for (int by = 0; by < tuning.blocksY; by++)
-            for (int bx = 0; bx < tuning.blocksX; bx++)
+        for (int by = 0; by < BlocksY; by++)
+            for (int bx = 0; bx < BlocksX; bx++)
             {
                 // Only the block the player is standing on is left out, so the run
                 // opens surrounded rather than in a clearing. A plaza at the start
                 // meant the first thing you did was walk somewhere; food is the whole
                 // economy, and it should be within reach of the spawn point.
-                if (Mathf.Abs(bx - tuning.blocksX / 2) <= tuning.startClearBlocks &&
-                    Mathf.Abs(by - tuning.blocksY / 2) <= tuning.startClearBlocks) continue;
+                if (Mathf.Abs(bx - BlocksX / 2) <= tuning.startClearBlocks &&
+                    Mathf.Abs(by - BlocksY / 2) <= tuning.startClearBlocks) continue;
 
                 int district = DistrictTarget(bx, by);
                 var type = reactorSlots.TryGetValue((bx, by), out var reactor)
@@ -616,8 +632,8 @@ public class GameBootstrap : MonoBehaviour
 
                 int heightPx = rng.Next(type.minHeightPx, type.maxHeightPx + 1);
 
-                float x = (bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX;
-                float y = (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY;
+                float x = (bx - BlocksX * 0.5f) * tuning.blockSpacingX;
+                float y = (by - BlocksY * 0.5f) * tuning.blockSpacingY;
 
                 // Break the lattice. On exact rails the eye finds the grid instantly
                 // and the city reads as a spreadsheet; a couple of units of wander is
@@ -702,8 +718,8 @@ public class GameBootstrap : MonoBehaviour
         if (wanted <= 0) return;
 
         // Room to breathe around the spawn point, whatever the block roll said.
-        if (Mathf.Abs(bx - tuning.blocksX / 2) <= tuning.startClearBlocks &&
-            Mathf.Abs(by - tuning.blocksY / 2) <= tuning.startClearBlocks) return;
+        if (Mathf.Abs(bx - BlocksX / 2) <= tuning.startClearBlocks &&
+            Mathf.Abs(by - BlocksY / 2) <= tuning.startClearBlocks) return;
 
         for (int i = 0; i < wanted; i++)
         {
@@ -836,11 +852,26 @@ public class GameBootstrap : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// An enemy by name, from the Tuning roster first and then from the levels' own.
+    ///
+    /// The fallback exists because a type added to Tuning.enemyTypes does not necessarily
+    /// arrive: Unity serves a ScriptableObject's cached serialized state, and an array that
+    /// has been serialized once keeps its old contents through recompiles and reimports
+    /// while the source says otherwise. That cost this project a missing boss — the wave
+    /// fired on schedule and logged that its enemy "does not exist" — and it is the same
+    /// failure that pinned the character roster. Enemies belonging to a level are declared
+    /// in code beside the level, where nothing can shadow them.
+    /// </summary>
     public EnemyType FindType(string name)
     {
-        if (tuning.enemyTypes == null) return null;
-        foreach (var t in tuning.enemyTypes)
+        if (tuning.enemyTypes != null)
+            foreach (var t in tuning.enemyTypes)
+                if (t.name == name) return t;
+
+        foreach (var t in LevelDef.ExtraEnemyTypes)
             if (t.name == name) return t;
+
         return null;
     }
 
@@ -1010,10 +1041,10 @@ public class GameBootstrap : MonoBehaviour
 
         // Every slot outside the clear starting area, shuffled.
         var slots = new System.Collections.Generic.List<(int bx, int by)>();
-        for (int by = 0; by < tuning.blocksY; by++)
-            for (int bx = 0; bx < tuning.blocksX; bx++)
+        for (int by = 0; by < BlocksY; by++)
+            for (int bx = 0; bx < BlocksX; bx++)
             {
-                if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 && Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
+                if (Mathf.Abs(bx - BlocksX / 2) <= 1 && Mathf.Abs(by - BlocksY / 2) <= 1) continue;
                 slots.Add((bx, by));
             }
 
@@ -1032,8 +1063,8 @@ public class GameBootstrap : MonoBehaviour
             bool wantUnique = uniquesPlaced < uniques.Count;
             if (!wantUnique && (reactors.Count == 0 || commonPlaced >= tuning.reactorCount)) break;
 
-            var world = new Vector2((bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX,
-                                    (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY);
+            var world = new Vector2((bx - BlocksX * 0.5f) * tuning.blockSpacingX,
+                                    (by - BlocksY * 0.5f) * tuning.blockSpacingY);
 
             bool tooClose = false;
             foreach (var p in placed)
@@ -1107,11 +1138,11 @@ public class GameBootstrap : MonoBehaviour
         if (type == null || wanted <= 0) return;
 
         var slots = new System.Collections.Generic.List<(int bx, int by)>();
-        for (int by = 0; by < tuning.blocksY; by++)
-            for (int bx = 0; bx < tuning.blocksX; bx++)
+        for (int by = 0; by < BlocksY; by++)
+            for (int bx = 0; bx < BlocksX; bx++)
             {
-                if (Mathf.Abs(bx - tuning.blocksX / 2) <= 1 &&
-                    Mathf.Abs(by - tuning.blocksY / 2) <= 1) continue;
+                if (Mathf.Abs(bx - BlocksX / 2) <= 1 &&
+                    Mathf.Abs(by - BlocksY / 2) <= 1) continue;
                 if (taken.ContainsKey((bx, by)) || chosen.ContainsKey((bx, by))) continue;
                 slots.Add((bx, by));
             }
@@ -1136,8 +1167,8 @@ public class GameBootstrap : MonoBehaviour
         {
             if (count >= wanted) break;
 
-            var world = new Vector2((bx - tuning.blocksX * 0.5f) * tuning.blockSpacingX,
-                                    (by - tuning.blocksY * 0.5f) * tuning.blockSpacingY);
+            var world = new Vector2((bx - BlocksX * 0.5f) * tuning.blockSpacingX,
+                                    (by - BlocksY * 0.5f) * tuning.blockSpacingY);
 
             bool tooClose = false;
             foreach (var p in placed)
@@ -1165,8 +1196,8 @@ public class GameBootstrap : MonoBehaviour
     /// </summary>
     int DistrictTarget(int bx, int by)
     {
-        float nx = (bx + 0.5f) / tuning.blocksX * 2f - 1f;
-        float ny = (by + 0.5f) / tuning.blocksY * 2f - 1f;
+        float nx = (bx + 0.5f) / BlocksX * 2f - 1f;
+        float ny = (by + 0.5f) / BlocksY * 2f - 1f;
 
         if (Mathf.Max(Mathf.Abs(nx), Mathf.Abs(ny)) < tuning.downtownFraction) return 0;
 

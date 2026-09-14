@@ -755,6 +755,13 @@ public class Enemy : Damageable
         float deathDuration = playsDeath ? type.deathFrames / DirectionalArt.Fps + 0.15f : 0f;
         if (IsBoss && PlayerProgress.Instance != null) PlayerProgress.Instance.Win(deathDuration);
 
+        // A level's closing enemy opens the way onward where it fell. Matched by name from
+        // the level rather than by a flag on the type, so the same Mech can be an ordinary
+        // heavy in one level and the thing that ends another.
+        var level = LevelDef.Current;
+        if (!string.IsNullOrEmpty(level.bossType) && type.name == level.bossType && !IsBoss)
+            Portal.Open(tuning, transform.position);
+
         // With a destruction clip, the corpse lingers just long enough to play it.
         // Collision goes immediately so a dying enemy never blocks or shoves.
         if (playsDeath)
