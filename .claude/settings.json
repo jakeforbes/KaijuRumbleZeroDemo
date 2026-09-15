@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File tools\\compile-check.ps1*)",
+      "Bash(pwsh tools/compile-check.ps1*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File tools/compile-check.ps1*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)"
+    ]
+  }
+}

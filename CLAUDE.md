@@ -14,7 +14,21 @@ the art/FX inventory. Read it rather than re-deriving those.
 
 ## Running and verifying
 
-There is no test suite, no build script and no CLI entry point. Verification is Unity Play mode.
+There is no test suite. Verification is Unity Play mode — but **compile first**:
+
+```
+pwsh tools/compile-check.ps1
+```
+
+Builds both generated assemblies using the .NET SDK inside the Unity install, prints only what
+is broken, and exits non-zero on error. A few seconds warm. It does **not** need the editor
+closed — it compiles the generated `.csproj` against Unity's DLLs rather than driving the
+editor, so it runs during a playtest where Unity's own `-batchmode` would block on the lock.
+
+Run it before handing work over. It catches typos; it does not catch behaviour — a component
+whose `Awake` runs before its fields are assigned compiles perfectly, and so does a value
+silently overridden by a stale serialized asset. Both have cost this project real time. A clean
+run means *worth playing*, not *works*.
 
 - Open the project in Unity 6000.6.0f1, open `Assets/Scenes/SampleScene.unity`, press Play.
 - **The scene is empty and that is correct.** `GameBootstrap` builds everything from code.
